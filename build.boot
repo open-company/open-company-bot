@@ -1,5 +1,6 @@
 (set-env!
  :source-paths #{"src"}
+ :resource-paths #{"resources"}
  :dependencies '[[org.clojure/clojure "1.8.0"]
                  [com.stuartsierra/component "0.3.1"]
                  ;; [stylefruits/gniazdo "0.4.1"]

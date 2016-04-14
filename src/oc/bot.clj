@@ -6,7 +6,7 @@
             [oc.bot.slack :as slack]
             [oc.bot.sqs :as sqs]))
 
-(def scripts (read-string (io/resource "scripts.edn")))
+(def scripts (read-string (slurp (io/resource "scripts.edn"))))
 
 (defn system [config-options]
   (let [{:keys [sqs-queue sqs-msg-handler slack-msg-handler slack-token]} config-options]
