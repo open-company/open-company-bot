@@ -1,0 +1,11 @@
+{:onboard ["Hi {{name}}, I’m the new TransparencyBot for {{company}}."
+           "{{company}} is an open company that has embraced stakeholder transparency and I’m here to help with that."
+           "{{company}} will now have a company transparency dashboard where key company information is shared with stakeholders like you."
+           "Your first step is to head over to your company transparency dashboard here: {{company-dashboard}}"
+           "There you’ll be asked to authenticate with your {{company}} Slack user."
+           "If you have any questions at this point, please ask {{contact-person}}."]
+ :authenticated ["Congratulations {{name}}! You’ve now got access to the transparency dashboard for {{company}}."
+                 "You can always get the most up to date company information there: {{company-dashboard}}"
+                 "I’ll also reach out to you periodically here to let you know when there is important new information about {{company}}."]
+
+;; < later, when the inbound info request use case is live they’ll be instructions on asking the bot questions >
