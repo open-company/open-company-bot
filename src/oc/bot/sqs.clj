@@ -25,11 +25,11 @@
   ;; (prn 'deleting-msg (:body msg))
   (sqs/delete-message creds (assoc msg :queue-url queue-url)))
 
-(defn relay-message-to-slack
-  "Relay a given message to slack, mostly used for testing purposes"
-  [slack-conn msg]
-  (slack/send-message! (-> sys :slack) (read-string (:body msg)))
-  msg)
+;; (defn relay-message-to-slack
+;;   "Relay a given message to slack, mostly used for testing purposes"
+;;   [slack-conn msg]
+;;   (slack/send-message! (-> sys :slack) (read-string (:body msg)))
+;;   msg)
 
 (defn sqs-process*
   "Yield a deferred that will ultimately delete the message put into it

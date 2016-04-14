@@ -14,11 +14,6 @@
   (let [scopes (clojure.string/join "," (map name (e/env :slack-scopes)))]
     (str "https://slack.com/oauth/authorize?scope=" scopes "&client_id=" (e/env :slack-client-id))))
 
-;; Test token created in slacks API dev tools
-(def bot-testing-ch "C10A1P4H2")
-(def test-token "xoxp-6895731204-18894935921-34364210081-7283fdaced")
-(def token "xoxb-34365017170-VxjcsIQhNcAW1bHX1YAG4yjf")
-
 (def list-channels-action
   "https://slack.com/api/channels.list")
 
@@ -61,7 +56,7 @@
     ((:keep-alive component))
     (dissoc component :conn :keep-alive :msg-idx)))
 
-(defn slack-connection [message-handler]
+(defn slack-connection [token message-handler]
   (map->SlackConnection {:ws-url (get-websocket-url token)
                          :message-handler (or message-handler prn)}))
 
