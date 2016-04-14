@@ -15,7 +15,6 @@
       :sqs   (-> (sqs/sqs-listener sqs-queue sqs-msg-handler)
                  (component/using [:slack])))))
 
-
 (comment
   (aws-sqs/send-message sqs/creds (e/env :aws-sqs-queue) {:type "message" :channel slack/bot-testing-ch :text "Sent via SQS!"})
 
