@@ -62,7 +62,7 @@
   (map->SlackConnection {:ws-url (get-websocket-url token)
                          :message-handler (or message-handler prn)}))
 
-(defn send-message! [^SlackConnection slack-conn msg]
+(defn send-event! [^SlackConnection slack-conn msg]
   ;; https://github.com/ztellman/manifold/issues/73
   ;; (assert (:conn slack-conn) "Slack connection must be provided")
   (->> (assoc msg :id (deref (:msg-idx slack-conn)))
