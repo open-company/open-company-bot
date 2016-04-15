@@ -42,7 +42,9 @@
 (defrecord SlackConnection [ws-url]
   component/Lifecycle
   (start [component]
-    (println ";; Starting SlackConnection")
+    (println ";; Starting SlackConnection" ws-url)
+    ;; https://github.com/ztellman/manifold/issues/73
+    ;; (assert ws-url "Websocket URL required to establish connection")
     (let [msg-idx    (atom 0) ; messages need pos-int ids for same conn
           conn       @(aleph.http/websocket-client ws-url)
           keep-alive (t/every 5000 #(send-ping! conn (swap! msg-idx inc)))]
@@ -51,7 +53,7 @@
       (assoc component :msg-idx msg-idx :conn conn :keep-alive keep-alive)))
 
   (stop [component]
-    (println ";; Stopping SlackConnection")
+    (println ";; Stopping SlackConnection" ws-url)
     (s/close! (:conn component))
     ((:keep-alive component))
     (dissoc component :conn :keep-alive :msg-idx)))
@@ -60,14 +62,38 @@
   (map->SlackConnection {:ws-url (get-websocket-url token)
                          :message-handler (or message-handler prn)}))
 
-(defn send-message! [slack-conn msg]
+(defn send-message! [^SlackConnection slack-conn msg]
+  ;; https://github.com/ztellman/manifold/issues/73
+  ;; (assert (:conn slack-conn) "Slack connection must be provided")
   (->> (assoc msg :id (deref (:msg-idx slack-conn)))
        (chesire/generate-string)
        (s/put! (:conn slack-conn))))
 
+(defrecord SlackConnectionManager []
+  component/Lifecycle
+  (start [component]
+    (println ";; Starting SlackConnectionManager")
+    (assoc component :connections (atom {})))
+  (stop [component]
+    (println ";; Stopping SlackConnectionManager")
+    (doseq [c (vals @(:connections component))]
+      (component/stop c))
+    (dissoc component :connections)))
+
+(defn slack-connection-manager []
+  (map->SlackConnectionManager {}))
+
+(defn initialize-connection! [^SlackConnectionManager conn-man bot-token msg-handler]
+  (let [c (component/start (slack-connection bot-token msg-handler))]
+    (swap! (:connections conn-man) assoc bot-token c)
+    c))
+
+(defn connection-for [^SlackConnectionManager conn-man bot-token]
+  (-> conn-man :connections deref (get bot-token)))
+
 ;; REPL stuff =========================================================
 
-(comment 
+(comment
   (def bot-user-id "U10AR0H50") ; retrieve from rethinkdb
 
   ;; build out into generic slack-fmt w/ support for the various entities
@@ -93,7 +119,7 @@
         (reply! conn idx msg))
       (prn msg)))
 
-  (def bot 
+  (def bot
     (map->SlackConnection {:ws-url (get-websocket-url token)
                            :message-handler handle-msg}))
 
@@ -104,7 +130,7 @@
   (send-ping! (:conn bot) 10)
 
   (def every-test (t/every 1000 #(send-ping! (:conn bot) 10)))
-  
+
   (every-test)
 
   )
