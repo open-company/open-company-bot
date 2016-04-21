@@ -4,9 +4,12 @@
  :dependencies '[[org.clojure/clojure "1.8.0"]
                  [com.stuartsierra/component "0.3.1"]
                  ;; [stylefruits/gniazdo "0.4.1"]
+                 [com.taoensso/timbre "4.3.1"]
                  [stencil "0.5.0"]
                  [amazonica "0.3.53"]
                  [aleph "0.4.1"]
+                 [manifold "0.1.4"]
+                 [automat "0.1.3"]
                  [cheshire "5.6.1"]
                  [environ "1.0.2"]
                  [boot-environ "1.0.2" :scope "test"]])
