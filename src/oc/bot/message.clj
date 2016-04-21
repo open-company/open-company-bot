@@ -2,9 +2,11 @@
   (:require [clojure.java.io :as io]
             [clojure.set :as cset]
             [stencil.core :as st]
-            [stencil.parser :as stp]))
+            [stencil.parser :as stp]
+            [taoensso.timbre :as timbre]))
 
-(def templates (-> "scripts.edn" io/resource slurp read-string))
+;; TODO this should be statically defined in prod
+(defn templates [] (-> "scripts.edn" io/resource slurp read-string))
 
 (defn validate-params [parsed params]
   (let [required (->> parsed
@@ -23,9 +25,13 @@
   (let [parsed (stp/parse tpl)]
     (st/render parsed (validate-params parsed params))))
 
-(defn messages-for [script-id script-params]
-  (map #(render % script-params) (get templates script-id)))
-
+(defn messages-for [script-id segment-id script-params]
+  (timbre/debugf "Getting messages for %s :: %s\n" script-id segment-id)
+  (map #(render % script-params) (get-in (templates) [script-id segment-id])))
 
 (comment 
-  (messages-for :onboard {:name "x" :company "x" :company-dashboard "/xxx" :contact-person "@tom"}))
+  (messages-for :onboard
+                [:company-name :init]
+                {:name "Tom" :company-name "Live.ly" :company-dashboard "/xxx" :contact-person "@tom"})
+
+  )
