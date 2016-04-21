@@ -40,7 +40,7 @@
 
     (defn test-onboard-trigger []
       {:diff     (rand-int 1000)
-       :script   {:id :onboard :params {:name "Sarah" :company-name "Flickr" :company-slug "flickr" :company-dashboard "https://opencompany.com/flickr" :company-description "The home for all your photos." :contact-person "Tom" :currency "$"}}
+       :script   {:id :onboard :params {:name "Sean" :company-name "Flickr" :company-slug "flickr" :company-dashboard "https://opencompany.com/flickr" :company-description "The home for all your photos." :contact-person "Tom" :currency "$"}}
        :receiver {:type :channel :id dm-testing-ch}
        :bot      {:token (e/env :slack-bot-token) :id bot-user-id}})
     (defn test-su-trigger []
@@ -61,7 +61,7 @@
     
     )
 
-  (aws-sqs/send-message sqs/creds (e/env :aws-sqs-queue) (test-onboard-user-trigger))
+  (aws-sqs/send-message sqs/creds (e/env :aws-sqs-queue) (test-onboard-trigger))
 
   (def sys (system {:sqs-queue (e/env :aws-sqs-queue)
                     :sqs-msg-handler sqs-handler}))

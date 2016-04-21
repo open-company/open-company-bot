@@ -118,7 +118,7 @@
 (defn messages [fsm [transition-signal]]
   (let [seg-id     (message-segment-id (:value fsm) transition-signal)
         msg-params (merge (-> fsm :value :init-msg :script :params) (-> fsm :value :updated))]
-    (m/messages-for (-> fsm :value :script) seg-id msg-params)))
+    (m/messages-for (-> fsm :value :script-id) seg-id msg-params)))
 
 (defn stage-confirmed? [fsm]
   (contains? (-> fsm :value :confirmed) (-> fsm :value :stage)))
@@ -132,11 +132,13 @@
   (if (from-bot? msg)
     fsm-state
     (if (initialize? msg)
+
+      ;; Startup case, i.e. messages coming from SQS initiating new convs ========
       (let [->full-msg (fn [text] {:type "message" :text text :channel (-> msg :receiver :id)})
             script-id  (-> msg :script :id)
             transition [:init]
             new-fsm    (a/advance (get-in scripts [script-id :automat])
-                                  {:script   script-id
+                                  {:script-id script-id
                                    :stage    (-> scripts script-id :stages first)
                                    :init-msg msg
                                    :stages   (-> scripts script-id :stages)}
@@ -145,21 +147,26 @@
         (doseq [m' (messages new-fsm transition)]
           (s/put! out-stream (->full-msg m')))
         new-fsm)
+      
+      ;; Regular case, i.e. messages sent by users =============================
       (let [->full-msg  (fn [text] {:type "message" :text text :channel (:channel msg)})
             transition  (msg-text->transition (:text msg))
-            updated-fsm (a/advance (:onboard automats) fsm-state transition ::invalid)]
+            updated-fsm (a/advance (get-in scripts [(-> fsm-state :value :script-id) :automat])
+                                   fsm-state transition ::invalid)]
         (timbre/debug "Transition:" transition)
         ;; Side effects
         (if (= ::invalid updated-fsm)
           (s/put! out-stream (->full-msg (str "Sorry, " (-> fsm-state :value :init-msg :script :params :name)
                                               ". I'm not sure what to do with this.")))
           (doseq [m' (messages updated-fsm transition)]
+            (timbre/info "sending" m)
             (s/put! out-stream (->full-msg m'))))
         ;; Return new FSM state
         ;; if the current stage is confirmed/completed also advance to next stage
         (trace (cond
                  (= ::invalid updated-fsm)      fsm-state
-                 (stage-confirmed? updated-fsm) (a/advance (:onboard automats) updated-fsm [:next-stage])
+                 (stage-confirmed? updated-fsm) (a/advance (get-in scripts [(-> fsm-state :value :script-id) :automat])
+                                                           updated-fsm [:next-stage])
                  :else                          updated-fsm))))))
 
 ;; TODO
