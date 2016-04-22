@@ -1,0 +1,8 @@
+{:aws-access-key "..."
+ :aws-secret-key "..."
+ :aws-sqs-queue "https://sqs.us-east-1.amazonaws.com/.../my-queue"
+
+ :slack-client-id "..."
+ :slack-client-secret "..."
+ :slack-bot-token "xoxb-..."
+ :slack-copes [:bot :users:read]}
