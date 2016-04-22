@@ -8,7 +8,7 @@
 
 Before running anything make sure you copy `config.edn.template` to `config.edn` and adjust the values in the contained map.
 
-Start a REPL with `boot dev`, connect to it using the printed nREPL port.
+Start a REPL with `boot dev`.
 
 The `oc.bot` namespace contains a `comment` form with everything needed to get the system into a running state. There currently is no `start` command that can be called from a terminal.
 
@@ -34,8 +34,9 @@ Let’s go through the lifecycle of a *scripted conversation* step-by-step.
 4. If a message **succeeds** to advance the FSM the appropriate response is looked up using the `stage` of the FSM as well as the meaning of the user’s message. The response is then sent to the `SlackConnection`.
 5. This process might loop until the conversation’s FSM reaches an accept state in which case it should be removed from the `ConversationManager` (TBD).
 
-## For your orientation 
-##### Namespaces
+## For Your Orientation
+
+#### Namespaces
 
 **oc.bot**
 Consider this the core of things. It’s very little code but it’s where you go if you want to boot up the entire system.
@@ -54,6 +55,29 @@ We want to interact with Slack through their Realtime API, potentially the bot s
 
 **oc.bot.utils**
 Generic stuff that is not tied to any particular domain.
+
+#### Notes on Overall Design
+
+**Regarding Components:** A lot of things have been initially modelled as [components][component] but I think only few of them actually should be components. Specifically the `Conversation` and `ConversationManager` components are probably not needed.
+
+Since both operate on streams they could be represented by something like this as well:  
+
+```clojure
+(defn mk-conv [out]
+  (let [state (atom nil)]
+    (partial (fn [state msg]
+                (swap! state conj msg)
+                (s/put! out msg))
+              state)))
+
+(s/connect-via in (mk-conv out) out)
+```
+
+This would out the state into the stream connection, causing disposal if `in` or `out` are closed.
+
+This would require dropping some of the pure-ness of the `transition-fn` that we currently have but that seems fine.
+
+**Regarding ConversationManager:** Most likely one `ConversationManager` is sufficient. Slack message events have a `:team` key which can be used as part of the predicate for incoming messages. (Not all events do have this key but probably not a problem for now.) 
 
 [component]: https://github.com/stuartsierra/component
 [manifold]: https://github.com/ztellman/manifold
