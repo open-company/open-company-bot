@@ -1,5 +1,7 @@
 # Open Company Bot
 
+[![MPL License](http://img.shields.io/badge/license-MPL-blue.svg?style=flat)](https://www.mozilla.org/MPL/2.0/)
+
 ## Development
 
 Start a REPL with `boot dev`, connect to it using the printed nREPL port.
@@ -49,6 +51,15 @@ We want to interact with Slack through their Realtime API, potentially the bot s
 **oc.bot.utils**
 Generic stuff that is not tied to any particular domain.
 
-
 [component]: https://github.com/stuartsierra/component
 [manifold]: https://github.com/ztellman/manifold
+
+## Participation
+
+Please note that this project is released with a [Contributor Code of Conduct](https://github.com/open-company/open-company-web/blob/mainline/CODE-OF-CONDUCT.md). By participating in this project you agree to abide by its terms.
+
+## License
+
+Distributed under the [Mozilla Public License v2.0](http://www.mozilla.org/MPL/2.0/). See `LICENSE` for full text.
+
+Copyright © 2015-2016 OpenCompany, Inc.
