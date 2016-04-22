@@ -6,6 +6,8 @@
 
 > Make sure you have Boot and Java 8 installed. For details refer [here](https://github.com/open-company/open-company-web#local-setup).
 
+Before running anything make sure you copy `config.edn.template` to `config.edn` and adjust the values in the contained map.
+
 Start a REPL with `boot dev`, connect to it using the printed nREPL port.
 
 The `oc.bot` namespace contains a `comment` form with everything needed to get the system into a running state. There currently is no `start` command that can be called from a terminal.
