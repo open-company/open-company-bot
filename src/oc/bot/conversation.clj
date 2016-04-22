@@ -4,6 +4,7 @@
             [manifold.deferred :as d]
             [manifold.stream :as s]
             [automat.core :as a]
+            [automat.fsm :as f]
             [oc.bot.message :as m]
             [oc.bot.utils :as u])
   (:import [java.time LocalDateTime]))
@@ -38,6 +39,11 @@
 ;; Conversations as state machines. Coerce messages into transitions.
 ;; Build data to look up messages to be sent.
 ;; -----------------------------------------------------------------------------
+
+;; TODO use this to limit msg->transition lookup space
+(defn possible-transitions [compiled-fsm state]
+  (let [alphabet (f/alphabet (:fsm (meta compiled-fsm)))]
+    (set (filter (fn [t] (a/advance compiled-fsm state t nil)) alphabet))))
 
 (defn fact-check [update-transition]
   [(a/or
