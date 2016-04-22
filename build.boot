@@ -44,7 +44,12 @@
         (repl)))
 
 (deftask test! []
-  (set-env! :source-paths conj "test")
+  (set-env! :source-paths #(conj % "test"))
   (comp (watch)
-        (test)))
+        (test :requires #{'amazonica.aws.sqs
+                          'taoensso.timbre
+                          'manifold.stream
+                          'manifold.deferred
+                          'stencil.core
+                          'stencil.parser})))
 
