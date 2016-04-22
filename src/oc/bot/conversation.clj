@@ -60,7 +60,8 @@
                          :confirm (fn [state input] (update state :confirmed (fnil conj #{}) (:stage state)))
                          :update (fn [state [sig v]] (assoc-in state [:updated (:stage state)] v))}}))
 
-(def init-only (a/compile [:init] {:signal first}))
+(def init-only {:automat (a/compile [:init] {:signal first})
+                :stages  [:init]})
 
 ;; FSM testing
 (comment 
@@ -78,12 +79,9 @@
 
 (def scripts {:onboard {:automat fact-checker
                         :stages [:company-name :company-description :currency :ceo]}
-              :onboard-user {:automat init-only
-                             :stages  [:init]}
-              :onboard-user-authenticated {:automat init-only
-                                           :stages  [:init]}
-              :stakeholder-update {:automat init-only
-                                   :stages [:init]}})
+              :onboard-user init-only
+              :onboard-user-authenticated init-only
+              :stakeholder-update init-only})
 
 (defn initialize? [msg]
   (= :oc.bot/initialize (:type msg)))
@@ -159,15 +157,15 @@
           (s/put! out-stream (->full-msg (str "Sorry, " (-> fsm-state :value :init-msg :script :params :name)
                                               ". I'm not sure what to do with this.")))
           (doseq [m' (messages updated-fsm transition)]
-            (timbre/info "sending" m)
+            (timbre/info "Sending:" m')
             (s/put! out-stream (->full-msg m'))))
         ;; Return new FSM state
         ;; if the current stage is confirmed/completed also advance to next stage
-        (trace (cond
-                 (= ::invalid updated-fsm)      fsm-state
-                 (stage-confirmed? updated-fsm) (a/advance (get-in scripts [(-> fsm-state :value :script-id) :automat])
-                                                           updated-fsm [:next-stage])
-                 :else                          updated-fsm))))))
+        (cond
+          (= ::invalid updated-fsm)      fsm-state
+          (stage-confirmed? updated-fsm) (a/advance (get-in scripts [(-> fsm-state :value :script-id) :automat])
+                                                    updated-fsm [:next-stage])
+          :else                          updated-fsm)))))
 
 ;; TODO
 ;; 1. nice-to-have: connect streams so Conversations can put!/take! text only messages
@@ -207,13 +205,6 @@
     (when s (timbre/debug "predicate-map-lookup returned multiple results, using first"))
     (when f (timbre/debugf "predicate-match for: %s\n" msg))
     f))
-
-;; (defn not-ended
-;;   "Return `conv`, but only if it's FSM isn't in an accepted state."
-;;   [conv]
-;;   (when conv
-;;     (when-not (-> conv :state deref :fsm :accepted?)
-;;       conv)))
 
 ;; Maybe the map created here should just have a channel as value
 ;; The created conversation could take messages from that channel
