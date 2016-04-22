@@ -52,4 +52,3 @@
                           'manifold.deferred
                           'stencil.core
                           'stencil.parser})))
-
