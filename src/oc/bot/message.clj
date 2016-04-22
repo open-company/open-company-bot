@@ -36,6 +36,7 @@
 
 (defn messages-for [script-id segment-id script-params]
   (timbre/debugf "Getting messages for %s :: %s\n" script-id segment-id)
+  ;; TODO we probably want to throw if no messages are found
   (map #(render % script-params) (get-in (templates) [script-id segment-id])))
 
 (comment 
