@@ -1,0 +1,7 @@
+{[:init :init]
+ ["Hi {{name}}, I’m the new TransparencyBot for {{company-name}}."
+  "{{company-name}} is an open company that has embraced stakeholder transparency and I’m here to help with that."
+  "{{company-name}} will now have a company transparency dashboard where key company information is shared with stakeholders like you."
+  "Your first step is to head over to your company transparency dashboard here: {{company-dashboard}}"
+  "There you’ll be asked to authenticate with your {{company-name}} Slack user."
+  "If you have any questions at this point, please ask {{contact-person}}."]}

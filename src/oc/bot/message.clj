@@ -1,12 +1,21 @@
 (ns oc.bot.message
   (:require [clojure.java.io :as io]
             [clojure.set :as cset]
+            [clojure.string :as string]
             [stencil.core :as st]
             [stencil.parser :as stp]
             [taoensso.timbre :as timbre]))
 
+(defn file->script-id [file]
+  (keyword (string/replace (.getName file) #"\.edn$" "")))
+
+(defn script-files []
+  (remove #(.isDirectory %) (file-seq (io/file (io/resource "scripts")))))
+
 ;; TODO this should be statically defined in prod
-(defn templates [] (-> "scripts.edn" io/resource slurp read-string))
+(defn templates []
+  (into {} (for [f (script-files)]
+             [(file->script-id f) (-> f slurp read-string)])))
 
 (defn validate-params [parsed params]
   (let [required (->> parsed
