@@ -9,17 +9,6 @@
             [oc.bot.utils :as u])
   (:import [java.time LocalDateTime]))
 
-(defrecord Conversation [in out init-state transition-fn]
-  component/Lifecycle
-  (start [component]
-    (let [id    (java.util.UUID/randomUUID)
-          state (atom init-state)]
-      (s/on-closed in #(prn 'closed id))
-      (s/consume #(swap! state transition-fn out %) in)
-      (assoc component :state state)))
-  (stop [component]
-    (dissoc component :state)))
-
 (defrecord ConversationManager [in out dispatcher]
   component/Lifecycle
   (start [component]
@@ -129,12 +118,9 @@
 
 (defn trace [x] (prn x) x)
 
-;; using this as a pure fn isn't such a great idea after all
-;; when using things like `connect-via` deferreds should be returned
-;; and using this function with `swap!` makes this harder
-(defn test-transition-fn [fsm-state out-stream msg]
+(defn transition-fn [fsm-atom out-stream msg]
   (if (from-bot? msg)
-    fsm-state
+    (d/success-deferred true)
     (if (initialize? msg)
 
       ;; Startup case, i.e. messages coming from SQS initiating new convs ========
@@ -148,30 +134,32 @@
                                    :stages   (-> scripts script-id :stages)}
                                   transition)]
         (timbre/info "Starting new scripted conversation:" script-id)
+        (reset! fsm-atom new-fsm)
         (doseq [m' (messages new-fsm transition)]
           (s/put! out-stream (->full-msg m')))
-        new-fsm)
+        (d/success-deferred true)) ; use `drain-into` coming in manifold 0.1.5
       
       ;; Regular case, i.e. messages sent by users =============================
       (let [->full-msg  (fn [text] {:type "message" :text text :channel (:channel msg)})
             transition  (msg-text->transition (:text msg))
-            updated-fsm (a/advance (get-in scripts [(-> fsm-state :value :script-id) :automat])
-                                   fsm-state transition ::invalid)]
+            updated-fsm (a/advance (get-in scripts [(-> @fsm-atom :value :script-id) :automat])
+                                   @fsm-atom transition ::invalid)]
         (timbre/debug "Transition:" transition)
         ;; Side effects
         (if (= ::invalid updated-fsm)
-          (s/put! out-stream (->full-msg (str "Sorry, " (-> fsm-state :value :init-msg :script :params :name)
-                                              ". I'm not sure what to do with this.")))
-          (doseq [m' (messages updated-fsm transition)]
-            (timbre/info "Sending:" m')
-            (s/put! out-stream (->full-msg m'))))
-        ;; Return new FSM state
-        ;; if the current stage is confirmed/completed also advance to next stage
-        (cond
-          (= ::invalid updated-fsm)      fsm-state
-          (stage-confirmed? updated-fsm) (a/advance (get-in scripts [(-> fsm-state :value :script-id) :automat])
-                                                    updated-fsm [:next-stage])
-          :else                          updated-fsm)))))
+          (do
+            (s/put! out-stream (->full-msg (str "Sorry, " (-> @fsm-atom :value :init-msg :script :params :name)
+                                                ". I'm not sure what to do with this.")))
+            (d/success-deferred true))) ; use `drain-into` coming in manifold 0.1.5
+          (do
+            (if (stage-confirmed? updated-fsm)
+              (reset! fsm-atom (a/advance (get-in scripts [(-> @fsm-atom :value :script-id) :automat])
+                                          updated-fsm [:next-stage]))
+              (reset! fsm-atom updated-fsm))
+            (doseq [m' (messages updated-fsm transition)]
+              (timbre/info "Sending:" m')
+              (s/put! out-stream (->full-msg m')))
+            (d/success-deferred true)))))) ; use `drain-into` coming in manifold 0.1.5
 
 ;; TODO
 ;; 1. nice-to-have: connect streams so Conversations can put!/take! text only messages
@@ -185,12 +173,6 @@
 ;; Route messages to their respective conversations or create new conversations
 ;; -----------------------------------------------------------------------------
 
-(defn mk-conv [out]
-  (map->Conversation {:in  (s/stream)
-                      :out out
-                      :init-state {}
-                      :transition-fn test-transition-fn}))
-
 (defn message? [msg]
   (= "message" (:type msg)))
 
@@ -198,6 +180,7 @@
   "Build a predicate that can be used to figure out if messages are relevant for a conversation."
   [base-msg]
   ;; (prn 'msg->pred base-msg)
+  ;; (constantly true) ; handy when testing
   (when (initialize? base-msg)
     (fn [msg]
       (and (not (from-bot? msg))
@@ -212,23 +195,22 @@
     (when f (timbre/debugf "predicate-match for: %s\n" msg))
     f))
 
-;; Maybe the map created here should just have a channel as value
-;; The created conversation could take messages from that channel
-;; and handle all the rest
+(defn mk-conv [out]
+  (let [state (atom nil)]
+    (partial transition-fn state out)))
+
 (defn dispatch! [conv-mngr incoming-msg]
   ;; (prn conv-mngr)
   (timbre/debugf "Number of ongoing conversations: %s\n" (count @(:conversations conv-mngr)))
-  (if-let [conv (find-matching-conv @(:conversations conv-mngr) incoming-msg)]
-    (s/put! (:in conv) incoming-msg)
-    (let [new-conv (component/start (mk-conv (:out conv-mngr)))
+  (if-let [conv-in (find-matching-conv @(:conversations conv-mngr) incoming-msg)]
+    (s/put! conv-in incoming-msg)
+    (let [conv-in  (s/stream)
           pred     (msg->predicate incoming-msg)]
       (when pred
         (timbre/infof "Registering new conversation %s\n" incoming-msg)
-        (swap! (:conversations conv-mngr)
-               assoc
-               (msg->predicate incoming-msg)
-               new-conv)
-        (s/put! (:in new-conv) incoming-msg)))))
+        (s/connect-via conv-in (mk-conv (:out conv-mngr)) (:out conv-mngr))
+        (swap! (:conversations conv-mngr) assoc pred conv-in)
+        (s/put! conv-in incoming-msg)))))
 
 (defn conversation-manager [in out]
   (map->ConversationManager {:in in :out out :dispatcher dispatch!}))
@@ -258,6 +240,13 @@
   (s/put! in {:text "no" :channel 1})
   (s/put! in {:text "Amen" :channel 1})
   (s/put! in {:text "yes" :channel 1})
+
+  (s/put! in "hi")
+  (s/put! in "yo")
+  (s/put! in "bye")
+
+  (s/drain-into [:a :b :c] in)
+  
 
   (let [m {:a 1, :b 2, :c 3}
         v {:a 1 :c 9}]
