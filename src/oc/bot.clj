@@ -70,18 +70,4 @@
 
   (alter-var-root #'sys component/stop)
 
-  ;; Repro for https://github.com/ztellman/manifold/issues/73
-  ;; =========================================================
-  ;; (require '[manifold.deferred :as d])
-
-  ;; (let [dd (d/deferred)]
-  ;;   (-> dd
-  ;;       (d/chain #(do (assert (string? %) "invalid") %) prn)
-  ;;       (d/catch #(println "something unexpected:" (.getMessage %))))
-  ;;   (d/success! dd nil))
-
-  ;; (try
-  ;;   (assert nil "stuff breaks")
-  ;;   (catch Throwable e (prn 'caught)))
-
   )
