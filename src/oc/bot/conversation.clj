@@ -153,6 +153,11 @@
 
 (defn trace [x] (prn x) x)
 
+(def not-understood
+  {:yes "You can answer with *yes* or *no*."
+   :no "You can answer with *yes* or *no*."
+   :currency "You can provide a currency with *EUR* or *USD*."})
+
 (defn transition-fn [fsm-atom out-stream msg]
   (if (from-bot? msg)
     (d/success-deferred true)
@@ -186,7 +191,8 @@
           (do
             (s/put! out-stream (->full-msg (str "Sorry, " (-> @fsm-atom :value :init-msg :script :params :name)
                                                 ". I'm not sure what to do with this.")))
-            (d/success-deferred true))) ; use `drain-into` coming in manifold 0.1.5
+            (s/put! out-stream (->full-msg (not-understood (first allowed?))))
+            (d/success-deferred true)) ; use `drain-into` coming in manifold 0.1.5
           (do
             (if (stage-confirmed? updated-fsm)
               (reset! fsm-atom (a/advance compiled-fsm updated-fsm [:next-stage]))
@@ -194,7 +200,7 @@
             (doseq [m' (messages updated-fsm transition)]
               (timbre/info "Sending:" m')
               (s/put! out-stream (->full-msg m')))
-            (d/success-deferred true)))))) ; use `drain-into` coming in manifold 0.1.5
+            (d/success-deferred true))))))) ; use `drain-into` coming in manifold 0.1.5
 
 ;; -----------------------------------------------------------------------------
 ;; Conversation Routing 
