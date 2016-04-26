@@ -3,11 +3,39 @@
             [taoensso.timbre :as timbre]
             [manifold.deferred :as d]
             [manifold.stream :as s]
+            [manifold.time :as t]
             [automat.core :as a]
             [automat.fsm :as f]
             [oc.bot.message :as m]
             [oc.bot.utils :as u])
   (:import [java.time LocalDateTime]))
+
+(defn typing-chain
+  "Return a vector of deferred emitting functions that will
+   put `msg` into `out` for `ms` every `every.ms`
+   Intended to be used with `manifold.deferred/chain`"
+  [msg ms every-ms out]
+  (mapv
+   #(fn [_] (t/in (* % every-ms)
+                  (fn [] (s/try-put! out msg every-ms))))
+   (range (inc (quot ms every-ms)))))
+
+(defn with-wait
+  "Return a single function that will eventually put it's argument `msg`
+   into `out` after sending a few 'typing' messages into out."
+  [out]
+  (fn [msg]
+    (let [wait-time (* 100 (count (:text msg)))
+          typing    {:type "typing" :channel (or (:channel msg) (-> msg :receiver :id))}]
+      (-> (apply d/chain
+                 nil
+                 ;; 3000 here is a limit by Slack. When sending more than a few
+                 ;; messages within a 3000ms window Slack will close the connection.
+                 (conj (typing-chain typing wait-time 3000 out)
+                       (fn [_] (s/put! out msg))
+                       (fn [success?] (when-not success?
+                                        (throw (ex-info "Failed to out message" {:out out, :msg msg}))))))
+          (d/catch Exception #(throw %))))))
 
 (defrecord ConversationManager [in out dispatcher]
   component/Lifecycle
@@ -16,7 +44,6 @@
     (let [conversations (atom {})
           started       (assoc component :conversations conversations)]
       (s/on-closed in #(prn 'closed-conv-mngr-in))
-      ;; use connect-via here perhaps
       (s/consume #(dispatcher started %) in)
       started))
   (stop [component]
@@ -205,10 +232,13 @@
   (if-let [conv-in (find-matching-conv @(:conversations conv-mngr) incoming-msg)]
     (s/put! conv-in incoming-msg)
     (let [conv-in  (s/stream)
+          conv-out (s/stream)
           pred     (msg->predicate incoming-msg)]
       (when pred
         (timbre/infof "Registering new conversation %s\n" incoming-msg)
-        (s/connect-via conv-in (mk-conv (:out conv-mngr)) (:out conv-mngr))
+        (s/connect-via conv-in (mk-conv conv-out) conv-out)
+        ;; TODO consider making conv-out buffered
+        (s/connect-via conv-out (with-wait (:out conv-mngr)) (:out conv-mngr))
         (swap! (:conversations conv-mngr) assoc pred conv-in)
         (s/put! conv-in incoming-msg)))))
 
