@@ -85,7 +85,7 @@
                          :confirm (fn [state input] (update state :confirmed (fnil conj #{}) (:stage state)))
                          :update (fn [state [sig v]] (assoc-in state [:updated (:stage state)] v))}}))
 
-(def init-only {:automat (a/compile [:init] {:signal first})
+(def init-only {:fsm (a/compile [:init] {:signal first})
                 :stages  [:init]})
 
 ;; FSM testing
@@ -102,7 +102,7 @@
 
   )
 
-(def scripts {:onboard {:automat fact-checker
+(def scripts {:onboard {:fsm fact-checker
                         :stages [:company-name :company-description :currency :ceo]}
               :onboard-user init-only
               :onboard-user-authenticated init-only
@@ -160,7 +160,7 @@
       (let [->full-msg (fn [text] {:type "message" :text text :channel (-> msg :receiver :id)})
             script-id  (-> msg :script :id)
             transition [:init]
-            new-fsm    (a/advance (get-in scripts [script-id :automat])
+            new-fsm    (a/advance (get-in scripts [script-id :fsm])
                                   {:script-id script-id
                                    :stage    (-> scripts script-id :stages first)
                                    :init-msg msg
@@ -174,8 +174,9 @@
       
       ;; Regular case, i.e. messages sent by users =============================
       (let [->full-msg   (fn [text] {:type "message" :text text :channel (:channel msg)})
-            compiled-fsm (get-in scripts [(-> @fsm-atom :value :script-id) :automat])
-            transition   (msg-text->transition (:text msg) (possible-transitions compiled-fsm @fsm-atom))
+            compiled-fsm (trace (get-in scripts [(-> @fsm-atom :value :script-id) :fsm]))
+            allowed?     (trace (possible-transitions compiled-fsm @fsm-atom))
+            transition   (msg-text->transition (:text msg) allowed?)
             updated-fsm  (a/advance compiled-fsm @fsm-atom transition ::invalid)]
         (timbre/debug "Transition:" transition)
         ;; Side effects
