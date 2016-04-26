@@ -87,7 +87,7 @@ Scripts define the messages a bot will send when initiating a conversation or re
 All scripts can be found inside `resources/scripts/` and follow the same format (specified in [EDN][edn]):
 
 ```clojure
-{[stage transition-signal] [“Message 1” “Message 2” “Message 3”]}
+{[stage transition-signal] ["Message 1" "Message 2" "Message 3"]}
 ```
 
 To understand this format let’s look at how conversations are modelled. Conversations may go through multiple *stages* which can be thought of as “checkpoints” on the way to completing the goal of the conversation.
@@ -112,7 +112,7 @@ The above example is one *stage*. Let’s assume and identifier for this stage o
 Now the empty lists after these `[stage transition-signal]` pairs can be filled with messages. Messages may contain special variable fields like `{{company-name}}`. You may also, instead of providing a list of strings, provide a list containing strings and lists of strings. Messages in nested lists will be chosen randomly:
 
 ```clojure
-[“Message 1” [“Message 2 v1” “Message 2 v2”] “Message 3”]
+["Message 1" ["Message 2 v1" "Message 2 v2"] "Message 3"]
 ```
 
 [component]: https://github.com/stuartsierra/component
