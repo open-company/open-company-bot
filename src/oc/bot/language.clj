@@ -1,13 +1,9 @@
 (ns oc.bot.language)
 
-(defn yes? [s]
-  (#{"y" "yes"} s))
+(def yes? #{"y" "yes"})
 
-(defn no? [s]
-  (#{"n" "no"} s))
+(def no? #{"n" "no"})
 
-(defn euro? [s]
-  (#{"€" "eur" "euro"} s))
+(def euro? #{"€" "eur" "euro"})
 
-(defn dollar? [s]
-  (#{"$" "usd" "dollar"} s))
+(def dollar? #{"$" "usd" "dollar"})
