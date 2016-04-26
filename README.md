@@ -58,9 +58,9 @@ Generic stuff that is not tied to any particular domain.
 
 #### Notes on Overall Design
 
-**Regarding Components:** A lot of things have been initially modelled as [components][component] but I think only few of them actually should be components. Specifically the `Conversation` and `ConversationManager` components are probably not needed.
+**FIXED** **Regarding Components:** A lot of things have been initially modelled as [components][component] but I think only few of them actually should be components. Specifically the `Conversation` and `ConversationManager` components are probably not needed.
 
-Since both operate on streams they could be represented by something like this as well:  
+Since both operate on streams they could be represented by something like this as well:
 
 ```clojure
 (defn mk-conv [out]
@@ -77,10 +77,43 @@ This would out the state into the stream connection, causing disposal if `in` or
 
 This would require dropping some of the pure-ness of the `transition-fn` that we currently have but that seems fine.
 
-**Regarding ConversationManager:** Most likely one `ConversationManager` is sufficient. Slack message events have a `:team` key which can be used as part of the predicate for incoming messages. (Not all events do have this key but probably not a problem for now.) 
+**Regarding ConversationManager:** Most likely one `ConversationManager` is sufficient. Slack message events have a `:team` key which can be used as part of the predicate for incoming messages. (Not all events do have this key but probably not a problem for now.)
+
+
+## Authoring Scripts
+
+Scripts define the messages a bot will send when initiating a conversation or reacting to users messages.
+
+All scripts can be found inside `resources/scripts/` and follow the same format (specified in [EDN][edn]):
+
+```clojure
+{[stage transition-signal] [“Message 1” “Message 2” “Message 3”]}
+```
+
+To understand this format let’s look at how conversations are modelled. Conversations may go through multiple *stages* which can be thought of as “checkpoints” on the way to completing the goal of the conversation.
+
+Within these stages there may be one or more *transitions* representing a user’s message. Because a users message isn’t easily understood by machines we try to extract a *transition-signal* from each message. A transition-signal might look like any of these: `:yes`, `:no`, `:currency` or `:str`. These will be expanded as the bot becomes able to recognize additional types of responses. E.g. a `:user` signal might be introduced.
+
+**An example:** at some point we might ask the user to confirm the companies name. The user might confirm the existing name (`:yes`) or she might choose to change the name (`:no`). After the `:no` signal any response will be interpreted as the desired company name (`:str`). After that another confirmation (`:yes`) is needed to finish the stage or alternatively the user may go back and specify a different name (as often as they want).
+
+The above example is one *stage*. Let’s assume and identifier for this stage of `:company-name`. The transitions have already been discussed. The skeleton to specify messages for each transition would look like this:
+
+```clojure
+{[:company-name :yes] []
+ [:company-name :no]  []
+ [:company-name :str] []
+ [:company-name :yes-after-update] []
+```
+
+> **Note** `:yes-after-update` is an extra transformation on the original signal to allow us sending different confirmation messages if the user has changed information.
+
+Now the empty lists after these `[stage transition-signal]` pairs can be filled with messages. Messages may contain special variable fields like `{{company-name}}`. You may also, instead of providing a list of strings, provide a list containing strings and lists of strings. Messages in nested lists will be chosen randomly:
+
+[“Message 1” [“Message 2 v1” “Message 2 v2”] “Message 3”]
 
 [component]: https://github.com/stuartsierra/component
 [manifold]: https://github.com/ztellman/manifold
+[edn]: https://github.com/edn-format/edn
 
 ## Participation
 
