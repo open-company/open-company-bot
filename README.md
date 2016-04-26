@@ -109,7 +109,9 @@ The above example is one *stage*. Let’s assume and identifier for this stage o
 
 Now the empty lists after these `[stage transition-signal]` pairs can be filled with messages. Messages may contain special variable fields like `{{company-name}}`. You may also, instead of providing a list of strings, provide a list containing strings and lists of strings. Messages in nested lists will be chosen randomly:
 
+```clojure
 [“Message 1” [“Message 2 v1” “Message 2 v2”] “Message 3”]
+```
 
 [component]: https://github.com/stuartsierra/component
 [manifold]: https://github.com/ztellman/manifold
