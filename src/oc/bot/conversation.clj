@@ -29,7 +29,7 @@
   [out]
   (fn [msg]
     (let [wait-time (* 50 (count (:text msg)))
-          typing    {:type "typing" :channel (or (:channel msg) (-> msg :receiver :id))}]
+          typing    {:type "typing" :channel (:channel msg)}]
       (-> (apply d/chain
                  nil
                  ;; 3000 here is a limit by Slack. When sending more than a few
