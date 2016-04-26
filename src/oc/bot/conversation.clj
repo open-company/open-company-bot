@@ -136,8 +136,8 @@
   (cond
     (and (= signal :yes) (get (:updated fsm-value) (:stage fsm-value)))
     [(:stage fsm-value) :yes-after-update]
-
-    :else [(:stage fsm-value) signal]))
+    :else
+    [(:stage fsm-value) signal]))
 
 (defn messages [fsm [transition-signal]]
   (let [seg-id     (message-segment-id (:value fsm) transition-signal)
