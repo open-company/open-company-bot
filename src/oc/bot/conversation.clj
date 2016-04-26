@@ -25,7 +25,7 @@
    into `out` after sending a few 'typing' messages into out."
   [out]
   (fn [msg]
-    (let [wait-time (* 100 (count (:text msg)))
+    (let [wait-time (* 50 (count (:text msg)))
           typing    {:type "typing" :channel (or (:channel msg) (-> msg :receiver :id))}]
       (-> (apply d/chain
                  nil
@@ -188,13 +188,6 @@
               (s/put! out-stream (->full-msg m')))
             (d/success-deferred true)))))) ; use `drain-into` coming in manifold 0.1.5
 
-;; TODO
-;; 1. nice-to-have: connect streams so Conversations can put!/take! text only messages
-;; 2. nice-to-have: make 'typing...' work without conversations needing to worry about it
-;; 3. make sure put! return values are checked where necessary
-;; 4. (maybe) remove need for multiple conversation managers
-;; 5. 
-
 ;; -----------------------------------------------------------------------------
 ;; Conversation Routing 
 ;; Route messages to their respective conversations or create new conversations
@@ -281,65 +274,3 @@
   (let [m {:a 1, :b 2, :c 3}
         v {:a 1 :c 9}]
     (u/predicate-map-lookup m v)))
-
-;; experiment with aritificially delaying messages while maintaining order
-
-(comment
-
-  (def msg-id (atom 0))
-  (defn msg [] [(* (rand-int 4) 1000) (swap! msg-id inc)])
-
-  @(s/put! in (msg))
-
-  (quot 4300 500)
-
-  (mod 4300 500)
-
-  (defn put-while
-    "Send `msg` messages to out for `ms`"
-    [ms every-ms out]
-    (doseq [n (range (quot ms every-ms))]
-      (Thread/sleep every-ms)
-      (s/try-put! out :typing every-ms))
-    (Thread/sleep (mod ms every-ms)))
-
-  (do 
-    (def in (s/stream 15))
-    (def out (s/stream))
-
-    (defn with-wait [msg]
-      (-> msg
-          (d/chain
-           #(d/future (send-typing (first %) 300 out) %)
-           #(update % 1 inc)
-           #(do (prn {:result %}) %)
-           #(s/put! out %)
-           #(when-not % (throw (ex-info "Failed to out message" {:out out, :msg msg}))))
-          (d/catch Exception #(throw %))))
-
-    (s/connect-via in with-wait out)
-    (s/consume #(prn 'out (.getSecond (LocalDateTime/now)) %) out))
-  
-  (prn 'x)
-  )
-
-;; experiment with using streams to reduce amount of info passed to conversations
-
-(comment
-  (s/connect-via
-   in
-   (fn [msg-full]
-     (let [enrich (fn [txt] (merge {:text txt} (select-keys msg-full [:channel])))])
-     )
-   out)
-
-  (let [msg {:channel 1 :text "abc"}
-        src (s/stream)
-        out (s/stream)
-        trimmed (s/map :text src)
-        enriched (s/map #(merge {:text %} (select-keys msg [:channel])) out)]
-    ;; (s/consume #(prn 'out %) out)
-    (s/consume #(prn 'enriched %) enriched)
-    (s/consume #(prn 'trimmed %) trimmed)
-    (s/connect-via trimmed #(apply d/chain (mapv (fn [c] (s/put! out c)) %)) out)
-    (s/put! src msg)))
