@@ -123,7 +123,9 @@
 
 (defn msg-text->transition
   "Given a users message `txt` and a set of `allowed?` signals
-   find a transition or return nil"
+   find a transition or return `nil`. Since all entries in the
+   `transitions` table have equal weight it is very important that
+   the list of allowed transitions is as constrained as possible."
   [txt allowed?]
   (let [trns (transitions txt)
         txt' (string/lower-case txt)]
