@@ -26,6 +26,9 @@
                  ;; JSON encoding/decoding
                  ;; https://github.com/dakrone/cheshire
                  [cheshire "5.6.1"]
+                 ;; Lightweight utility library
+                 ;; https://github.com/weavejester/medley
+                 [medley "0.7.4"]
                  ;; Environment variables
                  ;; https://github.com/weavejester/environ
                  [environ "1.0.2"]
