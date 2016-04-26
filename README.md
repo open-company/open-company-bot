@@ -96,6 +96,8 @@ Within these stages there may be one or more *transitions* representing a userâ€
 
 **An example:** at some point we might ask the user to confirm the companies name. The user might confirm the existing name (`:yes`) or she might choose to change the name (`:no`). After the `:no` signal any response will be interpreted as the desired company name (`:str`). After that another confirmation (`:yes`) is needed to finish the stage or alternatively the user may go back and specify a different name (as often as they want).
 
+![An example stage verifying a piece of information](https://raw.githubusercontent.com/open-company/open-company-bot/master/docs/fact-check-automata.png)
+
 The above example is one *stage*. Letâ€™s assume and identifier for this stage of `:company-name`. The transitions have already been discussed. The skeleton to specify messages for each transition would look like this:
 
 ```clojure
