@@ -6,6 +6,7 @@
             [manifold.time :as t]
             [automat.core :as a]
             [automat.fsm :as f]
+            [clojure.string :as string]
             [medley.core :as med]
             [oc.bot.message :as m]
             [oc.bot.language :as lang]
@@ -124,10 +125,11 @@
   "Given a users message `txt` and a set of `allowed?` signals
    find a transition or return nil"
   [txt allowed?]
-  (let [trns (transitions txt)]
+  (let [trns (transitions txt)
+        txt' (string/lower-case txt)]
     (-> (comp allowed? first)
         (med/filter-vals trns)
-        (u/predicate-map-lookup txt)
+        (u/predicate-map-lookup txt')
         (first))))
 
 (defn message-segment-id

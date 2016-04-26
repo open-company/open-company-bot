@@ -1,5 +1,4 @@
-(ns oc.bot.language
-  (:require [clojure.string :as string]))
+(ns oc.bot.language)
 
 (defn yes? [s]
   (#{"y" "yes"} s))
