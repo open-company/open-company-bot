@@ -59,10 +59,10 @@
 ;; Build data to look up messages to be sent.
 ;; -----------------------------------------------------------------------------
 
-;; TODO use this to limit msg->transition lookup space
 (defn possible-transitions [compiled-fsm state]
   (let [alphabet (f/alphabet (:fsm (meta compiled-fsm)))]
-    (set (filter (fn [t] (a/advance compiled-fsm state t nil)) alphabet))))
+    ;; SIGNAL using [t] here means we assume the FSMs signal function is `first`
+    (set (filter (fn [t] (a/advance compiled-fsm state [t] false)) alphabet))))
 
 (defn fact-check [update-transition]
   [(a/or
