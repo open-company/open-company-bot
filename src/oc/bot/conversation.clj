@@ -6,7 +6,9 @@
             [manifold.time :as t]
             [automat.core :as a]
             [automat.fsm :as f]
+            [medley.core :as med]
             [oc.bot.message :as m]
+            [oc.bot.language :as lang]
             [oc.bot.utils :as u])
   (:import [java.time LocalDateTime]))
 
@@ -111,20 +113,22 @@
 (defn from-bot? [msg]
   (= "U10AR0H50" (:user msg)))
 
-;; Very very simplistic...
-(defn msg-text->transition [txt]
-  (get {"yes" [:yes]
-        "y"   [:yes]
-        "no"  [:no]
-        "n"   [:no]
-        "€"   [:currency ::euro]
-        "euro" [:currency ::euro]
-        "EUR" [:currency ::euro]
-        "$"   [:currency ::euro]
-        "dollar" [:currency ::euro]
-        "USD" [:currency ::euro]}
-       txt
-       [:str txt]))
+(defn transitions [txt]
+  {lang/yes?     [:yes]
+   lang/no?      [:no]
+   lang/euro?    [:currency ::eur]
+   lang/dollar?  [:currency ::usd]
+   (fn [_] true) [:str txt]})
+
+(defn msg-text->transition
+  "Given a users message `txt` and a set of `allowed?` signals
+   find a transition or return nil"
+  [txt allowed?]
+  (let [trns (transitions txt)]
+    (-> (comp allowed? first)
+        (med/filter-vals trns)
+        (u/predicate-map-lookup txt)
+        (first))))
 
 (defn message-segment-id
   "Given `fsm-value` and it's most recent `signal`, find messages that should be sent"
@@ -167,10 +171,10 @@
         (d/success-deferred true)) ; use `drain-into` coming in manifold 0.1.5
       
       ;; Regular case, i.e. messages sent by users =============================
-      (let [->full-msg  (fn [text] {:type "message" :text text :channel (:channel msg)})
-            transition  (msg-text->transition (:text msg))
-            updated-fsm (a/advance (get-in scripts [(-> @fsm-atom :value :script-id) :automat])
-                                   @fsm-atom transition ::invalid)]
+      (let [->full-msg   (fn [text] {:type "message" :text text :channel (:channel msg)})
+            compiled-fsm (get-in scripts [(-> @fsm-atom :value :script-id) :automat])
+            transition   (msg-text->transition (:text msg) (possible-transitions compiled-fsm @fsm-atom))
+            updated-fsm  (a/advance compiled-fsm @fsm-atom transition ::invalid)]
         (timbre/debug "Transition:" transition)
         ;; Side effects
         (if (= ::invalid updated-fsm)
@@ -180,8 +184,7 @@
             (d/success-deferred true))) ; use `drain-into` coming in manifold 0.1.5
           (do
             (if (stage-confirmed? updated-fsm)
-              (reset! fsm-atom (a/advance (get-in scripts [(-> @fsm-atom :value :script-id) :automat])
-                                          updated-fsm [:next-stage]))
+              (reset! fsm-atom (a/advance compiled-fsm updated-fsm [:next-stage]))
               (reset! fsm-atom updated-fsm))
             (doseq [m' (messages updated-fsm transition)]
               (timbre/info "Sending:" m')
