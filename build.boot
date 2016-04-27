@@ -16,7 +16,7 @@
                  [amazonica "0.3.53"]
                  ;; Asynchronous communication for clojure (http-client)
                  ;; https://github.com/ztellman/aleph
-                 [aleph "0.4.1"]
+                 [aleph "0.4.2-alpha1"]
                  ;; Async programming tools (streams/deferred computation)
                  ;; https://github.com/ztellman/manifold
                  [manifold "0.1.4"]

@@ -98,7 +98,9 @@
       (adv [:yes])
       (adv [:next-stage]))
 
-  (automat.viz/view fact-checker)
+  (require 'automat.viz)
+
+  (automat.viz/view (fact-check :str))
 
   )
 
@@ -262,6 +264,7 @@
 
     (def init-msg
       {:type :oc.bot/initialize
+       :receiver {:type :channel :id 1}
        :script {:id :onboard
                 :params {:name "Sarah" :company-name "Flickr" :company-description "Hottest startup on the block." :company-dashboard "https://opencompany.com/flickr" :contact-person "Tom"}}})
 
@@ -274,9 +277,9 @@
   (alter-var-root #'conv-mngr component/stop)
 
   (s/put! in init-msg)
-  (s/put! in {:text "no" :channel 1})
-  (s/put! in {:text "Amen" :channel 1})
-  (s/put! in {:text "yes" :channel 1})
+  (s/put! in {:type "message" :text "wahaay" :channel 1})
+  (s/put! in {:type "message" :text "Amen" :channel 1})
+  (s/put! in {:type "message" :text "yes" :channel 1})
 
   (s/put! in "hi")
   (s/put! in "yo")
@@ -287,4 +290,12 @@
 
   (let [m {:a 1, :b 2, :c 3}
         v {:a 1 :c 9}]
-    (u/predicate-map-lookup m v)))
+    (u/predicate-map-lookup m v))
+
+
+  (f/alphabet (:fsm (meta (get-in scripts [:onboard :fsm]))))
+
+  (a/advance fact-checker nil nil)
+
+
+  )
