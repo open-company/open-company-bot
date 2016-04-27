@@ -6,18 +6,20 @@
             [stencil.parser :as stp]
             [taoensso.timbre :as timbre]))
 
-(defn file->script-id [file]
-  (keyword (string/replace (.getName file) #"\.edn$" "")))
+(defn- file->script-id [file]
+  (let [fname (.getName file)]
+    (assert (string/ends-with? fname ".edn") "Scripts must be stored in .edn files")
+    (keyword (string/replace fname  #"\.edn$" ""))))
 
-(defn script-files []
+(defn- script-files []
   (remove #(.isDirectory %) (file-seq (io/file (io/resource "scripts")))))
 
 ;; TODO this should be statically defined in prod
-(defn templates []
+(defn- templates []
   (into {} (for [f (script-files)]
              [(file->script-id f) (-> f slurp read-string)])))
 
-(defn validate-params [parsed params]
+(defn- validate-params [parsed params]
   (let [required (->> parsed
                       (filter #(or (instance? stencil.ast.EscapedVariable %)
                                    (instance? stencil.ast.UnescapedVariable %)))
@@ -30,14 +32,25 @@
                        :params params
                        :parsed-template parsed})))))
 
-(defn render [tpl params]
+(defn- render [tpl params]
   (let [parsed (stp/parse tpl)]
     (st/render parsed (validate-params parsed params))))
 
+(defn- get-messages
+  "Find messages for `segment-id` ([stage transition] tuple)
+   in the script `script-id` within the `templates` map."
+  [templates script-id segment-id]
+  (let [segment (get-in templates [script-id segment-id])]
+    (if-not segment
+      (throw (ex-info (str "No messages found for " [script-id segment-id])
+                      {:templates templates :script-id script-id :segment-id segment-id}))
+      (map (fn [m] (if (vector? m) (rand-nth m) m)) segment))))
+
+;; Public API ==================================================================
+
 (defn messages-for [script-id segment-id script-params]
   (timbre/debugf "Getting messages for %s :: %s\n" script-id segment-id)
-  ;; TODO we probably want to throw if no messages are found
-  (map #(render % script-params) (get-in (templates) [script-id segment-id])))
+  (map #(render % script-params) (get-messages (templates) script-id segment-id)))
 
 (comment 
   (messages-for :onboard
