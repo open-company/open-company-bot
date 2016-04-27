@@ -82,7 +82,7 @@ This would require dropping some of the pure-ness of the `transition-fn` that we
 
 ## Authoring Scripts
 
-Scripts define the messages a bot will send when initiating a conversation or reacting to users messages.
+Scripts define the messages a bot will send when initiating a conversation or reacting to a user's messages.
 
 All scripts can be found inside `resources/scripts/` and follow the same format (specified in [EDN][edn]):
 
@@ -109,7 +109,7 @@ The above example is one *stage*. Let’s assume and identifier for this stage o
 
 > **Note** `:yes-after-update` is an extra transformation on the original signal to allow us sending different confirmation messages if the user has changed information.
 
-Now the empty lists after these `[stage transition-signal]` pairs can be filled with messages. Messages may contain special variable fields like `{{company-name}}`. You may also, instead of providing a list of strings, provide a list containing strings and lists of strings. Messages in nested lists will be chosen randomly:
+Now the empty lists after these `[stage transition-signal]` pairs can be filled with messages. Messages may contain special variable fields like `{{company-name}}`. You may also, instead of providing a list of strings, provide a list containing strings and lists of strings. Messages in nested lists will be **chosen randomly**:
 
 ```clojure
 ["Message 1" ["Message 2 v1" "Message 2 v2"] "Message 3"]
