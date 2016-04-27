@@ -5,7 +5,7 @@
             (if (pred v)
               (conj acc (get pred-map pred))
               acc))
-          (list)
+          #{}
           (keys pred-map)))
 
 (defn next-in [xs x]
