@@ -1,2 +1,2 @@
 {[:init :init]
- ["Hey {{name}}, I’ve got great news. The newest stakeholder update for {{company-name}} is available {{stakeholder-update-link}}."]}
+ ["Hey {{user/name}}, I’ve got great news. The newest stakeholder update for {{company/name}} is available https://opencompany.com/{{company/slug}}/stakeholder-update."]}

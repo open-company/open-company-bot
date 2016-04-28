@@ -54,7 +54,7 @@
 
 (comment 
   (messages-for :onboard
-                [:company-name :init]
-                {:name "Tom" :company-name "Live.ly" :company-dashboard "/xxx" :contact-person "@tom"})
+                [:company/name :init]
+                {:user/name "Tom" :company/name "Live.ly" :company/dashboard "/xxx" :contact-person "@tom"})
 
   )

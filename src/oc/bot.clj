@@ -40,22 +40,24 @@
 
     (defn test-onboard-trigger [ch-id]
       {:diff     (rand-int 1000)
-       :script   {:id :onboard :params {:name "Sarah" :company-name "Flickr" :company-slug "flickr" :company-dashboard "https://opencompany.com/flickr" :company-description "The home for all your photos." :contact-person "Tom" :currency "$"}}
+       :script   {:id :onboard :params {:user/name "Sarah" :company/name "Flickr" :company/slug "flickr"
+                                        :company/description "The home for all your photos." :company/currency "$"
+                                        :contact-person "Tom"}}
        :receiver {:type :channel :id ch-id}
        :bot      {:token (e/env :slack-bot-token) :id bot-user-id}})
     (defn test-su-trigger [ch-id]
       {:diff     (rand-int 1000)
-       :script   {:id :stakeholder-update :params {:name "Sarah" :company-name "Flickr" :stakeholder-update-link "https://opencompany.com/flickr"}}
+       :script   {:id :stakeholder-update :params {:user/name "Sarah" :company/name "Flickr"}}
        :receiver {:type :channel :id ch-id}
        :bot      {:token (e/env :slack-bot-token) :id bot-user-id}})
     (defn test-onboard-user-trigger [ch-id]
       {:diff     (rand-int 1000)
-       :script   {:id :onboard-user :params {:name "Sarah" :company-name "Flickr" :company-dashboard "https://opencompany.com/flickr" :contact-person "@stuart"}}
+       :script   {:id :onboard-user :params {:name "Sarah" :company/name "Flickr" :company/dashboard "https://opencompany.com/flickr" :contact-person "@stuart"}}
        :receiver {:type :channel :id ch-id}
        :bot      {:token (e/env :slack-bot-token) :id bot-user-id}})
     (defn test-onboard-user-authenticated-trigger [ch-id]
       {:diff     (rand-int 1000)
-       :script   {:id :onboard-user :params {:name "Sarah" :company-name "Flickr" :company-dashboard "https://opencompany.com/flickr"}}
+       :script   {:id :onboard-user :params {:name "Sarah" :company/name "Flickr" :company/dashboard "https://opencompany.com/flickr"}}
        :receiver {:type :channel :id ch-id}
        :bot      {:token (e/env :slack-bot-token) :id bot-user-id}})
     

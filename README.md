@@ -98,18 +98,18 @@ Within these stages there may be one or more *transitions* representing a user�
 
 ![An example stage verifying a piece of information](https://raw.githubusercontent.com/open-company/open-company-bot/master/docs/fact-check-automata.png)
 
-The above example is one *stage*. Let’s assume and identifier for this stage of `:company-name`. The transitions have already been discussed. The skeleton to specify messages for each transition would look like this:
+The above example is one *stage*. Let’s assume and identifier for this stage of `:company/name`. The transitions have already been discussed. The skeleton to specify messages for each transition would look like this:
 
 ```clojure
-{[:company-name :yes] []
- [:company-name :no]  []
- [:company-name :str] []
- [:company-name :yes-after-update] []
+{[:company/name :yes] []
+ [:company/name :no]  []
+ [:company/name :str] []
+ [:company/name :yes-after-update] []
 ```
 
 > **Note** `:yes-after-update` is an extra transformation on the original signal to allow us sending different confirmation messages if the user has changed information.
 
-Now the empty lists after these `[stage transition-signal]` pairs can be filled with messages. Messages may contain special variable fields like `{{company-name}}`. You may also, instead of providing a list of strings, provide a list containing strings and lists of strings. Messages in nested lists will be **chosen randomly**:
+Now the empty lists after these `[stage transition-signal]` pairs can be filled with messages. Messages may contain special variable fields like `{{company/name}}`. You may also, instead of providing a list of strings, provide a list containing strings and lists of strings. Messages in nested lists will be **chosen randomly**:
 
 ```clojure
 ["Message 1" ["Message 2 v1" "Message 2 v2"] "Message 3"]

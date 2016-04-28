@@ -1,45 +1,45 @@
-{[:company-name :init]
- ["Hi {{name}}, I’m the new TransparencyBot for {{company-name}}."
+{[:company/name :init]
+ ["Hi {{user/name}}, I’m the new TransparencyBot for {{company/name}}."
   "I’ll be working with you and your fellow stakeholders to keep everyone on the same page."
-  "The first thing we ought to do is confirm the information OpenCompany has about {{company-name}}."
-  "Is “{{company-name}}” the right name for the company? You can answer with *yes* or *no*."]
- [:company-name :no]
+  "The first thing we ought to do is confirm the information OpenCompany has about {{company/name}}."
+  "Is “{{company/name}}” the right name for the company? You can answer with *yes* or *no*."]
+ [:company/name :no]
  ["Understood. What name should I use?"]
- [:company-name :str]
- ["OK, I'll update the company name to {{company-name}}. Sounds right?"]
- [:company-name :yes-after-update]
+ [:company/name :str]
+ ["OK, I'll update the company name to {{company/name}}. Sounds right?"]
+ [:company/name :yes-after-update]
  ["Cool, got it."
-  "The description we have for “{{company-name}}” is “{{company-description}}.” Is this correct? You can answer with *yes* or *no*."]
- [:company-name :yes]
- ["Great. The description we have for “{{company-name}}” is “{{company-description}}.” Is this correct? You can answer with *yes* or *no*."]
+  "The description we have for “{{company/name}}” is “{{company/description}}.” Is this correct? You can answer with *yes* or *no*."]
+ [:company/name :yes]
+ ["Great. The description we have for “{{company/name}}” is “{{company/description}}.” Is this correct? You can answer with *yes* or *no*."]
  
- [:company-description :no]
- ["OK. What’s the right description for {{company-name}}?"]
- [:company-description :str]
- ["OK. The description will be updated to “{{company-description}}”, sounds right?"]
- [:company-description :yes-after-update]
- ["Great, I updated the description to “{{company-description}}”. Now, is the currency {{currency}} right for {{company-name}}?"]
- [:company-description :yes]
- ["Super. The currency we have for {{company-name}} is {{currency}}, is that correct?"]
+ [:company/description :no]
+ ["OK. What’s the right description for {{company/name}}?"]
+ [:company/description :str]
+ ["OK. The description will be updated to “{{company/description}}”, sounds right?"]
+ [:company/description :yes-after-update]
+ ["Great, I updated the description to “{{company/description}}”. Now, is the currency {{company/currency}} right for {{company/name}}?"]
+ [:company/description :yes]
+ ["Super. The currency we have for {{company/name}} is {{company/currency}}, is that correct?"]
 
- [:currency :no]
- ["OK. What’s the right currency for {{company-name}}?"]
- [:currency :currency]
- ["OK. The currency will be updated to “{{currency}}”, sounds right?"]
- [:currency :yes-after-update]
- ["Great, I updated the currency to “{{currency}}”"
-  "Good work {{name}}, we’re done setting up {{company-name}}. You can revisit these settings at anytime here: https://opencompany.com/companies/{{company-slug}}/settings  or message me with “settings”."
-  "{{company-name}} now has a company transparency dashboard with a set of core topics: Founder’s Update, Growth, Key Challenges, Team and Hiring, Product, Finances, Values, and Mission."
-  "You should visit the dashboard now and start updating the information so all {{company-name}} stakeholders have easy access to up to date information: https://opencompany.com/companies/{{company-slug}}"
+ [:company/currency :no]
+ ["OK. What’s the right currency for {{company/name}}?"]
+ [:company/currency :currency]
+ ["OK. The currency will be updated to “{{company/currency}}”, sounds right?"]
+ [:company/currency :yes-after-update]
+ ["Great, I updated the currency to “{{company/currency}}”"
+  "Good work {{user/name}}, we’re done setting up {{company/name}}. You can revisit these settings at anytime here: https://opencompany.com/companies/{{company/slug}}/settings  or message me with “settings”."
+  "{{company/name}} now has a company transparency dashboard with a set of core topics: Founder’s Update, Growth, Key Challenges, Team and Hiring, Product, Finances, Values, and Mission."
+  "You should visit the dashboard now and start updating the information so all {{company/name}} stakeholders have easy access to up to date information: https://opencompany.com/companies/{{company/slug}}"
   "You can also add or remove topics to better reflect the information your company stakeholders need."
   "If some of your fellow colleagues are better sources of some of this core company information, please send them a Slack message and ask them to visit the dashboard and update the information."
   "Once a month we’ll send a stakeholder update to all internal stakeholders (members of this Slack organization) and to any external stakeholders you identify such as investors and advisors."
   "Are you the CEO or the person that should be responsible for approving the stakeholder update? You can answer with *yes* or *no*."]
- [:currency :yes]
+ [:company/currency :yes]
  ["Great."
-  "Good work {{name}}, we’re done setting up {{company-name}}. You can revisit these settings at anytime here: https://opencompany.com/companies/{{company-slug}}/settings  or message me with “settings”."
-  "{{company-name}} now has a company transparency dashboard with a set of core topics: Founder’s Update, Growth, Key Challenges, Team and Hiring, Product, Finances, Values, and Mission."
-  "You should visit the dashboard now and start updating the information so all {{company-name}} stakeholders have easy access to up to date information: https://opencompany.com/companies/{{company-slug}}"
+  "Good work {{user/name}}, we’re done setting up {{company/name}}. You can revisit these settings at anytime here: https://opencompany.com/companies/{{company/slug}}/settings  or message me with “settings”."
+  "{{company/name}} now has a company transparency dashboard with a set of core topics: Founder’s Update, Growth, Key Challenges, Team and Hiring, Product, Finances, Values, and Mission."
+  "You should visit the dashboard now and start updating the information so all {{company/name}} stakeholders have easy access to up to date information: https://opencompany.com/companies/{{company/slug}}"
   "You can also add or remove topics to better reflect the information your company stakeholders need."
   "If some of your fellow colleagues are better sources of some of this core company information, please send them a Slack message and ask them to visit the dashboard and update the information."
   "Once a month we’ll send a stakeholder update to all internal stakeholders (members of this Slack organization) and to any external stakeholders you identify such as investors and advisors."
@@ -50,6 +50,6 @@
  [:ceo :str]
  ["OK, so {{ceo}} should be responsible for approving the stakeholder update? You can answer with *yes* or *no*."]
  [:ceo :yes-after-update]
- ["Great. Thanks {{name}}."]
+ ["Great. Thanks {{user/name}}."]
  [:ceo :yes]
  ["OK. Let's configure who receives Stakeholder updates then."]}

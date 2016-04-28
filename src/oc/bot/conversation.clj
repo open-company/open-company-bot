@@ -105,7 +105,7 @@
   )
 
 (def scripts {:onboard {:fsm fact-checker
-                        :stages [:company-name :company-description :currency :ceo]}
+                        :stages [:company/name :company/description :company/currency :ceo]}
               :onboard-user init-only
               :onboard-user-authenticated init-only
               :stakeholder-update init-only})

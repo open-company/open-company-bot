@@ -11,6 +11,7 @@
 
 (deftest render-test
   (is (= "hello sarah" (#'m/render "hello {{name}}" {:name "sarah"})))
+  (is (= "hello sarah" (#'m/render "hello {{user/name}}" {:user/name "sarah"})))
   (is (thrown? clojure.lang.ExceptionInfo (#'m/render "hello {{name}}" {})))
   (is (thrown? clojure.lang.ExceptionInfo (#'m/render "hello {{name}}" {:foo "bar"}))))
 
