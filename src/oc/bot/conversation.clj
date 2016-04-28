@@ -5,16 +5,15 @@
             [manifold.stream :as s]
             [manifold.time :as t]
             [automat.core :as a]
-            [automat.fsm :as f]
             [clojure.string :as string]
             [medley.core :as med]
-            [oc.api-client :as api]
+            [oc.bot.conversation.fsm :as fsm]
             [oc.bot.message :as m]
             [oc.bot.language :as lang]
             [oc.bot.utils :as u])
   (:import [java.time LocalDateTime]))
 
-(defn typing-chain
+(defn for-duration-chain
   "Return a vector of deferred emitting functions that will
    put `msg` into `out` for `ms` every `every.ms`
    Intended to be used with `manifold.deferred/chain`"
@@ -35,7 +34,7 @@
                  nil
                  ;; 3000 here is a limit by Slack. When sending more than a few
                  ;; messages within a 3000ms window Slack will close the connection.
-                 (conj (typing-chain typing wait-time 3000 out)
+                 (conj (for-duration-chain typing wait-time 3000 out)
                        (fn [_] (s/put! out msg))
                        (fn [success?] (when-not success?
                                         (throw (ex-info "Failed to out message" {:out out, :msg msg}))))))
@@ -44,88 +43,42 @@
 (defrecord ConversationManager [in out dispatcher]
   component/Lifecycle
   (start [component]
-    (println ";; Starting Conversation Manager")
+    (timbre/info "Starting Conversation Manager")
     (let [conversations (atom {})
           started       (assoc component :conversations conversations)]
-      (s/on-closed in #(prn 'closed-conv-mngr-in))
+      (s/on-closed in #(timbre/info "ConversationManager Source has been closed"))
       (s/connect-via in #(dispatcher conversations out %) out)
       started))
   (stop [component]
-    (println ";; Stopping Conversation Manager")
+    (timbre/info "Stopping Conversation Manager")
     (dissoc component :conversations)))
 
 ;; -----------------------------------------------------------------------------
-;; Conversation state
-;; Conversations as state machines. Coerce messages into transitions.
-;; Build data to look up messages to be sent.
+;; Define scripts by providing a state machine and it's stages
 ;; -----------------------------------------------------------------------------
 
-(defn possible-transitions [compiled-fsm state]
-  (let [alphabet (f/alphabet (:fsm (meta compiled-fsm)))]
-    ;; SIGNAL using [t] here means we assume the FSMs signal function is `first`
-    (set (filter (fn [t] (a/advance compiled-fsm state [t] false)) alphabet))))
+(def scripts
+  (let [init-only {:fsm    fsm/init-only-fsm
+                   :stages [:init]}]
+    {:onboard {:fsm    fsm/onboard-fsm
+               :stages [:company/name :company/description :company/currency :ceo]}
+     :onboard-user init-only
+     :onboard-user-authenticated init-only
+     :stakeholder-update init-only}))
 
-(defn fact-check [update-transition]
-  [(a/or
-    [:yes (a/$ :confirm)]
-    [(a/+ [:no [update-transition (a/$ :update)]])
-     [:yes (a/$ :confirm)]])])
-
-(defn optional-input [update-transition]
-  [(a/or
-    [:no]
-    [update-transition (a/$ :update)
-     [:yes (a/$ :confirm)]])])
-
-(defn confirm-fn [{:keys [stage] :as state} _]
-  (if-let [updated (get-in state [:updated stage])]
-    (if @(api/patch-company! (-> state :init-msg :script :params :company/slug)
-                             {(-> stage name keyword) updated})
-      (update state :confirmed (fnil conj #{}) stage)
-      (update state :error (fnil conj #{}) stage))
-    (update state :confirmed (fnil conj #{}) stage)))
-
-(def onboard-fsm
-  (a/compile [:init 
-              (fact-check :str) ;name
-              [:next-stage (a/$ :next-stage)]
-              (optional-input :str) ;desc
-              ]
-             {:signal   first
-              :reducers {:next-stage (fn [state input] (update state :stage (fn [s] (u/next-in (:stages state) s))))
-                         :confirm confirm-fn
-                         :update (fn [state [sig v]] (assoc-in state [:updated (:stage state)] v))}}))
-
-(def init-only {:fsm (a/compile [:init] {:signal first})
-                :stages  [:init]})
-
-;; FSM testing
-(comment 
-  (def adv (partial a/advance fact-checker))
-
-  (-> {:stages [:a :b :c]
-       :stage  :a}
-      (adv [:init])
-      (adv [:yes])
-      (adv [:next-stage]))
-
-  (require 'automat.viz)
-
-  (automat.viz/view (fact-check :str))
-
-  )
-
-(def scripts {:onboard {:fsm onboard-fsm
-                        :stages [:company/name :company/description :company/currency :ceo]}
-              :onboard-user init-only
-              :onboard-user-authenticated init-only
-              :stakeholder-update init-only})
+;; -----------------------------------------------------------------------------
+;; A few handy predicate functions 
+;; -----------------------------------------------------------------------------
 
 (defn initialize? [msg]
-  (= :oc.bot/initialize (:type msg)))
+  (boolean (and (= :oc.bot/initialize (:type msg))
+                (-> msg :receiver :id))))
 
-(defn from-bot? [msg]
-  (= "U10AR0H50" (:user msg)))
+(defn from-bot? [msg bot-uid]
+  (= bot-uid (:user msg)))
+
+(defn message? [msg]
+  (= "message" (:type msg)))
 
 (defn transitions [txt]
   {lang/yes?     [:yes]
@@ -148,7 +101,8 @@
         (first))))
 
 (defn message-segment-id
-  "Given `fsm-value` and it's most recent `signal`, find messages that should be sent"
+  "Given `fsm-value` and it's most recent `signal`, return the [stage signal]
+   tuple that should be used to look up messages."
   [fsm-value signal]
   (cond
     (and (= signal :yes) (get (:updated fsm-value) (:stage fsm-value)))
@@ -156,84 +110,92 @@
     :else
     [(:stage fsm-value) signal]))
 
-(defn messages [fsm [transition-signal]]
-  (let [seg-id     (message-segment-id (:value fsm) transition-signal)
-        msg-params (merge (-> fsm :value :init-msg :script :params) (-> fsm :value :updated))]
-    (m/messages-for (-> fsm :value :script-id) seg-id msg-params)))
+(defn messages
+  [fsm-value [transition-signal]]
+  (let [seg-id     (message-segment-id fsm-value transition-signal)
+        msg-params (merge (-> fsm-value :init-msg :script :params) (-> fsm-value :updated))]
+    (m/messages-for (-> fsm-value :script-id) seg-id msg-params)))
 
 (defn stage-confirmed? [fsm]
   (contains? (-> fsm :value :confirmed) (-> fsm :value :stage)))
-
-(defn trace [x] (prn x) x)
 
 (def not-understood
   {:yes "You can answer with *yes* or *no*."
    :no "You can answer with *yes* or *no*."
    :currency "You can provide a currency with *EUR* or *USD*."})
 
-(defn transition-fn [fsm-atom out-stream msg]
-  (if (from-bot? msg)
-    (d/success-deferred true)
-    (if (initialize? msg)
+(defn transition-fn
+  "Inputs:
+   - `fsm-atom`, Atom containing the current state of the FSM representing the conversation
+   - `out-stream`, a stream where messages should be put to send them back to the user
+   - `msg`, a message that was identified as relevant to the conversation
 
-      ;; Startup case, i.e. messages coming from SQS initiating new convs ========
-      (let [->full-msg (fn [text] {:type "message" :text text :channel (-> msg :receiver :id)})
-            script-id  (-> msg :script :id)
-            transition [:init]
-            new-fsm    (a/advance (get-in scripts [script-id :fsm])
-                                  {:script-id script-id
-                                   :stage    (-> scripts script-id :stages first)
-                                   :init-msg msg
-                                   :stages   (-> scripts script-id :stages)}
-                                  transition)]
-        (timbre/info "Starting new scripted conversation:" script-id)
-        (reset! fsm-atom new-fsm)
-        (doseq [m' (messages new-fsm transition)]
-          (s/put! out-stream (->full-msg m')))
-        (d/success-deferred true)) ; use `drain-into` coming in manifold 0.1.5
-      
-      ;; Regular case, i.e. messages sent by users =============================
-      (let [->full-msg   (fn [text] {:type "message" :text text :channel (:channel msg)})
-            compiled-fsm (get-in scripts [(-> @fsm-atom :value :script-id) :fsm])
-            allowed?     (possible-transitions compiled-fsm @fsm-atom)
-            transition   (msg-text->transition (:text msg) allowed?)
-            updated-fsm  (a/advance compiled-fsm @fsm-atom transition ::invalid)]
-        (timbre/debug "Transition:" transition)
-        ;; Side effects
-        (if (= ::invalid updated-fsm)
-          (do
-            (s/put! out-stream (->full-msg (str "Sorry, " (-> @fsm-atom :value :init-msg :script :params :user/name)
-                                                ". I'm not sure what to do with this.")))
-            (s/put! out-stream (->full-msg (not-understood (first allowed?))))
-            (d/success-deferred true)) ; use `drain-into` coming in manifold 0.1.5
-          (do
-            (if (and (stage-confirmed? updated-fsm)
-                     (not (:accepted? updated-fsm)))
-              (reset! fsm-atom (a/advance compiled-fsm updated-fsm [:next-stage]))
-              (reset! fsm-atom updated-fsm))
-            (if (:error (:value updated-fsm))
-              (s/put! out-stream (->full-msg "Sorry, something broke. We're on it. Please try again later."))
-              (doseq [m' (messages updated-fsm transition)]
-                (timbre/info "Sending:" m')
-                (s/put! out-stream (->full-msg m'))))
-            (d/success-deferred true))))))) ; use `drain-into` coming in manifold 0.1.5
+  `msg` may either be a Slack event (usually messages) or an init message fetched from SQS
+  If it is an init message the `fsm-atom` will get initialized with the appropriate FSM already
+  transitioned with `[:init]`. It may also send initial messages to the user starting the conversation.
+
+  If `msg` is not an init message from SQS it will be treated as a text message received by the user.
+  If the message can be interpreted as one of the possible inputs to advance the FSM the `fsm-atom`
+  will get updated. If not a 'I don't understand' message will be sent to the user indicating possible
+  messages to advance the FSM.
+
+  Additionally it is checked if the transition completes the current stage of the FSM, if it does
+  it's state will be updated to be in the next stage."
+  [fsm-atom out-stream msg]
+  (if (initialize? msg)
+    ;; Startup case, i.e. messages coming from SQS initiating new convs ========
+    (let [->full-msg (fn [text] {:type "message" :text text :channel (-> msg :receiver :id)})
+          script-id  (-> msg :script :id)
+          transition [:init]
+          new-fsm    (a/advance (get-in scripts [script-id :fsm])
+                                {:script-id script-id
+                                 :stage    (-> scripts script-id :stages first)
+                                 :init-msg msg
+                                 :stages   (-> scripts script-id :stages)}
+                                transition)]
+      (timbre/info "Starting new scripted conversation:" script-id)
+      (reset! fsm-atom new-fsm)
+      (doseq [m' (messages (:value new-fsm) transition)]
+        (s/put! out-stream (->full-msg m')))
+      (d/success-deferred true)) ; use `drain-into` coming in manifold 0.1.5
+    
+    ;; Regular case, i.e. messages sent by users =============================
+    (let [->full-msg   (fn [text] {:type "message" :text text :channel (:channel msg)})
+          compiled-fsm (get-in scripts [(-> @fsm-atom :value :script-id) :fsm])
+          allowed?     (fsm/possible-transitions compiled-fsm @fsm-atom)
+          transition   (msg-text->transition (:text msg) allowed?)
+          updated-fsm  (a/advance compiled-fsm @fsm-atom transition ::invalid)]
+      (timbre/debug "Transition:" transition)
+      ;; Side effects
+      (if (= ::invalid updated-fsm)
+        (do
+          (s/put! out-stream (->full-msg (str "Sorry, " (-> @fsm-atom :value :init-msg :script :params :user/name)
+                                              ". I'm not sure what to do with this.")))
+          (s/put! out-stream (->full-msg (not-understood (first allowed?))))
+          (d/success-deferred true)) ; use `drain-into` coming in manifold 0.1.5
+        (do
+          (if (and (stage-confirmed? updated-fsm)
+                   (not (:accepted? updated-fsm)))
+            (reset! fsm-atom (a/advance compiled-fsm updated-fsm [:next-stage]))
+            (reset! fsm-atom updated-fsm))
+          (if (:error (:value updated-fsm))
+            (s/put! out-stream (->full-msg "Sorry, something broke. We're on it. Please try again later."))
+            (doseq [m' (messages (:value updated-fsm) transition)]
+              (timbre/info "Sending:" m')
+              (s/put! out-stream (->full-msg m'))))
+          (d/success-deferred true)))))) ; use `drain-into` coming in manifold 0.1.5
 
 ;; -----------------------------------------------------------------------------
 ;; Conversation Routing 
 ;; Route messages to their respective conversations or create new conversations
 ;; -----------------------------------------------------------------------------
 
-(defn message? [msg]
-  (= "message" (:type msg)))
-
 (defn msg->predicate
   "Build a predicate that can be used to figure out if messages are relevant for a conversation."
-  [base-msg]
-  ;; (prn 'msg->pred base-msg)
-  ;; (constantly true) ; handy when testing
+  [base-msg bot-uid]
   (when (initialize? base-msg)
     (fn [msg]
-      (and (not (from-bot? msg))
+      (and (not (from-bot? msg bot-uid))
            (message? msg)
            (= (:channel msg)
               (-> base-msg :receiver :id))))))
@@ -248,16 +210,21 @@
   (let [state (atom nil)]
     (partial transition-fn state out)))
 
-(defn dispatch! [conversations out incoming-msg]
+(def +bot-uid+ "U10AR0H50")
+
+(defn dispatch!
+  "Use the `conversations` atom containing a predicate-map to find a conversation
+  `incoming-msg` is relevant to or, given a predicate can be derived from `incoming-msg`,
+  create a new conversation piping it's messages into `out` with a length-depending delay."
+  [conversations out incoming-msg]
   (timbre/debugf "Number of ongoing conversations: %s\n" (count @conversations))
   (if-let [conv-in (find-matching-conv @conversations incoming-msg)]
     (s/put! conv-in incoming-msg)
     (let [conv-in  (s/stream)
-          conv-out (s/stream)
-          pred     (msg->predicate incoming-msg)]
-      (if pred
+          conv-out (s/stream)]
+      (if-let [pred (msg->predicate incoming-msg +bot-uid+)]
         (do
-          (timbre/infof "Registering new conversation %s\n" incoming-msg)
+          (timbre/info "Registering new conversation" incoming-msg)
           (s/connect-via conv-in (mk-conv conv-out) conv-out)
           ;; TODO consider making conv-out buffered
           (s/connect-via conv-out (with-wait out) out)

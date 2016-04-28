@@ -10,23 +10,23 @@
             [environ.core :as e]
             [cheshire.core :as chesire]))
 
-(defn slack-btn-uri
-  "Generate a URI suitable for initializing OAuth flow"
-  []
-  (let [scopes (clojure.string/join "," (map name (e/env :slack-copes)))]
-    (str "https://slack.com/oauth/authorize?scope=" scopes "&client_id=" (e/env :slack-client-id))))
+;; (defn slack-btn-uri
+;;   "Generate a URI suitable for initializing OAuth flow"
+;;   []
+;;   (let [scopes (clojure.string/join "," (map name (e/env :slack-copes)))]
+;;     (str "https://slack.com/oauth/authorize?scope=" scopes "&client_id=" (e/env :slack-client-id))))
 
-(def list-channels-action
-  "https://slack.com/api/channels.list")
+;; (def list-channels-action
+;;   "https://slack.com/api/channels.list")
+
+;; (defn get-channels
+;;   "Retrieve all channels for the team the given API token is associated with"
+;;   [api-token]
+;;   (let [response (-> @(http/get list-channels-action {:query-params {:token api-token} :as :json}) :body)]
+;;     (when (:ok response) (:channels response))))
 
 (def ^:private rtm-socket-url
   "https://slack.com/api/rtm.start")
-
-(defn get-channels
-  "Retrieve all channels for the team the given API token is associated with"
-  [api-token]
-  (let [response (-> @(http/get list-channels-action {:query-params {:token api-token} :as :json}) :body)]
-    (when (:ok response) (:channels response))))
 
 (defn get-websocket-url
   "Retrieve a websocket connection URL"
@@ -60,7 +60,7 @@
 (defrecord SlackConnection [ws-url]
   component/Lifecycle
   (start [component]
-    (timbre/infof "Starting SlackConnection %s\n" ws-url)
+    (timbre/info "Starting SlackConnection" ws-url)
     (assert ws-url "Websocket URL required to establish connection")
     (let [msg-idx    (atom 0) ; messages need pos-int ids for same conn
           conn       @(aleph.http/websocket-client ws-url)
@@ -71,7 +71,7 @@
       ;; TODO use s/transform here to generate new sources (maybe)
       (s/connect-via out-proxy #(add-id-and-jsonify conn (swap! msg-idx inc) %) conn)
       (s/connect-via conn #(parse % in-proxy) in-proxy)
-      (s/on-closed conn #(timbre/infof "SlackConnection closed %s\n" ws-url))
+      (s/on-closed conn #(timbre/info "SlackConnection closed" ws-url))
       (assoc component
              :msg-idx msg-idx
              :conn conn
@@ -81,7 +81,7 @@
              :conversation-manager (component/start (conv/conversation-manager in-proxy out-proxy)))))
 
   (stop [component]
-    (timbre/infof "Stopping SlackConnection %s\n" ws-url)
+    (timbre/info "Stopping SlackConnection" ws-url)
     (s/close! (:conn component))
     (s/close! (:in-proxy component))
     (s/close! (:out-proxy component))
@@ -125,33 +125,5 @@
   (alter-var-root #'bot component/start)
 
   (alter-var-root #'bot component/stop)
-
-  ;; (def every-test (t/every 1000 #(send-ping! (:conn bot) 10)))
-
-  ;; (every-test)
-
-  ;; build out into generic slack-fmt w/ support for the various entities
-  ;; (defn fmt-user [uid]
-  ;;   (str "<@" uid ">"))
-
-  ;; (defn mentioned? [msg uid]
-  ;;   (string/includes? (:text msg) (fmt-user uid)))
-
-  ;; (defn trace [x] (prn 'msg-debug x) x)
-
-  ;; (defn reply! [conn idx msg]
-  ;;   (->> {:type "message" :id idx :channel (:channel msg)
-  ;;         :text (str (fmt-user (:user msg)) ": Hey there!")}
-  ;;        (chesire/generate-string)
-  ;;        (s/put! conn)))
-
-  ;; (defn handle-msg [conn idx msg]
-  ;;   (let [msg (chesire/parse-string msg keyword)]
-  ;;     (when (:text msg)
-  ;;       (prn :mentioned (mentioned? msg bot-user-id)))
-  ;;     (when (and (:text msg) (mentioned? msg bot-user-id))
-  ;;       (reply! conn idx msg))
-  ;;     (prn msg)))
-
 
   )
