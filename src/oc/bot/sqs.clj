@@ -32,7 +32,7 @@
   [msg-handler msg-delete]
   (let [res (d/deferred)]
     (-> res
-        (d/chain msg-handler msg-delete (fn delete-report [x] (prn 'msg-delete-result x)))
+        (d/chain msg-handler msg-delete)
         (d/catch #(timbre/error "Failed to process SQS message:" %)))
     res))
 
