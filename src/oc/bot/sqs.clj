@@ -26,9 +26,9 @@
   ;; (prn 'deleting-msg (:body msg))
   (sqs/delete-message creds (assoc msg :queue-url queue-url)))
 
-(defn sqs-process*
-  "Yield a deferred that will ultimately delete the message put into it
-  from SQS unless it fails while handling the message. Logs if it does."
+(defn process
+  "Yield a deferred that will ultimately call `msg-delete` with message put into it.
+  If `msg-handler` throws, `msg-delete` will not be called and an error will be logged."
   [msg-handler msg-delete]
   (let [res (d/deferred)]
     (-> res
@@ -39,9 +39,9 @@
 (defn dispatch-message
   "Check for a message and, if one is available, put it into the given deferrred"
   [queue-url deferred]
-  (timbre/debugf "Checking for message in queue: %s\n" queue-url)
+  (timbre/debug "Checking for message in queue:" queue-url)
   (when-let [m (get-message queue-url)]
-    (timbre/debugf "Got message from queue: %s\n" queue-url)
+    (timbre/debug "Got message from queue:" queue-url)
     (d/success! deferred m)))
 
 (defrecord SQSListener [queue-url message-handler]
@@ -51,7 +51,7 @@
     (timbre/info "Starting SQSListener")
     (let [delete!   (partial delete-message! creds queue-url)
           handle!   (partial message-handler component)   
-          processor (fn [] (sqs-process* handle! delete!))
+          processor (fn [] (process handle! delete!))
           retriever (t/every 3000 #(dispatch-message queue-url (processor)))]
       ;; (s/consume (partial (:message-nfhandler component) conn (swap! msg-idx inc)) conn)
       ;; (d/catch conn #(str "something unexpected: " (.getMessage %))) ; not sure if this actually does anything 
@@ -63,8 +63,7 @@
     (dissoc component :retriever)))
 
 (defn sqs-listener [queue-url message-handler]
-  (map->SQSListener {:queue-url queue-url
-                     :message-handler (or message-handler #(do (prn 'sqs-default-handler %1 %2) %2))}))
+  (map->SQSListener {:queue-url queue-url :message-handler message-handler}))
 
 (comment
   (def sqs (sqs-listener "https://sqs.us-east-1.amazonaws.com/892554801312/my-queue" nil))
