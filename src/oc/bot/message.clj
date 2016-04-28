@@ -2,6 +2,7 @@
   (:require [clojure.java.io :as io]
             [clojure.set :as cset]
             [clojure.string :as string]
+            [medley.core :as med]
             [stencil.core :as st]
             [stencil.parser :as stp]
             [taoensso.timbre :as timbre]))
@@ -19,6 +20,11 @@
   (into {} (for [f (script-files)]
              [(file->script-id f) (-> f slurp read-string)])))
 
+(defn- humanize [v]
+  (let [mapping {:oc.bot.conversation/eur "EUR (€)"
+                 :oc.bot.conversation/usd "USD ($)"}]
+    (or (get mapping v) v)))
+
 (defn- validate-params [parsed params]
   (let [required (->> parsed
                       (filter #(or (instance? stencil.ast.EscapedVariable %)
@@ -34,7 +40,9 @@
 
 (defn- render [tpl params]
   (let [parsed (stp/parse tpl)]
-    (st/render parsed (validate-params parsed params))))
+    (->> (med/map-vals humanize params)
+         (validate-params parsed)
+         (st/render parsed))))
 
 (defn- get-messages
   "Find messages for `segment-id` ([stage transition] tuple)

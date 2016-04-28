@@ -9,9 +9,15 @@
   (is (thrown? AssertionError (#'m/file->script-id (io/file "abc/xyz.clj"))))
   (is (= :hello_world (#'m/file->script-id (io/file "abc/hello_world.edn")))))
 
+(deftest humanize-test
+  (is (= "EUR (€)" (#'m/humanize :oc.bot.conversation/eur)))
+  (is (= "USD ($)" (#'m/humanize :oc.bot.conversation/usd))))
+
 (deftest render-test
   (is (= "hello sarah" (#'m/render "hello {{name}}" {:name "sarah"})))
   (is (= "hello sarah" (#'m/render "hello {{user/name}}" {:user/name "sarah"})))
+  (is (= "the currency is EUR (€)" (#'m/render "the currency is {{currency}}" {:currency :oc.bot.conversation/eur})))
+  (is (= "the currency is USD ($)" (#'m/render "the currency is {{currency}}" {:currency :oc.bot.conversation/usd})))
   (is (thrown? clojure.lang.ExceptionInfo (#'m/render "hello {{name}}" {})))
   (is (thrown? clojure.lang.ExceptionInfo (#'m/render "hello {{name}}" {:foo "bar"}))))
 
