@@ -32,8 +32,10 @@
   "Retrieve a websocket connection URL"
   [bot-token]
   (let [response (-> @(http/get rtm-socket-url {:query-params {:token bot-token :no_unreads true} :as :json}) :body)]
-    (when (:ok response)
-      (:url response))))
+    (if (:ok response)
+      (:url response)
+      (throw (ex-info "Failed to retreive Websocket connection URL from Slack API"
+                      {:response response})))))
 
 (defn send-ping!
   "Send a ping message to the Slack RTM API to make sure the connection stays alive
