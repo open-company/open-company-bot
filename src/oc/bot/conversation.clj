@@ -48,7 +48,7 @@
     (let [conversations (atom {})
           started       (assoc component :conversations conversations)]
       (s/on-closed in #(prn 'closed-conv-mngr-in))
-      (s/consume #(dispatcher started %) in)
+      (s/connect-via in #(dispatcher conversations out %) out)
       started))
   (stop [component]
     (println ";; Stopping Conversation Manager")
@@ -245,21 +245,23 @@
   (let [state (atom nil)]
     (partial transition-fn state out)))
 
-(defn dispatch! [conv-mngr incoming-msg]
-  ;; (prn conv-mngr)
-  (timbre/debugf "Number of ongoing conversations: %s\n" (count @(:conversations conv-mngr)))
-  (if-let [conv-in (find-matching-conv @(:conversations conv-mngr) incoming-msg)]
+(defn dispatch! [conversations out incoming-msg]
+  (timbre/debugf "Number of ongoing conversations: %s\n" (count @conversations))
+  (if-let [conv-in (find-matching-conv @conversations incoming-msg)]
     (s/put! conv-in incoming-msg)
     (let [conv-in  (s/stream)
           conv-out (s/stream)
           pred     (msg->predicate incoming-msg)]
-      (when pred
-        (timbre/infof "Registering new conversation %s\n" incoming-msg)
-        (s/connect-via conv-in (mk-conv conv-out) conv-out)
-        ;; TODO consider making conv-out buffered
-        (s/connect-via conv-out (with-wait (:out conv-mngr)) (:out conv-mngr))
-        (swap! (:conversations conv-mngr) assoc pred conv-in)
-        (s/put! conv-in incoming-msg)))))
+      (if pred
+        (do
+          (timbre/infof "Registering new conversation %s\n" incoming-msg)
+          (s/connect-via conv-in (mk-conv conv-out) conv-out)
+          ;; TODO consider making conv-out buffered
+          (s/connect-via conv-out (with-wait out) out)
+          (swap! conversations assoc pred conv-in)
+          (s/put! conv-in incoming-msg))
+        ;; return a success deferred to keep connect-via happy
+        (d/success-deferred true)))))
 
 (defn conversation-manager [in out]
   (map->ConversationManager {:in in :out out :dispatcher dispatch!}))
