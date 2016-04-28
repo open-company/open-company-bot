@@ -8,6 +8,7 @@
             [automat.fsm :as f]
             [clojure.string :as string]
             [medley.core :as med]
+            [oc.api-client :as api]
             [oc.bot.message :as m]
             [oc.bot.language :as lang]
             [oc.bot.utils :as u])
@@ -70,6 +71,14 @@
     [(a/+ [:no [update-transition (a/$ :update)]])
      [:yes (a/$ :confirm)]])])
 
+(defn confirm-fn [{:keys [stage] :as state} _]
+  (if-let [updated (get-in state [:updated stage])]
+    (if @(api/patch-company! (-> state :init-msg :script :params :company/slug)
+                             {(-> stage name keyword) updated})
+      (update state :confirmed (fnil conj #{}) stage)
+      (update state :error (fnil conj #{}) stage))
+    (update state :confirmed (fnil conj #{}) stage)))
+
 (def fact-checker
   (a/compile [:init 
               (fact-check :str) ;name
@@ -82,7 +91,7 @@
               ]
              {:signal   first
               :reducers {:next-stage (fn [state input] (update state :stage (fn [s] (u/next-in (:stages state) s))))
-                         :confirm (fn [state input] (update state :confirmed (fnil conj #{}) (:stage state)))
+                         :confirm confirm-fn
                          :update (fn [state [sig v]] (assoc-in state [:updated (:stage state)] v))}}))
 
 (def init-only {:fsm (a/compile [:init] {:signal first})
@@ -183,15 +192,15 @@
       
       ;; Regular case, i.e. messages sent by users =============================
       (let [->full-msg   (fn [text] {:type "message" :text text :channel (:channel msg)})
-            compiled-fsm (trace (get-in scripts [(-> @fsm-atom :value :script-id) :fsm]))
-            allowed?     (trace (possible-transitions compiled-fsm @fsm-atom))
+            compiled-fsm (get-in scripts [(-> @fsm-atom :value :script-id) :fsm])
+            allowed?     (possible-transitions compiled-fsm @fsm-atom)
             transition   (msg-text->transition (:text msg) allowed?)
             updated-fsm  (a/advance compiled-fsm @fsm-atom transition ::invalid)]
         (timbre/debug "Transition:" transition)
         ;; Side effects
         (if (= ::invalid updated-fsm)
           (do
-            (s/put! out-stream (->full-msg (str "Sorry, " (-> @fsm-atom :value :init-msg :script :params :name)
+            (s/put! out-stream (->full-msg (str "Sorry, " (-> @fsm-atom :value :init-msg :script :params :user/name)
                                                 ". I'm not sure what to do with this.")))
             (s/put! out-stream (->full-msg (not-understood (first allowed?))))
             (d/success-deferred true)) ; use `drain-into` coming in manifold 0.1.5
@@ -199,9 +208,11 @@
             (if (stage-confirmed? updated-fsm)
               (reset! fsm-atom (a/advance compiled-fsm updated-fsm [:next-stage]))
               (reset! fsm-atom updated-fsm))
-            (doseq [m' (messages updated-fsm transition)]
-              (timbre/info "Sending:" m')
-              (s/put! out-stream (->full-msg m')))
+            (if (:error (:value updated-fsm))
+              (s/put! out-stream (->full-msg "Sorry, something broke. We're on it. Please try again later."))
+              (doseq [m' (messages updated-fsm transition)]
+                (timbre/info "Sending:" m')
+                (s/put! out-stream (->full-msg m'))))
             (d/success-deferred true))))))) ; use `drain-into` coming in manifold 0.1.5
 
 ;; -----------------------------------------------------------------------------
@@ -224,9 +235,8 @@
            (= (:channel msg)
               (-> base-msg :receiver :id))))))
 
-;; TODO add tests
 (defn find-matching-conv [convs msg]
-  (let [[f s] (u/predicate-map-lookup convs msg)]
+  (let [[f s] (vec (u/predicate-map-lookup convs msg))]
     (when s (timbre/debug "predicate-map-lookup returned multiple results, using first"))
     (when f (timbre/debugf "predicate-match for: %s\n" msg))
     f))
@@ -266,7 +276,8 @@
       {:type :oc.bot/initialize
        :receiver {:type :channel :id 1}
        :script {:id :onboard
-                :params {:name "Sarah" :company-name "Flickr" :company-description "Hottest startup on the block." :company-dashboard "https://opencompany.com/flickr" :contact-person "Tom"}}})
+                :params {:user/name "Sarah" :company/name "Flickr" :company/currency "USD" :company/slug "flickr"
+                         :company/description "Hottest startup on the block." :contact-person "Tom"}}})
 
     (def conv-mngr
       (map->ConversationManager {:in in :out out
@@ -280,6 +291,8 @@
   (s/put! in {:type "message" :text "wahaay" :channel 1})
   (s/put! in {:type "message" :text "Amen" :channel 1})
   (s/put! in {:type "message" :text "yes" :channel 1})
+  (s/put! in {:type "message" :text "no" :channel 1})
+  (s/put! in {:type "message" :text "Yolo, Yahoo." :channel 1})
 
   (s/put! in "hi")
   (s/put! in "yo")
