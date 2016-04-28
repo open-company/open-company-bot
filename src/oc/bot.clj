@@ -38,33 +38,34 @@
     (def test-msg {:type "message" :channel bot-testing-ch :text "Slack connection pooling works!"
                    :bot-token (e/env :slack-bot-token) :bot-user-id bot-user-id})
 
-    (defn test-onboard-trigger [ch-id]
+    (defn test-onboard-trigger [name ch-id]
       {:diff     (rand-int 1000)
-       :script   {:id :onboard :params {:user/name "Sarah" :company/name "Flickr" :company/slug "flickr"
-                                        :company/description "The home for all your photos." :company/currency "$"
+       :script   {:id :onboard :params {:user/name name :company/name "Buffer Inc." :company/slug "buffer"
+                                        :company/description "Save time managing your social media" :company/currency "USD"
                                         :contact-person "Tom"}}
        :receiver {:type :channel :id ch-id}
        :bot      {:token (e/env :slack-bot-token) :id bot-user-id}})
-    (defn test-su-trigger [ch-id]
+    (defn test-su-trigger [name ch-id]
       {:diff     (rand-int 1000)
-       :script   {:id :stakeholder-update :params {:user/name "Sarah" :company/name "Flickr"}}
+       :script   {:id :stakeholder-update :params {:user/name name :company/name "Buffer" :company/slug "buffer"}}
        :receiver {:type :channel :id ch-id}
        :bot      {:token (e/env :slack-bot-token) :id bot-user-id}})
-    (defn test-onboard-user-trigger [ch-id]
+    (defn test-onboard-user-trigger [name ch-id]
       {:diff     (rand-int 1000)
-       :script   {:id :onboard-user :params {:name "Sarah" :company/name "Flickr" :company/dashboard "https://opencompany.com/flickr" :contact-person "@stuart"}}
+       :script   {:id :onboard-user :params {:user/name name :company/name "Buffer" :company/slug "buffer" :contact-person "Jim"}}
        :receiver {:type :channel :id ch-id}
        :bot      {:token (e/env :slack-bot-token) :id bot-user-id}})
-    (defn test-onboard-user-authenticated-trigger [ch-id]
+    (defn test-onboard-user-authenticated-trigger [name ch-id]
       {:diff     (rand-int 1000)
-       :script   {:id :onboard-user :params {:name "Sarah" :company/name "Flickr" :company/dashboard "https://opencompany.com/flickr"}}
+       :script   {:id :onboard-user-authenticated :params {:user/name name :company/name "Buffer" :company/slug "buffer"}}
        :receiver {:type :channel :id ch-id}
        :bot      {:token (e/env :slack-bot-token) :id bot-user-id}})
     
     )
 
-  (aws-sqs/send-message sqs/creds (e/env :aws-sqs-queue) (test-onboard-trigger bot-testing-ch))
-  (aws-sqs/send-message sqs/creds (e/env :aws-sqs-queue) (test-onboard-trigger dm-testing-ch))
+  (aws-sqs/send-message sqs/creds (e/env :aws-sqs-queue) (test-onboard-trigger "Stuart" bot-testing-ch))
+
+  (aws-sqs/send-message sqs/creds (e/env :aws-sqs-queue) (test-onboard-trigger "Stuart" dm-testing-ch))
 
   (def sys (system {:sqs-queue (e/env :aws-sqs-queue)
                     :sqs-msg-handler sqs-handler}))
