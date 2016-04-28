@@ -2,7 +2,7 @@
 
 (def yes? #{"y" "yes"})
 
-(def no? #{"n" "no"})
+(def no? #{"n" "no" "not yet"})
 
 (def euro? #{"€" "eur" "euro"})
 

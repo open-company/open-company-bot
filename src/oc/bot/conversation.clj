@@ -71,6 +71,12 @@
     [(a/+ [:no [update-transition (a/$ :update)]])
      [:yes (a/$ :confirm)]])])
 
+(defn optional-input [update-transition]
+  [(a/or
+    [:no]
+    [update-transition (a/$ :update)
+     [:yes (a/$ :confirm)]])])
+
 (defn confirm-fn [{:keys [stage] :as state} _]
   (if-let [updated (get-in state [:updated stage])]
     (if @(api/patch-company! (-> state :init-msg :script :params :company/slug)
@@ -79,15 +85,11 @@
       (update state :error (fnil conj #{}) stage))
     (update state :confirmed (fnil conj #{}) stage)))
 
-(def fact-checker
+(def onboard-fsm
   (a/compile [:init 
               (fact-check :str) ;name
               [:next-stage (a/$ :next-stage)]
-              (fact-check :str) ;desc
-              [:next-stage (a/$ :next-stage)]
-              (fact-check :currency) ;currency
-              [:next-stage (a/$ :next-stage)]
-              (fact-check :user) ;ceo
+              (optional-input :str) ;desc
               ]
              {:signal   first
               :reducers {:next-stage (fn [state input] (update state :stage (fn [s] (u/next-in (:stages state) s))))
@@ -113,7 +115,7 @@
 
   )
 
-(def scripts {:onboard {:fsm fact-checker
+(def scripts {:onboard {:fsm onboard-fsm
                         :stages [:company/name :company/description :company/currency :ceo]}
               :onboard-user init-only
               :onboard-user-authenticated init-only
@@ -205,7 +207,8 @@
             (s/put! out-stream (->full-msg (not-understood (first allowed?))))
             (d/success-deferred true)) ; use `drain-into` coming in manifold 0.1.5
           (do
-            (if (stage-confirmed? updated-fsm)
+            (if (and (stage-confirmed? updated-fsm)
+                     (not (:accepted? updated-fsm)))
               (reset! fsm-atom (a/advance compiled-fsm updated-fsm [:next-stage]))
               (reset! fsm-atom updated-fsm))
             (if (:error (:value updated-fsm))
