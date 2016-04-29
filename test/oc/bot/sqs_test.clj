@@ -1,5 +1,6 @@
 (ns oc.bot.sqs-test
   (:require [oc.bot.sqs :as sqs]
+            [taoensso.timbre :as timbre]
             [manifold.deferred :as d]
             [clojure.test :as test :refer [is deftest]]))
 
@@ -16,8 +17,9 @@
         handle (fn [msg] (conj msg :b))
         delete (fn [msg] (reset! deleted msg))
         d      (sqs/process handle delete)]
-    (d/chain d (fn [_] (is (= @deleted nil))))
-    (d/success! d {:a 1})))
+    (timbre/with-config {:appenders {}}
+      (d/chain d (fn [_] (is (= @deleted nil))))
+      (d/success! d {:a 1}))))
 
 
 (comment
