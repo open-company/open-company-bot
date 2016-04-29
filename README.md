@@ -21,15 +21,15 @@ Let’s go through the lifecycle of a *scripted conversation* step-by-step.
 1. Initially, as mentioned earlier, some outside event triggers the start of a new conversation. The `oc.bot.sqs` namespaces provides a simple `SQSListener` [component][component] which polls a given SQS queue every 3 seconds.
 2. On reception of such message we try to establish a realtime (websocket) connection to Slack or use an existing one if present. These connections are represented as `SlackConnection` components.
 3. A `SlackConnection` has a stateful `ConversationManager` which keeps track of ongoing conversations, routes messages to their respective conversations and initiates new ones.
-4. Since the message we received from SQS is for initialising new conversations the `ConversationManager` will create a new `Conversation` via `oc.bot.conversation/dispatch!`.
-5. The created `Conversation` will be stored in a `predicate-map` by the `ConversationManager`. The predicate is derived from the initial message of a conversation and can be used to associate incoming messages with the correct conversation later on.
-6. A `Conversation` is also stateful: a Finite State Machine represents current status of the conversation. All state machines have an initial `[:init]` transition that is intended for the initial set of messages which do not represent a reaction to a user’s message.
+4. Since the message we received from SQS is for initialising new conversations the `ConversationManager` will create a new conversation by connecting a few streams inside a closure providing the conversations state via `oc.bot.conversation/dispatch!`.
+5. The created stream where incoming messages should be put will be stored in a `predicate-map` by the `ConversationManager`. The predicate is derived from the initial message of a conversation and can be used to associate incoming messages with the correct conversation later on.
+6. As mentioned each conversation has an atom to store state. A Finite State Machine represents current status of the conversation. All state machines have an initial `[:init]` transition that is intended for the initial set of messages which do not represent a reaction to a user’s message.
 7. Now we’ve sent the initial messages through a set of [manifold][manifold] streams back to the `SlackConnection`.
 
-**The user received these messages. The `Conversation` has started.**
+**The user received these messages. The conversation has started.**
 
 1. When a user sends a message to the bot or a channel the bot is part of the `SlackConnection`’s `ConversationManager` is used to find any relevant conversations. If there’s none the message is ignored. If there are any the first matching is used. (If there is a second match a warning is logged. This means our predicate generation function isn’t specific enough.)
-2. If a message matches the predicate it’s passed to the `Conversation` through a stream. Every message to a `Conversation` (even the initial ones from SQS) are handled via a transition function (currently `oc.bot.conversation/test-transition-fn`). The transition function now tries to extract meaning from a users message. Meaning here refers to a piece of data that can be used to “advance” the state of the FSM representing the conversation. Depending on the state the FSM is in it might accept different kinds of messages.
+2. If a message matches the predicate it’s put into the conversations stream. Every message put into the stream (even the initial ones from SQS) are handled via a transition function (currently `oc.bot.conversation/transition-fn`). The transition function now tries to extract meaning from a users message. Meaning here refers to a piece of data that can be used to “advance” the state of the FSM representing the conversation. Depending on the state the FSM is in it might accept different kinds of messages.
 3. If a message **fails** to advance the state of the FSM a generic “I don’t understand” message is sent back to the user.
 4. If a message **succeeds** to advance the FSM the appropriate response is looked up using the `stage` of the FSM as well as the meaning of the user’s message. The response is then sent to the `SlackConnection`.
 5. This process might loop until the conversation’s FSM reaches an accept state in which case it should be removed from the `ConversationManager` (TBD).
@@ -41,14 +41,23 @@ Let’s go through the lifecycle of a *scripted conversation* step-by-step.
 **oc.bot**
 Consider this the core of things. It’s very little code but it’s where you go if you want to boot up the entire system.
 
+**oc.api-client**
+The start of a OpenCompany API client written in Clojure.
+
 **oc.bot.sqs**
 Code for long-polling SQS, handling messages and deleting them in the case of success.
+
+**oc.bot.language**
+Various helper functions to check if a string matches a certain pattern (yes, no, etc.). Intended be expanded as requirements evolve.
 
 **oc.bot.message**
 Messages sent to users need to be formatted, they need to be parameterised and they need to be read from a description provided inside `scripts/`. This namespace does all of that.
 
 **oc.bot.conversation**
 This is responsible for all the state management inside conversations as well as for all message routing from Slack to individual conversations.
+
+**oc.bot.conversation.fsm**
+Defines all the state machines that make up conversations and a few helpers related to these.
 
 **oc.bot.slack**
 We want to interact with Slack through their Realtime API, potentially the bot should run on multiple teams for which multiple connections are required. This namespace implements basic building blocks to create, manage and destroy websocket connections to Slacks API.
@@ -58,27 +67,9 @@ Generic stuff that is not tied to any particular domain.
 
 #### Notes on Overall Design
 
-**FIXED** **Regarding Components:** A lot of things have been initially modelled as [components][component] but I think only few of them actually should be components. Specifically the `Conversation` and `ConversationManager` components are probably not needed.
-
-Since both operate on streams they could be represented by something like this as well:
-
-```clojure
-(defn mk-conv [out]
-  (let [state (atom nil)]
-    (partial (fn [state msg]
-                (swap! state conj msg)
-                (s/put! out msg))
-              state)))
-
-(s/connect-via in (mk-conv out) out)
-```
-
-This would out the state into the stream connection, causing disposal if `in` or `out` are closed.
-
-This would require dropping some of the pure-ness of the `transition-fn` that we currently have but that seems fine.
-
 **Regarding ConversationManager:** Most likely one `ConversationManager` is sufficient. Slack message events have a `:team` key which can be used as part of the predicate for incoming messages. (Not all events do have this key but probably not a problem for now.)
 
+**Testing Streams:** A lot of stuff is going through streams. Coming up with a proper testing setup for this is important. 
 
 ## Authoring Scripts
 
