@@ -39,6 +39,9 @@
 
 (defn patch-company! [slug data]
   (timbre/info "Updating Company:" slug data)
+  ;; In development the API may contain huge HTTP headers which makes
+  ;; aleph block indefinitely: https://github.com/ztellman/aleph/issues/239
+  ;; a tempprary solution to this is to desable the liberator trace headers
   (-> (http/patch (str +api-host+ "/companies/" slug)
                   {:middleware wrap-json
                    :headers {"Authorization" jwt
