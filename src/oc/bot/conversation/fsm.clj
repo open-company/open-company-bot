@@ -11,7 +11,8 @@
 
 (defn confirm-fn [{:keys [stage] :as state} _]
   (if-let [updated (get-in state [:updated stage])]
-    (if @(api/patch-company! (-> state :init-msg :script :params :company/slug)
+    (if @(api/patch-company! (-> state :init-msg :api-token)
+                             (-> state :init-msg :script :params :company/slug)
                              {(-> stage name keyword) updated})
       (update state :confirmed (fnil conj #{}) stage)
       (update state :error (fnil conj #{}) stage))

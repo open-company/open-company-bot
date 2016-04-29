@@ -149,9 +149,9 @@
           transition [:init]
           new-fsm    (a/advance (get-in scripts [script-id :fsm])
                                 {:script-id script-id
-                                 :stage    (-> scripts script-id :stages first)
-                                 :init-msg msg
-                                 :stages   (-> scripts script-id :stages)}
+                                 :stage     (-> scripts script-id :stages first)
+                                 :init-msg  msg
+                                 :stages    (-> scripts script-id :stages)}
                                 transition)]
       (timbre/info "Starting new scripted conversation:" script-id)
       (reset! fsm-atom new-fsm)

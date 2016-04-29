@@ -18,8 +18,6 @@
 ;; (def +api-host+ (e/env :oc-api))
 (def +api-host+ "http://localhost:3000")
 
-(def jwt "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyLWlkIjoic2xhY2s6VTA2U0JUWEpSIiwibmFtZSI6IlNlYW4gSm9obnNvbiIsInJlYWwtbmFtZSI6IlNlYW4gSm9obnNvbiIsImF2YXRhciI6Imh0dHBzOlwvXC9zZWN1cmUuZ3JhdmF0YXIuY29tXC9hdmF0YXJcL2Y1YjhmYzFhZmZhMjY2YzgwNzIwNjhmODExZjYzZTA0LmpwZz9zPTE5MiZkPWh0dHBzJTNBJTJGJTJGc2xhY2suZ2xvYmFsLnNzbC5mYXN0bHkubmV0JTJGN2ZhOSUyRmltZyUyRmF2YXRhcnMlMkZhdmFfMDAyMC0xOTIucG5nIiwiZW1haWwiOiJzZWFuQG9wZW5jb21wYW55LmNvbSIsIm93bmVyIjpmYWxzZSwiYWRtaW4iOnRydWUsIm9yZy1pZCI6InNsYWNrOlQwNlNCTUg2MCJ9.9Q8GNBojQ_xXT0lMtKve4fb5Pdh260oc2aUc-wP8dus")
-
 (def oc-json-types
   ["application/vnd.open-company.company.v1+json"
    "application/vnd.collection+vnd.open-company.company+json"
@@ -37,14 +35,14 @@
           res      (handler (cond-> request (json-type? request) (update :body ->json)))]
       (d/chain res #(cond-> % (json-type? %) (update :body parse-bs))))))
 
-(defn patch-company! [slug data]
+(defn patch-company! [token slug data]
   (timbre/info "Updating Company:" slug data)
   ;; In development the API may contain huge HTTP headers which makes
   ;; aleph block indefinitely: https://github.com/ztellman/aleph/issues/239
   ;; a tempprary solution to this is to desable the liberator trace headers
   (-> (http/patch (str +api-host+ "/companies/" slug)
                   {:middleware wrap-json
-                   :headers {"Authorization" jwt
+                   :headers {"Authorization" (str "Bearer " token)
                              "Accept" "application/vnd.open-company.company.v1+json"
                              "Accept-Charset" "utf-8"
                              "Content-Type" "application/vnd.open-company.company.v1+json"}
