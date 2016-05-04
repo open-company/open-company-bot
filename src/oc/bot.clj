@@ -8,7 +8,8 @@
             [oc.bot.sqs :as sqs]
             [oc.bot.slack :as slack]
             [oc.bot.conversation :as conv]
-            [oc.bot.message :as msg]))
+            [oc.bot.message :as msg])
+  (:gen-class))
 
 (defn system [config-options]
   (let [{:keys [sqs-queue sqs-msg-handler]} config-options]
@@ -28,6 +29,17 @@
     (timbre/infof "Received message from SQS: %s\n" msg-body)
     (s/put! (:in-proxy slack-conn) (assoc msg-body :type ::initialize)))
     msg)
+
+(defn -main []
+  (Thread/setDefaultUncaughtExceptionHandler
+   (reify Thread$UncaughtExceptionHandler
+     (uncaughtException [_ thread ex]
+       (println "uncaught exception")
+       (timbre/error ex "Uncaught exception on" (.getName thread)))))
+
+  (component/start (system {:sqs-queue (e/env :aws-sqs-queue)
+                            :sqs-msg-handler sqs-handler}))
+  (deref (s/take! (s/stream)))) ; block forever
 
 (comment
   (do
