@@ -35,10 +35,12 @@
                  ;; Boot tasks ==========================================
                  [boot-environ "1.0.2" :scope "test"] ; environ integration
                  [adzerk/boot-test "1.1.1" :scope "test"] ; clojure.test runner
+                 [danielsz/boot-runit "0.1.0-SNAPSHOT"] ; runit supervisor integration
                  ])
 
 (require '[environ.boot :refer [environ]]
-         '[adzerk.boot-test :refer [test]])
+         '[adzerk.boot-test :refer [test]]
+         '[danielsz.boot-runit :refer [runit]])
 
 (def config (read-string (slurp "config.edn")))
 
@@ -54,3 +56,14 @@
                     'manifold.deferred
                     'stencil.core
                     'stencil.parser}))
+
+(deftask build! []
+  (comp (pom :project 'oc/bot
+             :version "0.1.0")
+        (aot :namespace #{'oc.bot})
+        (uber)
+        (jar :file "oc-bot.jar"
+             :main 'oc.bot)
+        (runit :env config
+               :project "oc/bot")
+        (target)))
