@@ -62,8 +62,7 @@
              :version "0.1.0")
         (aot :namespace #{'oc.bot})
         (uber)
-        (jar :file "oc-bot.jar"
-             :main 'oc.bot)
+        (jar :main 'oc.bot)
         (runit :env config
                :project "oc/bot")
         (target)))
