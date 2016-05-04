@@ -39,10 +39,14 @@
 (defn dispatch-message
   "Check for a message and, if one is available, put it into the given deferrred"
   [queue-url deferred]
-  (timbre/debug "Checking for message in queue:" queue-url)
-  (when-let [m (get-message queue-url)]
-    (timbre/debug "Got message from queue:" queue-url)
-    (d/success! deferred m)))
+  (try
+    (timbre/debug "Checking for message in queue:" queue-url)
+    (when-let [m (get-message queue-url)]
+      (timbre/debug "Got message from queue:" queue-url)
+      (d/success! deferred m))
+    (catch Throwable e
+      (timbre/error "Exception while polling SQS:" e)
+      (throw e))))
 
 (defrecord SQSListener [queue-url message-handler]
   ;; Implement the Lifecycle protocol
@@ -50,7 +54,7 @@
   (start [component]
     (timbre/info "Starting SQSListener")
     (let [delete!   (partial delete-message! creds queue-url)
-          handle!   (partial message-handler component)   
+          handle!   (partial message-handler component)
           processor (fn [] (process handle! delete!))
           retriever (t/every 3000 #(dispatch-message queue-url (processor)))]
       ;; (s/consume (partial (:message-nfhandler component) conn (swap! msg-idx inc)) conn)
