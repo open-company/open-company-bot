@@ -60,9 +60,11 @@
 (deftask build! []
   (comp (pom :project 'oc/bot
              :version "0.1.0")
+        (runit :env config
+               :app-root "/opt/runit"
+               :out-of-memory true
+               :restart true)
         (aot :namespace #{'oc.bot})
         (uber)
         (jar :main 'oc.bot)
-        (runit :env config
-               :project "oc/bot")
         (target)))
