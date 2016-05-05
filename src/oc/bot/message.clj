@@ -7,18 +7,15 @@
             [stencil.parser :as stp]
             [taoensso.timbre :as timbre]))
 
-(defn- file->script-id [file]
-  (let [fname (.getName file)]
-    (assert (string/ends-with? fname ".edn") "Scripts must be stored in .edn files")
-    (keyword (string/replace fname  #"\.edn$" ""))))
+(def scripts [:onboard :onboard-user :onboard-user-authenticated :stakeholder-update])
 
-(defn- script-files []
-  (remove #(.isDirectory %) (file-seq (io/file (io/resource "scripts")))))
+(def script-files
+  (zipmap scripts (map #(str "scripts/" (name %) ".edn") scripts)))
 
 ;; TODO this should be statically defined in prod
 (defn- templates []
-  (into {} (for [f (script-files)]
-             [(file->script-id f) (-> f slurp read-string)])))
+  (into {} (for [[id r] script-files]
+             [id (-> r io/resource slurp read-string)])))
 
 (defn- humanize [v]
   (let [mapping {:oc.bot.conversation/eur "EUR (€)"
