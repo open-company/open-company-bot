@@ -37,6 +37,8 @@
        (println "uncaught exception")
        (timbre/error ex "Uncaught exception on" (.getName thread)))))
 
+  (timbre/info "ENV" (System/getenv))
+
   (component/start (system {:sqs-queue (e/env :aws-sqs-queue)
                             :sqs-msg-handler sqs-handler}))
   (deref (s/take! (s/stream)))) ; block forever

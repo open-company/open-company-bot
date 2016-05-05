@@ -35,12 +35,10 @@
                  ;; Boot tasks ==========================================
                  [boot-environ "1.0.2" :scope "test"] ; environ integration
                  [adzerk/boot-test "1.1.1" :scope "test"] ; clojure.test runner
-                 [org.clojars.martinklepsch/boot-runit "0.1.0-SNAPSHOT"] ; runit supervisor integration
                  ])
 
 (require '[environ.boot :refer [environ]]
-         '[adzerk.boot-test :refer [test]]
-         '[danielsz.boot-runit :refer [runit]])
+         '[adzerk.boot-test :refer [test]])
 
 (def config (read-string (slurp "config.edn")))
 
@@ -65,9 +63,4 @@
           (uber)
           (jar :main 'oc.bot :file jar-name)
           (sift :include #{(re-pattern (str "^" jar-name "$"))})
-          (runit :env config
-                 :jar jar-name
-                 :app-root "/opt/runit"
-                 :service-name "oc-bot"
-                 :out-of-memory true)
           (target))))
