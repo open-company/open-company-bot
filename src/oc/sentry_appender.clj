@@ -24,9 +24,9 @@
 
 (defn sentry-appender
   "Create a Sentry timbre appender.
-   (make-sentry-appender {:dsn \"YOUR SENTRY DSN\"})"
-  [options]
-  (assert (:dsn options) "make-sentry-appender requires a :dsn")
+   (make-sentry-appender \"YOUR SENTRY DSN\")"
+  [dsn]
+  (assert dsn "sentry-appender requires a dsn")
   (merge
    {:doc "A timbre appender that sends errors to getsentry.com"
     :min-level :error
@@ -37,11 +37,8 @@
           (let [throwable @(:?err_ args)
                 data      (extract-data throwable @(:vargs_ args))]
             (when throwable
-              (prn (-> {:message (.getMessage throwable)}
-                       (assoc-in [:extra :exception-data] data)
-                       (sentry-interfaces/stacktrace throwable)))
               (sentry/capture
-               (:dsn options)
+               dsn
                (-> {:message (.getMessage throwable)}
                    (assoc-in [:extra :exception-data] data)
                    (sentry-interfaces/stacktrace throwable))))))}))

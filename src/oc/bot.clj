@@ -34,7 +34,7 @@
 (defn -main []
   (timbre/merge-config!
    {:level     :info
-    :appenders {:sentry (sentry/sentry-appender {:dsn (e/env :sentry-dsn)})}})
+    :appenders {:sentry (sentry/sentry-appender (e/env :sentry-dsn))}})
 
   (Thread/setDefaultUncaughtExceptionHandler
    (reify Thread$UncaughtExceptionHandler
