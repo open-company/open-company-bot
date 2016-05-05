@@ -8,6 +8,9 @@
                  ;; Pure Clojure/Script logging library
                  ;; https://github.com/ptaoussanis/timbre
                  [com.taoensso/timbre "4.3.1"]
+                 ;; Interface to Sentry error reporting
+                 ;; https://github.com/sethtrain/raven-clj
+                 [raven-clj "1.3.1"]
                  ;; A Clojure implementation of Mustache
                  ;; https://github.com/davidsantiago/stencil
                  [stencil "0.5.0"]

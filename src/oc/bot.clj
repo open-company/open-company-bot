@@ -5,6 +5,7 @@
             [environ.core :as e]
             [manifold.stream :as s]
             [taoensso.timbre :as timbre]
+            [oc.sentry-appender :as sentry]
             [oc.bot.sqs :as sqs]
             [oc.bot.slack :as slack]
             [oc.bot.conversation :as conv]
@@ -31,16 +32,18 @@
     msg)
 
 (defn -main []
+  (timbre/merge-config!
+   {:level     :info
+    :appenders {:sentry (sentry/sentry-appender {:dsn (e/env :sentry-dsn)})}})
+
   (Thread/setDefaultUncaughtExceptionHandler
    (reify Thread$UncaughtExceptionHandler
      (uncaughtException [_ thread ex]
-       (println "uncaught exception")
-       (timbre/error ex "Uncaught exception on" (.getName thread)))))
-
-  (timbre/info "ENV" (System/getenv))
+       (timbre/error ex "Uncaught exception on" (.getName thread) (.getMessage ex)))))
 
   (component/start (system {:sqs-queue (e/env :aws-sqs-queue)
                             :sqs-msg-handler sqs-handler}))
+
   (deref (s/take! (s/stream)))) ; block forever
 
 (comment
@@ -73,9 +76,7 @@
       {:diff     (rand-int 1000)
        :script   {:id :onboard-user-authenticated :params {:user/name name :company/name "Buffer" :company/slug "buffer"}}
        :receiver {:type :channel :id ch-id}
-       :bot      {:token (e/env :slack-bot-token) :id bot-user-id}})
-    
-    )
+       :bot      {:token (e/env :slack-bot-token) :id bot-user-id}}))
 
   (aws-sqs/send-message sqs/creds (e/env :aws-sqs-queue) (test-onboard-trigger "Stuart" bot-testing-ch))
 
