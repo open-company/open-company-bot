@@ -35,7 +35,7 @@
                  ;; Boot tasks ==========================================
                  [boot-environ "1.0.2" :scope "test"] ; environ integration
                  [adzerk/boot-test "1.1.1" :scope "test"] ; clojure.test runner
-                 [danielsz/boot-runit "0.1.0-SNAPSHOT"] ; runit supervisor integration
+                 [org.clojars.martinklepsch/boot-runit "0.1.0-SNAPSHOT"] ; runit supervisor integration
                  ])
 
 (require '[environ.boot :refer [environ]]
@@ -58,13 +58,16 @@
                     'stencil.parser}))
 
 (deftask build! []
-  (comp (pom :project 'oc/bot
-             :version "0.1.0")
-        (runit :env config
-               :app-root "/opt/runit"
-               :out-of-memory true
-               :restart true)
-        (aot :namespace #{'oc.bot})
-        (uber)
-        (jar :main 'oc.bot)
-        (target)))
+  (let [v        "0.1.0"
+        jar-name (str "oc-bot-" v ".jar")]
+    (comp (pom :project 'oc/bot :version v)
+          (aot :namespace #{'oc.bot})
+          (uber)
+          (jar :main 'oc.bot :file jar-name)
+          (sift :include #{(re-pattern (str "^" jar-name "$"))})
+          (runit :env config
+                 :jar jar-name
+                 :app-root "/opt/runit"
+                 :service-name "oc-bot"
+                 :out-of-memory true)
+          (target))))
