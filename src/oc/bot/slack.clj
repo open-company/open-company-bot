@@ -52,7 +52,7 @@
 
 (defn parse [msg out]
   (let [m (chesire/parse-string msg keyword)]
-    (timbre/info m)
+    (timbre/debug m)
     (when-not (get m :ok ::ok)
       (timbre/warn "Error event from Slack" m))
     (s/put! out m)))
