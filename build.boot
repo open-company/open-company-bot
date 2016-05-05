@@ -11,6 +11,7 @@
                  ;; Interface to Sentry error reporting
                  ;; https://github.com/sethtrain/raven-clj
                  [raven-clj "1.3.1"]
+                 [clj-http "2.1.0"] ; https://github.com/sethtrain/raven-clj/pull/9
                  ;; A Clojure implementation of Mustache
                  ;; https://github.com/davidsantiago/stencil
                  [stencil "0.5.0"]
