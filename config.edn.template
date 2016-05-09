@@ -2,6 +2,8 @@
  :aws-secret-key "..."
  :aws-sqs-queue "https://sqs.us-east-1.amazonaws.com/.../my-queue"
 
+ :oc-api-endpoint "http://localhost:3000"
+
  :slack-client-id "..."
  :slack-client-secret "..."
  :slack-bot-token "xoxb-..."
