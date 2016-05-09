@@ -43,10 +43,10 @@
 (require '[environ.boot :refer [environ]]
          '[adzerk.boot-test :refer [test]])
 
-(def config (read-string (slurp "config.edn")))
+(def config (delay (read-string (slurp "config.edn"))))
 
 (deftask dev []
-  (comp (environ :env config)
+  (comp (environ :env @config)
         (repl)))
 
 (deftask test! []
