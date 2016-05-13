@@ -21,14 +21,21 @@
 
 (defn slack-handler [conn msg-idx msg] (prn msg))
 
+(defn update-rid [id token]
+  (if (= \U (first id))
+    (slack/get-im-channel token id)
+    id))
+
 (defn sqs-handler [sys msg]
   (let [msg-body   (read-string (:body msg))
         bot-token  (-> msg-body :bot :token)
         slack-conn (or (slack/connection-for (:slack sys) bot-token)
                        (slack/initialize-connection! (:slack sys) bot-token))]
-    ;; (prn 'slack-conn slack-conn)
     (timbre/infof "Received message from SQS: %s\n" msg-body)
-    (s/put! (:in-proxy slack-conn) (assoc msg-body :type ::initialize)))
+    (let [m (-> msg-body
+                (assoc :type ::initialize)
+                (update-in [:receiver :id] update-rid bot-token))]
+      (s/put! (:in-proxy slack-conn) m)))
     msg)
 
 (defn -main []
