@@ -40,13 +40,18 @@
                  [adzerk/boot-test "1.1.1" :scope "test"] ; clojure.test runner
                  ])
 
-(require '[environ.boot :refer [environ]]
+(require '[clojure.java.io :as io]
+         '[environ.boot :refer [environ]]
          '[adzerk.boot-test :refer [test]])
 
-(def config (delay (read-string (slurp "config.edn"))))
+(def config
+  (let [f (io/file "config.edn")]
+    (if (.exists f)
+      (-> f slurp read-string)
+      {})))
 
 (deftask dev []
-  (comp (environ :env @config)
+  (comp (environ :env config)
         (repl)))
 
 (deftask test! []
