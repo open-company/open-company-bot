@@ -7,4 +7,4 @@
  :slack-client-id "..."
  :slack-client-secret "..."
  :slack-bot-token "xoxb-..."
- :slack-copes [:bot :users:read]}
+ :slack-scopes [:bot :users:read]}

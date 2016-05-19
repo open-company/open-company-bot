@@ -13,7 +13,7 @@
 ;; (defn slack-btn-uri
 ;;   "Generate a URI suitable for initializing OAuth flow"
 ;;   []
-;;   (let [scopes (clojure.string/join "," (map name (e/env :slack-copes)))]
+;;   (let [scopes (clojure.string/join "," (map name (e/env :slack-scopes)))]
 ;;     (str "https://slack.com/oauth/authorize?scope=" scopes "&client_id=" (e/env :slack-client-id))))
 
 ;; (def list-channels-action
