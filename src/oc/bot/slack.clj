@@ -34,6 +34,9 @@
                                   {:method method :params params
                                    :response (select-keys % [:body :status])}))))))
 
+(defn get-users [token]
+  (-> @(slack-api :users.list {:token token}) :body :members))
+
 (defn get-im-channel [token user-id]
   (-> @(slack-api :im.open {:token token :user user-id}) :body :channel :id))
 
