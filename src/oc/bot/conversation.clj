@@ -169,9 +169,15 @@
       ;; Side effects
       (if (= ::invalid updated-fsm)
         (do
+          (timbre/debug "Message could not be turned into allowed signal"
+                        {:allowed? allowed?
+                         :fsm-state @fsm-atom
+                         :msg-text (:text msg)
+                         :transition transition})
           (s/put! out-stream (->full-msg (str "Sorry, " (-> @fsm-atom :value :init-msg :script :params :user/name)
                                               ". I'm not sure what to do with this.")))
-          (s/put! out-stream (->full-msg (not-understood (first allowed?))))
+          (if-let [guide-msg (not-understood (first allowed?))]
+            (s/put! out-stream (->full-msg guide-msg)))
           (d/success-deferred true)) ; use `drain-into` coming in manifold 0.1.5
         (do
           (if (and (stage-confirmed? updated-fsm)

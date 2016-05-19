@@ -25,17 +25,23 @@
 ;;   (let [response (-> @(http/get list-channels-action {:query-params {:token api-token} :as :json}) :body)]
 ;;     (when (:ok response) (:channels response))))
 
-(def ^:private rtm-socket-url
-  "https://slack.com/api/rtm.start")
+(defn slack-api [method params]
+  (-> (http/get (str "https://slack.com/api/" (name method))
+                {:query-params params :as :json})
+      (d/chain #(if (-> % :body :ok)
+                  %
+                  (throw (ex-info "Error after calling Slack API"
+                                  {:method method :params params
+                                   :response (select-keys % [:body :status])}))))))
 
-(defn get-websocket-url
-  "Retrieve a websocket connection URL"
-  [bot-token]
-  (let [response (-> @(http/get rtm-socket-url {:query-params {:token bot-token :no_unreads true} :as :json}) :body)]
-    (if (:ok response)
-      (:url response)
-      (throw (ex-info "Failed to retreive Websocket connection URL from Slack API"
-                      {:response response})))))
+(defn get-users [token]
+  (-> @(slack-api :users.list {:token token}) :body :members))
+
+(defn get-im-channel [token user-id]
+  (-> @(slack-api :im.open {:token token :user user-id}) :body :channel :id))
+
+(defn get-websocket-url [token]
+  (-> @(slack-api :rtm.start {:token token}) :body :url))
 
 (defn send-ping!
   "Send a ping message to the Slack RTM API to make sure the connection stays alive

@@ -16,14 +16,14 @@
  
  [:company/description :no]
  ["Ok. You can always go to your dashboard later and add a description."
-  "Good work Stuart, your new company dashboard is ready at https://opencompany.com/{{company/slug}}!"
+  "Good work {{user/name}}, your new company dashboard is ready at https://opencompany.com/{{company/slug}}!"
   "You’ll find a few common topics are already in your dashboard to give you a head start, but it’s easy to pick the ones you want. As information is updated in your dashboard, I’ll let everyone know via Slack."
   "Just visit https://opencompany.com/{{company/slug}} to get started!"]
  [:company/description :str]
  ["Nice. The description will be updated to “{{company/description}}”, sound right?"]
  [:company/description :yes-after-update]
  ["Ok, I've updated the description."
-  "Good work Stuart, your new company dashboard is ready at https://opencompany.com/{{company/slug}}!"
+  "Good work {{user/name}}, your new company dashboard is ready at https://opencompany.com/{{company/slug}}!"
   "You’ll find a few common topics are already in your dashboard to give you a head start, but it’s easy to pick the ones you want. As information is updated in your dashboard, I’ll let everyone know via Slack."
   "Just visit https://opencompany.com/{{company/slug}} to get started!"]
 

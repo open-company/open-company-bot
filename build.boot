@@ -10,8 +10,7 @@
                  [com.taoensso/timbre "4.3.1"]
                  ;; Interface to Sentry error reporting
                  ;; https://github.com/sethtrain/raven-clj
-                 [raven-clj "1.3.1"]
-                 [clj-http "2.1.0"] ; https://github.com/sethtrain/raven-clj/pull/9
+                 [raven-clj "1.3.2"]
                  ;; A Clojure implementation of Mustache
                  ;; https://github.com/davidsantiago/stencil
                  [stencil "0.5.0"]
@@ -41,10 +40,15 @@
                  [adzerk/boot-test "1.1.1" :scope "test"] ; clojure.test runner
                  ])
 
-(require '[environ.boot :refer [environ]]
+(require '[clojure.java.io :as io]
+         '[environ.boot :refer [environ]]
          '[adzerk.boot-test :refer [test]])
 
-(def config (read-string (slurp "config.edn")))
+(def config
+  (let [f (io/file "config.edn")]
+    (if (.exists f)
+      (-> f slurp read-string)
+      {})))
 
 (deftask dev []
   (comp (environ :env config)
