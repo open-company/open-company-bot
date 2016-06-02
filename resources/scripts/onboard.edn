@@ -13,19 +13,19 @@
  [:company/name :yes]
  ["Great."
   "Would you like to add a company description or tag line? It’ll look nice under your logo and name. *Just tell me what you’d like to use*, or say *not yet*."]
- 
- [:company/description :no]
- ["Ok. You can always go to your dashboard later and add a description."
-  "Good work {{user/name}}, your new company dashboard is ready at https://opencompany.com/{{company/slug}}!"
-  "You’ll find a few common topics are already in your dashboard to give you a head start, but it’s easy to pick the ones you want. As information is updated in your dashboard, I’ll let everyone know via Slack."
-  "Just visit https://opencompany.com/{{company/slug}} to get started!"]
- [:company/description :str]
- ["Nice. The description will be updated to “{{company/description}}”, sound right?"]
- [:company/description :yes-after-update]
- ["Ok, I've updated the description."
-  "Good work {{user/name}}, your new company dashboard is ready at https://opencompany.com/{{company/slug}}!"
-  "You’ll find a few common topics are already in your dashboard to give you a head start, but it’s easy to pick the ones you want. As information is updated in your dashboard, I’ll let everyone know via Slack."
-  "Just visit https://opencompany.com/{{company/slug}} to get started!"]
+
+ ;; [:company/description :no]
+ ;; ["Ok. You can always go to your dashboard later and add a description."
+ ;;  "Good work {{user/name}}, your new company dashboard is ready at https://opencompany.com/{{company/slug}}!"
+ ;;  "You’ll find a few common topics are already in your dashboard to give you a head start, but it’s easy to pick the ones you want. As information is updated in your dashboard, I’ll let everyone know via Slack."
+ ;;  "Just visit https://opencompany.com/{{company/slug}} to get started!"]
+ ;; [:company/description :str]
+ ;; ["Nice. The description will be updated to “{{company/description}}”, sound right?"]
+ ;; [:company/description :yes-after-update]
+ ;; ["Ok, I've updated the description."
+ ;;  "Good work {{user/name}}, your new company dashboard is ready at https://opencompany.com/{{company/slug}}!"
+ ;;  "You’ll find a few common topics are already in your dashboard to give you a head start, but it’s easy to pick the ones you want. As information is updated in your dashboard, I’ll let everyone know via Slack."
+ ;;  "Just visit https://opencompany.com/{{company/slug}} to get started!"]
 
  ;; [:company/currency :no]
  ;; ["OK. What’s the right currency for {{company/name}}?"]

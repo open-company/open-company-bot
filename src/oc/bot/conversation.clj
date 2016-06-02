@@ -61,13 +61,13 @@
   (let [init-only {:fsm    fsm/init-only-fsm
                    :stages [:init]}]
     {:onboard {:fsm    fsm/onboard-fsm
-               :stages [:company/name :company/description :company/currency :ceo]}
+               :stages [:company/name]}
      :onboard-user init-only
      :onboard-user-authenticated init-only
      :stakeholder-update init-only}))
 
 ;; -----------------------------------------------------------------------------
-;; A few handy predicate functions 
+;; A few handy predicate functions
 ;; -----------------------------------------------------------------------------
 
 (defn initialize? [msg]

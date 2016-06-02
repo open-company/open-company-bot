@@ -33,17 +33,15 @@
 (def init-only-fsm (a/compile [:init] {:signal first}))
 
 (def onboard-fsm
-  (a/compile [:init 
+  (a/compile [:init
               (fact-check :str) ;name
-              [:next-stage (a/$ :next-stage)]
-              (optional-input :str) ;desc
-              ]
+              [:next-stage (a/$ :next-stage)]]
              {:signal   first
               :reducers {:next-stage (fn [state input] (update state :stage (fn [s] (u/next-in (:stages state) s))))
                          :confirm confirm-fn
                          :update (fn [state [sig v]] (assoc-in state [:updated (:stage state)] v))}}))
 
-(comment 
+(comment
   (def adv (partial a/advance onboard-fsm))
 
   (-> {:stages [:a :b :c]
