@@ -6,7 +6,7 @@
 
 Before running anything make sure you copy `config.edn.template` to `config.edn` and adjust the values in the contained map.
 
-Start a REPL with `boot dev`.
+Start a REPL with: `boot dev`
 
 The `oc.bot` namespace contains a `comment` form with everything needed to get the system into a running state. There currently is no `start` command that can be called from a terminal.
 
@@ -107,6 +107,20 @@ Now the empty lists after these `[stage transition-signal]` pairs can be filled 
 [component]: https://github.com/stuartsierra/component
 [manifold]: https://github.com/ztellman/manifold
 [edn]: https://github.com/edn-format/edn
+
+
+## Testing
+
+Tests are run in continuous integration of the `master` and `mainline` branches on [Travis CI](https://travis-ci.org/open-company/open-company-bot):
+
+[![Build Status](https://travis-ci.org/open-company/open-company-bot.svg?branch=master)](https://travis-ci.org/open-company/open-company-bot)
+
+To run the tests locally:
+
+```console
+boot test!
+```
+
 
 ## Participation
 
