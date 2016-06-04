@@ -288,5 +288,4 @@
 
   (a/advance fact-checker nil nil)
 
-
   )
