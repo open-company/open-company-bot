@@ -8,8 +8,8 @@
             [environ.core :as e]))
 
 (def creds
-  {:access-key (e/env :aws-access-key)
-   :secret-key (e/env :aws-secret-key)})
+  {:access-key (e/env :aws-access-key-id)
+   :secret-key (e/env :aws-secret-access-key)})
 
 (defn get-message
   "Get a single message from SQS"
