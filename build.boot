@@ -50,6 +50,16 @@
       (-> f slurp read-string)
       {})))
 
+(deftask start []
+  (comp (environ :env config)
+        (with-pre-wrap fs
+          (require 'oc.bot 'com.stuartsierra.component)
+          ((resolve 'com.stuartsierra.component/start)
+           ((resolve 'oc.bot/system) {:sqs-queue       (:aws-sqs-queue config)
+                                      :sqs-msg-handler (resolve 'oc.bot/sqs-handler)}))
+          fs)
+        (wait)))
+
 (deftask dev []
   (comp (environ :env config)
         (repl)))
