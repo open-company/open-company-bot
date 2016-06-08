@@ -1,15 +1,5 @@
 # Open Company Bot [![MPL License](http://img.shields.io/badge/license-MPL-blue.svg?style=flat)](https://www.mozilla.org/MPL/2.0/) [![Build Status](https://travis-ci.org/open-company/open-company-bot.svg?branch=master)](https://travis-ci.org/open-company/open-company-bot)
 
-## Development
-
-> Make sure you have Boot and Java 8 installed. For details refer [here](https://github.com/open-company/open-company-web#local-setup).
-
-Before running anything make sure you copy `config.edn.template` to `config.edn` and adjust the values in the contained map.
-
-Start a REPL with: `boot dev`
-
-The `oc.bot` namespace contains a `comment` form with everything needed to get the system into a running state. There currently is no `start` command that can be called from a terminal.
-
 ## Overview
 
 All use cases currently covered by this bot program involve some trigger from the outside world (which is currently done via AWS SQS).
@@ -107,6 +97,22 @@ Now the empty lists after these `[stage transition-signal]` pairs can be filled 
 [component]: https://github.com/stuartsierra/component
 [manifold]: https://github.com/ztellman/manifold
 [edn]: https://github.com/edn-format/edn
+
+
+## Local Setup
+
+> Make sure you have Boot and Java 8 installed. For details refer [here](https://github.com/open-company/open-company-web#local-setup).
+
+Before running anything make sure you copy `config.edn.template` to `config.edn` and adjust the values in the contained map.
+
+
+## Usage
+
+Run the bot with: `boot start`
+
+Or start a REPL with: `boot dev`
+
+The `oc.bot` namespace contains a `comment` form with everything needed to get the system into a running state in the REPL.
 
 
 ## Testing
