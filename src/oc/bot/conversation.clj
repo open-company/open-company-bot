@@ -198,10 +198,10 @@
 
 (defn msg->predicate
   "Build a predicate that can be used to figure out if messages are relevant for a conversation."
-  [base-msg bot-uid]
+  [base-msg]
   (when (initialize? base-msg)
     (fn [msg]
-      (and (not (from-bot? msg bot-uid))
+      (and (not (from-bot? msg (-> base-msg :bot :id)))
            (message? msg)
            (= (:channel msg)
               (-> base-msg :receiver :id))))))
@@ -216,8 +216,6 @@
   (let [state (atom nil)]
     (partial transition-fn state out)))
 
-(def +bot-uid+ "U10AR0H50")
-
 (defn dispatch!
   "Use the `conversations` atom containing a predicate-map to find a conversation
   `incoming-msg` is relevant to or, given a predicate can be derived from `incoming-msg`,
@@ -228,7 +226,7 @@
     (s/put! conv-in incoming-msg)
     (let [conv-in  (s/stream)
           conv-out (s/stream)]
-      (if-let [pred (msg->predicate incoming-msg +bot-uid+)]
+      (if-let [pred (msg->predicate incoming-msg)]
         (do
           (timbre/info "Registering new conversation" incoming-msg)
           (s/connect-via conv-in (mk-conv conv-out) conv-out)
