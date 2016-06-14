@@ -8,11 +8,9 @@
  [:company/name :str]
  ["OK, I'll update the company name to {{company/name}}. Sound right?"]
  [:company/name :yes-after-update]
- ["Cool, got it."
-  "Would you like to add a company description or tag line? It’ll look nice under your logo and name. *Just tell me what you’d like to use*, or say *not yet*."]
+ ["Cool, got it."]
  [:company/name :yes]
- ["Great."
-  "Would you like to add a company description or tag line? It’ll look nice under your logo and name. *Just tell me what you’d like to use*, or say *not yet*."]
+ ["Great."]
 
  ;; [:company/description :no]
  ;; ["Ok. You can always go to your dashboard later and add a description."
