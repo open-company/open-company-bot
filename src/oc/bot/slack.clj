@@ -51,10 +51,9 @@
   (s/put! conn (chesire/generate-string {:type "ping" :id id})))
 
 (defn add-id-and-jsonify [out id msg]
-  (timbre/info "Sending to Slack:" msg)
-  (->> (assoc msg :id id)
-       (chesire/generate-string)
-       (s/put! out)))
+  (let [msg' (assoc msg :id id)]
+    (timbre/info "Sending to Slack:" msg')
+    (s/put! out (chesire/generate-string msg'))))
 
 (defn parse [msg out]
   (let [m (chesire/parse-string msg keyword)]

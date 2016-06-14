@@ -163,33 +163,33 @@
     (let [->full-msg   (fn [text] {:type "message" :text text :channel (:channel msg)})
           compiled-fsm (get-in scripts [(-> @fsm-atom :value :script-id) :fsm])
           allowed?     (fsm/possible-transitions compiled-fsm @fsm-atom)
-          transition   (msg-text->transition (:text msg) allowed?)
-          updated-fsm  (a/advance compiled-fsm @fsm-atom transition ::invalid)]
-      (timbre/debug "Transition:" transition)
-      ;; Side effects
-      (if (= ::invalid updated-fsm)
-        (do
-          (timbre/debug "Message could not be turned into allowed signal"
-                        {:allowed? allowed?
-                         :fsm-state @fsm-atom
-                         :msg-text (:text msg)
-                         :transition transition})
-          (s/put! out-stream (->full-msg (str "Sorry, " (-> @fsm-atom :value :init-msg :script :params :user/name)
-                                              ". I'm not sure what to do with this.")))
-          (if-let [guide-msg (not-understood (first allowed?))]
-            (s/put! out-stream (->full-msg guide-msg)))
-          (d/success-deferred true)) ; use `drain-into` coming in manifold 0.1.5
-        (do
-          (if (and (stage-confirmed? updated-fsm)
-                   (not (:accepted? updated-fsm)))
-            (reset! fsm-atom (a/advance compiled-fsm updated-fsm [:next-stage]))
-            (reset! fsm-atom updated-fsm))
-          (if (:error (:value updated-fsm))
-            (s/put! out-stream (->full-msg "Sorry, something broke. We're on it. Please try again later."))
-            (doseq [m' (messages (:value updated-fsm) transition)]
-              (timbre/info "Sending:" m')
-              (s/put! out-stream (->full-msg m'))))
-          (d/success-deferred true)))))) ; use `drain-into` coming in manifold 0.1.5
+          transition   (msg-text->transition (:text msg) allowed?)]
+      (timbre/info "Transitioning" {:message msg :transition transition})
+      (let [updated-fsm  (a/advance compiled-fsm @fsm-atom transition ::invalid)]
+        ;; Side effects
+        (if (= ::invalid updated-fsm)
+          (do
+            (timbre/debug "Message could not be turned into allowed signal"
+                          {:allowed? allowed?
+                           :fsm-state @fsm-atom
+                           :msg-text (:text msg)
+                           :transition transition})
+            (s/put! out-stream (->full-msg (str "Sorry, " (-> @fsm-atom :value :init-msg :script :params :user/name)
+                                                ". I'm not sure what to do with this.")))
+            (if-let [guide-msg (not-understood (first allowed?))]
+              (s/put! out-stream (->full-msg guide-msg)))
+            (d/success-deferred true)) ; use `drain-into` coming in manifold 0.1.5
+          (do
+            (if (and (stage-confirmed? updated-fsm)
+                     (not (:accepted? updated-fsm)))
+              (reset! fsm-atom (a/advance compiled-fsm updated-fsm [:next-stage]))
+              (reset! fsm-atom updated-fsm))
+            (if (:error (:value updated-fsm))
+              (s/put! out-stream (->full-msg "Sorry, something broke. We're on it. Please try again later."))
+              (doseq [m' (messages (:value updated-fsm) transition)]
+                (timbre/info "Sending:" m')
+                (s/put! out-stream (->full-msg m'))))
+            (d/success-deferred true))))))) ; use `drain-into` coming in manifold 0.1.5
 
 ;; -----------------------------------------------------------------------------
 ;; Conversation Routing 

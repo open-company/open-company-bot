@@ -72,8 +72,8 @@
        :bot      {:token (e/env :slack-bot-token) :id bot-user-id}})
     (defn test-su-trigger [name ch-id]
       {:diff     (rand-int 1000)
-       :script   {:id :stakeholder-update :params {:user/name name :company/name "Buffer" :company/slug "buffer"}}
-       :receiver {:type :channel :id ch-id}
+       :script   {:id :stakeholder-update :params {:user/name name :company/name "Buffer" :company/slug "buffer" :stakeholder-update/slug "abc" :stakeholder-update/note "We're profitable!!"}}
+       :receiver {:type :user :id ch-id}
        :bot      {:token (e/env :slack-bot-token) :id bot-user-id}})
     (defn test-onboard-user-trigger [name ch-id]
       {:diff     (rand-int 1000)
@@ -89,6 +89,7 @@
   (aws-sqs/send-message sqs/creds (e/env :aws-sqs-queue) (test-onboard-trigger "Stuart" bot-testing-ch))
 
   (aws-sqs/send-message sqs/creds (e/env :aws-sqs-queue) (test-onboard-trigger "Stuart" user-id))
+  (aws-sqs/send-message sqs/creds (e/env :aws-sqs-queue) (test-su-trigger "Martin" user-id))
 
   (def sys (system {:sqs-queue (e/env :aws-sqs-queue)
                     :sqs-msg-handler sqs-handler}))
