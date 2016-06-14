@@ -158,7 +158,7 @@
       (doseq [m' (messages (:value new-fsm) transition)]
         (s/put! out-stream (->full-msg m')))
       (d/success-deferred true)) ; use `drain-into` coming in manifold 0.1.5
-    
+
     ;; Regular case, i.e. messages sent by users =============================
     (let [->full-msg   (fn [text] {:type "message" :text text :channel (:channel msg)})
           compiled-fsm (get-in scripts [(-> @fsm-atom :value :script-id) :fsm])
