@@ -54,11 +54,13 @@
   (let [msg-body   (read-string (:body msg))
         bot-token  (-> msg-body :bot :token)
         slack-conn (or (slack/connection-for (:slack sys) bot-token)
-                       (slack/initialize-connection! (:slack sys) bot-token))]
+                       (slack/initialize-connection! (:slack sys) bot-token))
+        sink       (s/stream)]
     (timbre/infof "Received message from SQS: %s\n" msg-body)
+    (s/connect (s/throttle 0.3 sink) (:in-proxy slack-conn))
     (doseq [m (adjust-receiver msg-body)]
-      (s/put! (:in-proxy slack-conn) (assoc m :type ::initialize))))
-    msg)
+      (s/put! sink (assoc m :type ::initialize))))
+  msg)
 
 (defn -main []
   (timbre/merge-config!
