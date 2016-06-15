@@ -1,6 +1,7 @@
 (ns oc.bot.conversation.fsm
   (:require [automat.core :as a]
             [automat.fsm :as f]
+            [taoensso.timbre :as timbre]
             [oc.bot.utils :as u]
             [oc.api-client :as api]))
 
@@ -10,6 +11,7 @@
     (set (filter (fn [t] (a/advance compiled-fsm state [t] false)) alphabet))))
 
 (defn confirm-fn [{:keys [stage] :as state} _]
+  (timbre/info "Confirming update" state)
   (if-let [updated (get-in state [:updated stage])]
     (if @(api/patch-company! (-> state :init-msg :api-token)
                              (-> state :init-msg :script :params :company/slug)
