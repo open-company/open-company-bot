@@ -62,7 +62,7 @@
   (let [init-only {:fsm    fsm/init-only-fsm
                    :stages [:init]}]
     {:onboard {:fsm    fsm/onboard-fsm
-               :stages [:company/name]}
+               :stages [:company/logo]}
      :onboard-user init-only
      :onboard-user-authenticated init-only
      :stakeholder-update init-only}))
@@ -120,6 +120,16 @@
    :no "You can answer with *yes* or *no*."
    :currency "You can provide a currency with *EUR* or *USD*."})
 
+(defn init-state [init-msg]
+  (let [script-id (-> init-msg :script :id)
+        team-info (slack-api/get-team-info (-> init-msg :bot :token))]
+    {:script-id script-id
+     :stage     (-> scripts script-id :stages first)
+     :updated   (when (and (= :onboard script-id) (-> team-info :icon :image_default not))
+                  {:company/logo (-> team-info :icon :image_132)})
+     :init-msg  init-msg
+     :stages    (-> scripts script-id :stages)}))
+
 (defn transition-fn
   "Inputs:
    - `fsm-atom`, Atom containing the current state of the FSM representing the conversation
@@ -144,10 +154,7 @@
           script-id  (-> msg :script :id)
           transition [:init]
           new-fsm    (a/advance (get-in scripts [script-id :fsm])
-                                {:script-id script-id
-                                 :stage     (-> scripts script-id :stages first)
-                                 :init-msg  msg
-                                 :stages    (-> scripts script-id :stages)}
+                                (init-state msg)
                                 transition)]
       (timbre/info "Starting new scripted conversation:" script-id)
       (reset! fsm-atom new-fsm)
