@@ -1,5 +1,6 @@
 (ns oc.bot.slack
   (:require [oc.bot.conversation :as conv]
+            [oc.bot.slack-api :as slack-api]
             [aleph.http :as http]
             [com.stuartsierra.component :as component]
             [clojure.string :as string]
@@ -9,39 +10,6 @@
             [manifold.deferred :as d]
             [environ.core :as e]
             [cheshire.core :as chesire]))
-
-;; (defn slack-btn-uri
-;;   "Generate a URI suitable for initializing OAuth flow"
-;;   []
-;;   (let [scopes (clojure.string/join "," (map name (e/env :slack-scopes)))]
-;;     (str "https://slack.com/oauth/authorize?scope=" scopes "&client_id=" (e/env :slack-client-id))))
-
-;; (def list-channels-action
-;;   "https://slack.com/api/channels.list")
-
-;; (defn get-channels
-;;   "Retrieve all channels for the team the given API token is associated with"
-;;   [api-token]
-;;   (let [response (-> @(http/get list-channels-action {:query-params {:token api-token} :as :json}) :body)]
-;;     (when (:ok response) (:channels response))))
-
-(defn slack-api [method params]
-  (-> (http/get (str "https://slack.com/api/" (name method))
-                {:query-params params :as :json})
-      (d/chain #(if (-> % :body :ok)
-                  %
-                  (throw (ex-info "Error after calling Slack API"
-                                  {:method method :params params
-                                   :response (select-keys % [:body :status])}))))))
-
-(defn get-users [token]
-  (-> @(slack-api :users.list {:token token}) :body :members))
-
-(defn get-im-channel [token user-id]
-  (-> @(slack-api :im.open {:token token :user user-id}) :body :channel :id))
-
-(defn get-websocket-url [token]
-  (-> @(slack-api :rtm.start {:token token}) :body :url))
 
 (defn send-ping!
   "Send a ping message to the Slack RTM API to make sure the connection stays alive
@@ -97,7 +65,7 @@
 (defn slack-connection
   "Retrieve a websocket connection url using the provided token and return a SlackConnection component"
   [token]
-  (map->SlackConnection {:ws-url (get-websocket-url token)}))
+  (map->SlackConnection {:ws-url (slack-api/get-websocket-url token)}))
 
 (defrecord SlackConnectionManager []
   component/Lifecycle

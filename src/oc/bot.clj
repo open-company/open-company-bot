@@ -9,6 +9,7 @@
             [oc.sentry-appender :as sentry]
             [oc.bot.sqs :as sqs]
             [oc.bot.slack :as slack]
+            [oc.bot.slack-api :as slack-api]
             [oc.bot.conversation :as conv]
             [oc.bot.message :as msg])
   (:gen-class))
@@ -40,13 +41,13 @@
     (timbre/info "Adjusting receiver" {:type type})
     (cond
       (and (= :user type) (= \U (-> msg :receiver :id first)))
-      [(assoc msg :receiver {:id (slack/get-im-channel token (-> msg :receiver :id))
+      [(assoc msg :receiver {:id (slack-api/get-im-channel token (-> msg :receiver :id))
                              :type :channel})]
 
       (and (= :all-members type))
-      (for [u (filter real-user? (slack/get-users token))]
+      (for [u (filter real-user? (slack-api/get-users token))]
         (-> (assoc-in msg [:script :params :user/name] (first-name (:real_name u)))
-            (assoc :receiver {:type :channel :id (slack/get-im-channel token (:id u))})))
+            (assoc :receiver {:type :channel :id (slack-api/get-im-channel token (:id u))})))
 
       :else
       (throw (ex-info "Failed to adjust receiver" {:msg msg})))))
@@ -135,13 +136,13 @@
   )
 
 (comment 
-  (def names (map :real_name (filter real-user? (slack/get-users tkn))))
+  (def names (map :real_name (filter real-user? (slack-api/get-users tkn))))
 
   (map first-name names)
 
-  (map :real_name (filter real-user? (slack/get-users tkn)))
+  (map :real_name (filter real-user? (slack-api/get-users tkn)))
 
-  (set (flatten (map :id (remove :deleted (slack/get-users tkn)))))
+  (set (flatten (map :id (remove :deleted (slack-api/get-users tkn)))))
 
   (adjust-receiver {:bot {:token tkn}
                     :receiver {:type :all-members}})

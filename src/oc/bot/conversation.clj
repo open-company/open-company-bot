@@ -7,8 +7,9 @@
             [automat.core :as a]
             [clojure.string :as string]
             [medley.core :as med]
-            [oc.bot.conversation.fsm :as fsm]
+            [oc.bot.fsm :as fsm]
             [oc.bot.message :as m]
+            [oc.bot.slack-api :as slack-api]
             [oc.bot.language :as lang]
             [oc.bot.utils :as u])
   (:import [java.time LocalDateTime]))
