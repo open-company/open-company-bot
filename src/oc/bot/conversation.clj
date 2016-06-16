@@ -75,12 +75,6 @@
   (boolean (and (= :oc.bot/initialize (:type msg))
                 (-> msg :receiver :id))))
 
-(defn from-bot? [msg bot-uid]
-  (= bot-uid (:user msg)))
-
-(defn message? [msg]
-  (= "message" (:type msg)))
-
 (defn transitions [txt]
   {lang/yes?     [:yes]
    lang/no?      [:no]
@@ -202,8 +196,9 @@
   [base-msg]
   (when (initialize? base-msg)
     (fn [msg]
-      (and (not (from-bot? msg (-> base-msg :bot :id)))
-           (message? msg)
+      (and (not= (:subtype msg) "bot_message")
+           (not= (:user msg) (-> base-msg :bot :id))
+           (= (:type msg) "message")
            (= (:channel msg)
               (-> base-msg :receiver :id))))))
 
