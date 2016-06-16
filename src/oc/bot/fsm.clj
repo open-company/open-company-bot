@@ -19,7 +19,7 @@
   (let [alphabet (f/alphabet (:fsm (meta compiled-fsm)))
         dry-run  (assoc-in state [:value ::dry-run] true)]
     ;; SIGNAL using [t] here means we assume the FSMs signal function is `first`
-    (-> #(do #_(timbre/debug "Testing transition" % "with state" dry-run)
+    (-> #(do ;(timbre/debug "Testing transition" % "with state" dry-run)
              (a/advance compiled-fsm dry-run [%] false))
         (filter alphabet)
         (set))))
