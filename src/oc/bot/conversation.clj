@@ -204,8 +204,8 @@
 
 (defn find-matching-conv [convs msg]
   (let [[f s] (vec (u/predicate-map-lookup convs msg))]
-    (when s (timbre/debug "predicate-map-lookup returned multiple results, using first"))
-    (when f (timbre/debugf "predicate-match for: %s\n" msg))
+    (when s (timbre/warn "predicate-map-lookup returned multiple results, using first"))
+    (when f (timbre/debug "predicate-match for:" msg))
     f))
 
 (defn mk-conv [out]
