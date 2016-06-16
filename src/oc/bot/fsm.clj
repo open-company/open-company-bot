@@ -1,4 +1,4 @@
-(ns oc.bot.conversation.fsm
+(ns oc.bot.fsm
   (:require [automat.core :as a]
             [automat.fsm :as f]
             [taoensso.timbre :as timbre]
@@ -10,15 +10,19 @@
    does not contain a truthy value under `::dry-run`."
   [action-fn]
   (fn [state input]
+    ;; (timbre/debug "Dry run?" (::dry-run state) input)
     (if (::dry-run state)
       state
       (action-fn state input))))
 
 (defn possible-transitions [compiled-fsm state]
   (let [alphabet (f/alphabet (:fsm (meta compiled-fsm)))
-        dry-run  (assoc state ::dry-run true)]
+        dry-run  (assoc-in state [:value ::dry-run] true)]
     ;; SIGNAL using [t] here means we assume the FSMs signal function is `first`
-    (set (filter (fn [t] (a/advance compiled-fsm dry-run [t] false)) alphabet))))
+    (-> #(do #_(timbre/debug "Testing transition" % "with state" dry-run)
+             (a/advance compiled-fsm dry-run [%] false))
+        (filter alphabet)
+        (set))))
 
 (defn confirm-fn [{:keys [stage] :as state} _]
   (timbre/info "Confirming update" state)
