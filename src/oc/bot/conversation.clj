@@ -85,6 +85,7 @@
    lang/no?      [:no]
    lang/euro?    [:currency ::eur]
    lang/dollar?  [:currency ::usd]
+   lang/downloadable-image? [:image-url txt]
    (fn [_] true) [:str txt]})
 
 (defn msg-text->transition

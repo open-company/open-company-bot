@@ -21,6 +21,9 @@
                  ;; Asynchronous communication for clojure (http-client)
                  ;; https://github.com/ztellman/aleph
                  [aleph "0.4.2-alpha4"]
+                 ;; Apache Commons Validator provides the building blocks for validation.
+                 ;; https://commons.apache.org/proper/commons-validator/
+                 [commons-validator "1.5.1"]
                  ;; Async programming tools (streams/deferred computation)
                  ;; https://github.com/ztellman/manifold
                  [manifold "0.1.5-alpha1"]
