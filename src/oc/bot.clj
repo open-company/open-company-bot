@@ -93,28 +93,32 @@
                                         :company/description "Save time managing your social media" :company/currency "USD"
                                         :contact-person "Tom"}}
        :api-token jwt
-       :receiver {:type :channel :id ch-id}
+       :receiver {:type :user :id ch-id}
        :bot      {:token (e/env :slack-bot-token) :id bot-user-id}})
     (defn test-su-trigger [name ch-id]
       {:diff     (rand-int 1000)
        :script   {:id :stakeholder-update :params {:user/name name :company/name "Buffer" :company/slug "buffer" :stakeholder-update/slug "abc" :stakeholder-update/note "We're profitable!!"}}
-       :receiver {:type :user :id ch-id}
+       :receiver {:type :all-members}
        :bot      {:token (e/env :slack-bot-token) :id bot-user-id}})
     (defn test-onboard-user-trigger [name ch-id]
       {:diff     (rand-int 1000)
        :script   {:id :onboard-user :params {:user/name name :company/name "Buffer" :company/slug "buffer" :contact-person "Jim"}}
-       :receiver {:type :channel :id ch-id}
+       :receiver {:type :user :id ch-id}
        :bot      {:token (e/env :slack-bot-token) :id bot-user-id}})
     (defn test-onboard-user-authenticated-trigger [name ch-id]
       {:diff     (rand-int 1000)
        :script   {:id :onboard-user-authenticated :params {:user/name name :company/name "Buffer" :company/slug "buffer"}}
-       :receiver {:type :channel :id ch-id}
+       :receiver {:type :user :id ch-id}
        :bot      {:token (e/env :slack-bot-token) :id bot-user-id}}))
 
   (aws-sqs/send-message sqs/creds (e/env :aws-sqs-queue) (test-onboard-trigger "Stuart" bot-testing-ch))
 
   (aws-sqs/send-message sqs/creds (e/env :aws-sqs-queue) (test-onboard-trigger "Stuart" user-id))
   (aws-sqs/send-message sqs/creds (e/env :aws-sqs-queue) (test-su-trigger "Martin" user-id))
+
+  (test-onboard-trigger "Martin" user-id)
+
+  (sqs-handler sys {:body (pr-str (test-onboard-trigger "Martin" user-id))})
 
   (def sys (system {:sqs-queue (e/env :aws-sqs-queue)
                     :sqs-msg-handler sqs-handler}))
