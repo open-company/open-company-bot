@@ -1,6 +1,7 @@
 (ns oc.bot.language
   (:require [clojure.string :as string]
             [aleph.http :as http]
+            [taoensso.timbre :as timbre]
             [manifold.deferred :as d])
   (:import [org.apache.commons.validator UrlValidator]))
 
@@ -27,17 +28,35 @@
 (defn downloadable-image? [s]
   (when-let [url (extract-url s)]
     @(-> (http/head url)
-         (d/chain #(when (and (= 200 (:status %))
-                              (-> % :headers (get "content-type") image?))
-                     url))
-         (d/catch (fn [_] false))))) ; aleph sets "content-type" https://github.com/ztellman/aleph/blob/1427d8142b1762244645425dc6bee685feb15a95/src/aleph/http/client_middleware.clj#L282-L289
+         (d/chain (fn [res]
+                    (when (and (= 200 (:status res))
+                               ;; aleph sets "content-type" https://github.com/ztellman/aleph/blob/1427d8142b1762244645425dc6bee685feb15a95/src/aleph/http/client_middleware.clj#L282-L289
+                               (-> res :headers (get "content-type") image?))
+                      url)))
+         (d/catch (fn [e]
+                    (timbre/error e "The following URL caused an exception while checking" {:url url})
+                    false)))))
 
 (comment
-  (downloadable-image? "https://-R6qwnGcrHlY/AAAAAAAAAAI/AAAAAAAAAAA/SuoCUhq2DAM/w80-h80/photo.jpg")
+  (downloadable-image? "<https://-R6qwnGcrHlY/AAAAAAAAAAI/AAAAAAAAAAA/SuoCUhq2DAM/w80-h80/photo.jpg>")
+
+  (downloadable-image? "<http://aleph.io/images/aleph.png>")
+
+  (downloadable-image? "<https://logo.clearbit.com/pantheon.io?s=126>")
+
   (valid-url "https://-R6qwnGcrHlY/AAAAAAAAAAI/AAAAAAAAAAA/SuoCUhq2DAM/w80-h80/photo.jpg")
 
   (valid-url "<https://threaded.martinklepsch.org/fav/apple-icon-152x152.png>")
 
   (re-seq #"<(.*)>" "<https://threaded.martinklepsch.org/fav/apple-icon-152x152.png>")
+
+  ;; https://github.com/ztellman/aleph/issues/253
+  @(-> (aleph.http/head "http://aleph.io/images/aleph.png")
+       (manifold.deferred/chain (fn [res] (prn res))))
+
+  @(-> (aleph.http/get "http://aleph.io/images/aleph.png")
+       (manifold.deferred/chain (fn [res] (prn res))))
+
+
 
   )
