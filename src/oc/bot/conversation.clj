@@ -78,6 +78,7 @@
 (defn transitions [txt]
   {lang/yes?                [:yes]
    lang/no?                 [:no]
+   lang/not-now?            [:not-now]
    lang/euro?               [:currency ::eur]
    lang/dollar?             [:currency ::usd]
    lang/downloadable-image? [:image-url (lang/extract-url txt)]
@@ -118,7 +119,8 @@
 (def not-understood
   {:yes "You can answer with *yes* or *no*."
    :no "You can answer with *yes* or *no*."
-   :currency "You can provide a currency with *EUR* or *USD*."})
+   :currency "You can provide a currency with *EUR* or *USD*."
+   :image-url "Please provide a link to an image that is publicly accessibly."})
 
 (defn init-state [init-msg]
   (let [script-id (-> init-msg :script :id)
