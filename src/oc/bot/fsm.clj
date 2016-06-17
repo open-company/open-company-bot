@@ -67,7 +67,9 @@
 
 (def onboard-fsm
   (a/compile [:init
-              (fact-check :image-url) ;logo
+              ;; company/logo
+              (presence-branch (fact-check :image-url)
+                               (optional-input :image-url))
               [:next-stage (a/$ :next-stage)]]
              {:signal   first
               :reducers {:next-stage (dry-run-wrap (fn [state input] (update state :stage (fn [s] (u/next-in (:stages state) s)))))

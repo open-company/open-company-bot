@@ -132,9 +132,7 @@
      :init-msg  init-msg
      :stages    (-> scripts script-id :stages)}))
 
-(defn -transition-init
-  [fsm-atom out-stream msg]
-  ;; Startup case, i.e. messages coming from SQS initiating new convs ========
+(defn -transition-init [fsm-atom out-stream msg]
   (let [->full-msg (fn [text] {:type "message" :text text :channel (-> msg :receiver :id)})
         script-id  (-> msg :script :id)
         transition [:init]
@@ -147,23 +145,23 @@
       (s/put! out-stream (->full-msg m')))
     (d/success-deferred true))) ; use `drain-into` coming in manifold 0.1.5
 
-(defn -transition-msg
-  [fsm-atom out-stream msg]
+(defn -transition-msg [fsm-atom out-stream msg]
   (let [->full-msg   (fn [text] {:type "message" :text text :channel (:channel msg)})
         compiled-fsm (get-in scripts [(-> @fsm-atom :value :script-id) :fsm])
-        allowed?     (fsm/possible-transitions compiled-fsm @fsm-atom)
+        fsm-state    (fsm/advance-presence-branch compiled-fsm @fsm-atom)
+        allowed?     (fsm/possible-transitions compiled-fsm fsm-state)
         transition   (msg-text->transition (:text msg) allowed?)]
     (timbre/info "Transitioning" {:message msg :transition transition})
-    (let [updated-fsm  (a/advance compiled-fsm @fsm-atom transition ::invalid)]
+    (let [updated-fsm (a/advance compiled-fsm fsm-state transition ::invalid)]
       ;; Side effects
       (if (= ::invalid updated-fsm)
         (do
           (timbre/info "Message could not be turned into allowed signal"
                        {:allowed? allowed?
-                        :fsm-state @fsm-atom
+                        :fsm-state fsm-state
                         :msg msg
                         :transition transition})
-          (s/put! out-stream (->full-msg (str "Sorry, " (-> @fsm-atom :value :init-msg :script :params :user/name)
+          (s/put! out-stream (->full-msg (str "Sorry, " (-> fsm-state :value :init-msg :script :params :user/name)
                                               ". I'm not sure what to do with this.")))
           (if-let [guide-msg (not-understood (first allowed?))]
             (s/put! out-stream (->full-msg guide-msg)))
@@ -177,7 +175,7 @@
             (s/put! out-stream (->full-msg "Sorry, something broke. We're on it. Please try again later."))
             (doseq [m' (messages (:value updated-fsm) transition)]
               (s/put! out-stream (->full-msg m'))))
-          (d/success-deferred true)))))); use `drain-into` coming in manifold 0.1.5
+          (d/success-deferred true)))))) ; use `drain-into` coming in manifold 0.1.5
 
 (defn transition-fn
   "Inputs:
@@ -198,8 +196,10 @@
   it's state will be updated to be in the next stage."
   [fsm-atom out-stream msg]
   (if (initialize? msg)
-    (-transition-init fsm-atom out-stream msg) ; Startup case, i.e. messages coming from SQS initiating new convs
+    (-transition-init fsm-atom out-stream msg) ; Startup case, i.e. messages coming from SQS
     (-transition-msg fsm-atom out-stream msg))) ; Regular case, i.e. messages sent by users
+
+
 
 ;; -----------------------------------------------------------------------------
 ;; Conversation Routing 
@@ -296,5 +296,46 @@
   (f/alphabet (:fsm (meta (get-in scripts [:onboard :fsm]))))
 
   (a/advance fact-checker nil nil)
+
+  )
+
+(comment 
+  ;; Experiments in programatically determining all paths through the FSM
+  ;; and generating the resulting conversation
+  (do 
+    (def state (atom nil))
+    (def out (s/stream))
+    (s/consume (comp prn :text) out))
+
+  (let [bot  "xoxb-34365017170-g0TTz4EMfyaAuRNcx1Fov8rU"
+        jwt  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyLWlkIjoic2xhY2s6VTA2U0JUWEpSIiwibmFtZSI6IlNlYW4gSm9obnNvbiIsInJlYWwtbmFtZSI6IlNlYW4gSm9obnNvbiIsImF2YXRhciI6Imh0dHBzOlwvXC9zZWN1cmUuZ3JhdmF0YXIuY29tXC9hdmF0YXJcL2Y1YjhmYzFhZmZhMjY2YzgwNzIwNjhmODExZjYzZTA0LmpwZz9zPTE5MiZkPWh0dHBzJTNBJTJGJTJGc2xhY2suZ2xvYmFsLnNzbC5mYXN0bHkubmV0JTJGN2ZhOSUyRmltZyUyRmF2YXRhcnMlMkZhdmFfMDAyMC0xOTIucG5nIiwiZW1haWwiOiJzZWFuQG9wZW5jb21wYW55LmNvbSIsIm93bmVyIjpmYWxzZSwiYWRtaW4iOnRydWUsIm9yZy1pZCI6InNsYWNrOlQwNlNCTUg2MCJ9.9Q8GNBojQ_xXT0lMtKve4fb5Pdh260oc2aUc-wP8dus"
+        init  {:type     :oc.bot/initialize
+               :script   {:id :onboard :params {:user/name "Martin" :company/name "Buffer Inc." :company/slug "buffer"
+                                                :company/description "Save time managing your social media" :company/currency "USD"
+                                                :contact-person "Tom"}}
+               :api-token jwt
+               :receiver {:type :user :id 1}
+               :bot      {:token bot :id 1}}
+        out   (s/stream)]
+
+    (s/consume (comp prn :text) out)
+    (transition-fn state out init)
+    ;; (transition-fn state out {:text "no"})
+    ;; (transition-fn state out {:text "<https://s3-us-west-2.amazonaws.com/slack-files2/avatars/2016-06-14/50972112561_7f3a36f6902d884bf13e_132.png>"})
+    )
+
+  (defn test [state]
+    (swap! state assoc-in [:value ::fsm/dry-run] true)
+    state)
+
+  (transition-fn (test state) out {:text "no"})
+  (transition-fn (test state) out {:text "<https://s3-us-west-2.amazonaws.com/slack-files2/avatars/2016-06-14/50972112561_7f3a36f6902d884bf13e_132.png>"})
+  (transition-fn (test state) out {:text "yes"})
+
+  (def compiled (get-in scripts [(-> @state :value :script-id) :fsm]))
+
+  (fsm/advance-presence-branch compiled @state)
+
+  (fsm/possible-transitions compiled @state)
 
   )
