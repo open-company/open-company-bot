@@ -46,7 +46,9 @@
   (let [presence-branch? (= (possible-transitions compiled-fsm fsm-state)
                             #{::value-present ::value-missing})
         ;; TODO this could/should be passed to the function as a parameter
-        val-present?     (get-in value [:init-msg :script :params (-> value :stage)])]
+        val-present?     (-> (merge (get-in value [:init-msg :script :params])
+                                    (get-in value [:updated]))
+                             (get (-> value :stage)))]
     (cond
       (and presence-branch? val-present?) (a/advance compiled-fsm fsm-state [::value-present])
       (and presence-branch?)              (a/advance compiled-fsm fsm-state [::value-missing])
