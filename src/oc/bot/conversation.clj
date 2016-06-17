@@ -199,8 +199,6 @@
     (-transition-init fsm-atom out-stream msg) ; Startup case, i.e. messages coming from SQS
     (-transition-msg fsm-atom out-stream msg))) ; Regular case, i.e. messages sent by users
 
-
-
 ;; -----------------------------------------------------------------------------
 ;; Conversation Routing 
 ;; Route messages to their respective conversations or create new conversations
@@ -212,6 +210,7 @@
   (when (initialize? base-msg)
     (fn [msg]
       (and (not= (:subtype msg) "bot_message")
+           (not= (:subtype msg) "message_changed")
            (not= (:user msg) (-> base-msg :bot :id))
            (= (:type msg) "message")
            (= (:channel msg)
