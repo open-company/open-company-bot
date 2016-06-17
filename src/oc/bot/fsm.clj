@@ -34,6 +34,24 @@
       (update state :error (fnil conj #{}) stage))
     (update state :confirmed (fnil conj #{}) stage)))
 
+(defn presence-branch [present missing]
+  (a/or [::value-present present]
+        [::value-missing missing]))
+
+(defn advance-presence-branch
+  "Advance the given FSM if the current `stage` can be found in the scripts `params`
+   and the current possible transitions are presence branch actions
+   `::vlaue-present` / `::value-missing`"
+  [compiled-fsm {:keys [value] :as fsm-state}]
+  (let [presence-branch? (= (possible-transitions compiled-fsm fsm-state)
+                            #{::value-present ::value-missing})
+        ;; TODO this could/should be passed to the function as a parameter
+        val-present?     (get-in value [:init-msg :script :params (-> value :stage)])]
+    (cond
+      (and presence-branch? val-present?) (a/advance compiled-fsm fsm-state [::value-present])
+      (and presence-branch?)              (a/advance compiled-fsm fsm-state [::value-missing])
+      :else                               fsm-state)))
+
 (defn fact-check [update-transition]
   [(a/or
     [:yes (a/$ :confirm)]
@@ -41,10 +59,9 @@
      [:yes (a/$ :confirm)]])])
 
 (defn optional-input [update-transition]
-  [(a/or
-    [:no]
-    [update-transition (a/$ :update)
-     [:yes (a/$ :confirm)]])])
+  [(a/or [:not-now]
+         [update-transition (a/$ :update)
+          [:yes (a/$ :confirm)]])])
 
 (def init-only-fsm (a/compile [:init] {:signal first}))
 
@@ -66,8 +83,22 @@
       (adv [:yes])
       (adv [:next-stage]))
 
+  (def pb (a/compile (presence-branch (fact-check :image-url)
+                                      (optional-input :image-url))
+                     {:signal first}))
+
+  (f/alphabet (:fsm (meta pb)))
+
+  (a/advance pb {} [::value-missing])
+
+  (possible-transitions pb {})
+
+  (advance-presence-branch pb {})
+
   (require 'automat.viz)
 
   (automat.viz/view (fact-check :str))
-
+  (automat.viz/view (presence-branch (fact-check :image-url)
+                                     (optional-input :image-url)))
+  
   )
