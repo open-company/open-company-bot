@@ -18,6 +18,8 @@
 
 (def no? #{"n" "no" "not yet"})
 
+(def not-now? #{"not now" "later"})
+
 (def euro? #{"€" "eur" "euro"})
 
 (def dollar? #{"$" "usd" "dollar"})
