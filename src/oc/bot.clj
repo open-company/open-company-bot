@@ -37,6 +37,7 @@
   [msg]
   (let [token (-> msg :bot :token)
         type  (-> msg :receiver :type)]
+    (timbre/info "Adjusting receiver" {:type type})
     (cond
       (and (= :user type) (= \U (-> msg :receiver :id first)))
       [(assoc msg :receiver {:id (slack/get-im-channel token (-> msg :receiver :id))
