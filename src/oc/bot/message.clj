@@ -55,9 +55,10 @@
 
 (defn messages-for [script-id segment-id script-params]
   (timbre/debugf "Getting messages for %s :: %s\n" script-id segment-id)
-  (map #(render % script-params) (get-messages (templates) script-id segment-id)))
+  (->> (get-messages (templates) script-id segment-id)
+       (map (fn [tpl] (render tpl script-params)))))
 
-(comment 
+(comment
   (messages-for :onboard
                 [:company/name :init]
                 {:user/name "Tom" :company/name "Live.ly" :company/dashboard "/xxx" :contact-person "@tom"})
