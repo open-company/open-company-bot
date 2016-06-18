@@ -1,4 +1,4 @@
 {[:init :init]
- ["Congratulations {{user/name}}! You’ve now got access to the transparency dashboard for {{company/name}}."
-  "You can always get the most up to date company information there: https://opencompany.com/{{company/slug}}"
+ ["Congratulations {{user/name}}! You’ve now got access to the company dashboard for {{company/name}}."
+  "You can always get the most up to date key company information there: https://opencompany.com/{{company/slug}}"
   "I’ll also reach out to you periodically here to let you know when there is important new information about {{company/name}}."]}
