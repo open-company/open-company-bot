@@ -169,10 +169,10 @@
         ;; Side effects
         (if (= ::invalid updated-fsm)
           (do
-            (timbre/debug "Message could not be turned into allowed signal"
+            (timbre/info "Message could not be turned into allowed signal"
                           {:allowed? allowed?
                            :fsm-state @fsm-atom
-                           :msg-text (:text msg)
+                           :msg msg
                            :transition transition})
             (s/put! out-stream (->full-msg (str "Sorry, " (-> @fsm-atom :value :init-msg :script :params :user/name)
                                                 ". I'm not sure what to do with this.")))
@@ -187,7 +187,6 @@
             (if (:error (:value updated-fsm))
               (s/put! out-stream (->full-msg "Sorry, something broke. We're on it. Please try again later."))
               (doseq [m' (messages (:value updated-fsm) transition)]
-                (timbre/info "Sending:" m')
                 (s/put! out-stream (->full-msg m'))))
             (d/success-deferred true))))))) ; use `drain-into` coming in manifold 0.1.5
 
@@ -198,10 +197,10 @@
 
 (defn msg->predicate
   "Build a predicate that can be used to figure out if messages are relevant for a conversation."
-  [base-msg bot-uid]
+  [base-msg]
   (when (initialize? base-msg)
     (fn [msg]
-      (and (not (from-bot? msg bot-uid))
+      (and (not (from-bot? msg (-> base-msg :bot :id)))
            (message? msg)
            (= (:channel msg)
               (-> base-msg :receiver :id))))))
@@ -216,8 +215,6 @@
   (let [state (atom nil)]
     (partial transition-fn state out)))
 
-(def +bot-uid+ "U10AR0H50")
-
 (defn dispatch!
   "Use the `conversations` atom containing a predicate-map to find a conversation
   `incoming-msg` is relevant to or, given a predicate can be derived from `incoming-msg`,
@@ -228,7 +225,7 @@
     (s/put! conv-in incoming-msg)
     (let [conv-in  (s/stream)
           conv-out (s/stream)]
-      (if-let [pred (msg->predicate incoming-msg +bot-uid+)]
+      (if-let [pred (msg->predicate incoming-msg)]
         (do
           (timbre/info "Registering new conversation" incoming-msg)
           (s/connect-via conv-in (mk-conv conv-out) conv-out)

@@ -4,17 +4,17 @@
 
 (deftest msg->predicate-test
   (testing "only init messages return predicate"
-    (is (nil? (conv/msg->predicate {:type "message" :body "bla"} "x")))
-    (is (nil? (conv/msg->predicate {:type :oc.bot/initialize :body "bla"} "x")))
-    (is (fn? (conv/msg->predicate {:type :oc.bot/initialize :receiver {:id 1}} "x"))))
+    (is (nil? (conv/msg->predicate {:type "message" :body "bla"})))
+    (is (nil? (conv/msg->predicate {:type :oc.bot/initialize :body "bla"})))
+    (is (fn? (conv/msg->predicate {:type :oc.bot/initialize :receiver {:id 1}}))))
 
   (testing "does not match bot messages"
     (let [bot  "BOT_ID"
-          pred (conv/msg->predicate {:type :oc.bot/initialize :receiver {:id 1}} bot)]
+          pred (conv/msg->predicate {:type :oc.bot/initialize :receiver {:id 1} :bot {:id bot}})]
       (is (not (pred {:type "message" :channel 1 :user bot})))))
 
   (testing "matches messages of type 'message' with correct channel"
-    (let [pred (conv/msg->predicate {:type :oc.bot/initialize :receiver {:id 1}} "x")]
+    (let [pred (conv/msg->predicate {:type :oc.bot/initialize :receiver {:id 1} :bot {:id 2}})]
       (is (false? (pred {:body "abc" :type "user_joined" :channel 1})))
       (is (true? (pred {:body "abc" :type "message" :channel 1})))
       (is (false? (pred {:body "abc" :type "message" :channel 2}))))))

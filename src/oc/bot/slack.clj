@@ -59,7 +59,7 @@
   (let [m (chesire/parse-string msg keyword)]
     (timbre/debug m)
     (when-not (get m :ok ::ok)
-      (timbre/warn "Error event from Slack" m))
+      (timbre/error "Error event from Slack" m))
     (s/put! out m)))
 
 (defrecord SlackConnection [ws-url]

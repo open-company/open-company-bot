@@ -1,15 +1,27 @@
 (ns oc.bot.conversation.fsm
   (:require [automat.core :as a]
             [automat.fsm :as f]
+            [taoensso.timbre :as timbre]
             [oc.bot.utils :as u]
             [oc.api-client :as api]))
 
+(defn dry-run-wrap
+  "Wrap `action-fn` so that it only calls `action-fn` if the FSM's state
+   does not contain a truthy value under `::dry-run`."
+  [action-fn]
+  (fn [state input]
+    (if (::dry-run state)
+      state
+      (action-fn state input))))
+
 (defn possible-transitions [compiled-fsm state]
-  (let [alphabet (f/alphabet (:fsm (meta compiled-fsm)))]
+  (let [alphabet (f/alphabet (:fsm (meta compiled-fsm)))
+        dry-run  (assoc state ::dry-run true)]
     ;; SIGNAL using [t] here means we assume the FSMs signal function is `first`
-    (set (filter (fn [t] (a/advance compiled-fsm state [t] false)) alphabet))))
+    (set (filter (fn [t] (a/advance compiled-fsm dry-run [t] false)) alphabet))))
 
 (defn confirm-fn [{:keys [stage] :as state} _]
+  (timbre/info "Confirming update" state)
   (if-let [updated (get-in state [:updated stage])]
     (if @(api/patch-company! (-> state :init-msg :api-token)
                              (-> state :init-msg :script :params :company/slug)
@@ -37,9 +49,9 @@
               (fact-check :str) ;name
               [:next-stage (a/$ :next-stage)]]
              {:signal   first
-              :reducers {:next-stage (fn [state input] (update state :stage (fn [s] (u/next-in (:stages state) s))))
-                         :confirm confirm-fn
-                         :update (fn [state [sig v]] (assoc-in state [:updated (:stage state)] v))}}))
+              :reducers {:next-stage (dry-run-wrap (fn [state input] (update state :stage (fn [s] (u/next-in (:stages state) s)))))
+                         :confirm    (dry-run-wrap confirm-fn)
+                         :update     (dry-run-wrap (fn [state [sig v]] (assoc-in state [:updated (:stage state)] v)))}}))
 
 (comment
   (def adv (partial a/advance onboard-fsm))

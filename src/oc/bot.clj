@@ -2,6 +2,7 @@
   (:require [com.stuartsierra.component :as component]
             [amazonica.aws.sqs :as aws-sqs]
             [clojure.java.io :as io]
+            [clojure.string :as string]
             [environ.core :as e]
             [manifold.stream :as s]
             [taoensso.timbre :as timbre]
@@ -21,22 +22,46 @@
 
 (defn slack-handler [conn msg-idx msg] (prn msg))
 
-(defn update-rid [id token]
-  (if (= \U (first id))
-    (slack/get-im-channel token id)
-    id))
+(defn real-user? [user]
+  (and (not (:deleted user))
+       (not (:is_bot user))
+       (not (:is_restricted user))
+       (not (= "USLACKBOT" (:id user)))))
+
+(defn first-name [name]
+  (first (string/split name #"\s")))
+
+(defn adjust-receiver
+  "Inspect the receiver field and return one or more initialization messages
+   with proper DM channels and update :user/name script param."
+  [msg]
+  (let [token (-> msg :bot :token)
+        type  (-> msg :receiver :type)]
+    (timbre/info "Adjusting receiver" {:type type})
+    (cond
+      (and (= :user type) (= \U (-> msg :receiver :id first)))
+      [(assoc msg :receiver {:id (slack/get-im-channel token (-> msg :receiver :id))
+                             :type :channel})]
+
+      (and (= :all-members type))
+      (for [u (filter real-user? (slack/get-users token))]
+        (-> (assoc-in msg [:script :params :user/name] (first-name (:real_name u)))
+            (assoc :receiver {:type :channel :id (slack/get-im-channel token (:id u))})))
+
+      :else
+      (throw (ex-info "Failed to adjust receiver" {:msg msg})))))
 
 (defn sqs-handler [sys msg]
   (let [msg-body   (read-string (:body msg))
         bot-token  (-> msg-body :bot :token)
         slack-conn (or (slack/connection-for (:slack sys) bot-token)
-                       (slack/initialize-connection! (:slack sys) bot-token))]
+                       (slack/initialize-connection! (:slack sys) bot-token))
+        sink       (s/stream)]
     (timbre/infof "Received message from SQS: %s\n" msg-body)
-    (let [m (-> msg-body
-                (assoc :type ::initialize)
-                (update-in [:receiver :id] update-rid bot-token))]
-      (s/put! (:in-proxy slack-conn) m)))
-    msg)
+    (s/connect (s/throttle 0.3 sink) (:in-proxy slack-conn))
+    (doseq [m (adjust-receiver msg-body)]
+      (s/put! sink (assoc m :type ::initialize))))
+  msg)
 
 (defn -main []
   (timbre/merge-config!
@@ -103,4 +128,18 @@
   {:user "U10AR0H50", :inviter "U0JSATHT3", :type "message", :subtype "channel_join", :team "T06SBMH60", :text "<@U10AR0H50|transparency> has joined the channel", :channel "C0FGNSA2V", :ts "1461337622.001158"}
   ;; Events after being kicked
   {:type "channel_left", :channel "C10A1P4H2"}
+  )
+
+(comment 
+  (def names (map :real_name (filter real-user? (slack/get-users tkn))))
+
+  (map first-name names)
+
+  (map :real_name (filter real-user? (slack/get-users tkn)))
+
+  (set (flatten (map :id (remove :deleted (slack/get-users tkn)))))
+
+  (adjust-receiver {:bot {:token tkn}
+                    :receiver {:type :all-members}})
+
   )
