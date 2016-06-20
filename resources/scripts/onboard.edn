@@ -6,10 +6,11 @@
   "{{^company/logo}}We don't yet have an logo to display on your company's dashboard. *Provide a link* (square works best) or reply with *later*{{/company/logo}}"]
  [:company/logo :no]
  ["Understood. What logo should I use? The best dashboard logos fit into a square, roughly 180 x 180 pixels, like what you'd use for a Twitter avatar. You can answer with a URL (e.g. http://acme.com/logo.png). You can also answer with *later*."]
- [:company/logo :not-now]
- ["OK, you can always update the logo later at: {{env/origin}}/{{company/slug}}/profile"]
  [:company/logo :image-url]
  ["OK, I'll update the logo to this: {{company/logo}}. Looks right?"]
+ [:company/logo :not-now]
+ ["OK, you can always update the logo later at: {{env/origin}}/{{company/slug}}/profile"
+  "Good work {{user/name}}, your new OpenCompany dashboard is ready at {{env/origin}}/{{company/slug}}! Now it’s easy to keep your team, investors and other stakeholders engaged and up to date."]
  [:company/logo :yes-after-update]
  ["Cool, got it."
   "Good work {{user/name}}, your new OpenCompany dashboard is ready at {{env/origin}}/{{company/slug}}! Now it’s easy to keep your team, investors and other stakeholders engaged and up to date."]
