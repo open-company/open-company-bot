@@ -72,7 +72,7 @@ Messages sent to users need to be formatted, they need to be parameterised and t
 **oc.bot.conversation**
 This is responsible for all the state management inside conversations as well as for all message routing from Slack to individual conversations.
 
-**oc.bot.conversation.fsm**
+**oc.bot.fsm**
 Defines all the state machines that make up conversations and a few helpers related to these.
 
 **oc.bot.slack**
