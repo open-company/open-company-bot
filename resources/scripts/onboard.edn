@@ -2,18 +2,20 @@
  ["Hi {{user/name}}, I’m the Slack bot for your OpenCompany dashboard."
   "I’ll help you share information about the company to keep everyone engaged and on the same page."
   "The first thing we ought to do is confirm the information OpenCompany has about {{company/name}}."
-  "{{#company/logo}}Is the following logo correct? You can answer with *yes* or *no*. {{company/logo}}{{/company/logo}}"
-  "{{^company/logo}}We don't yet have an logo to display on your company's dashboard. *Provide a link* or reply with *later*{{/company/logo}}"]
+  "{{#company/logo}}Is this the right logo for the company? You can answer with *yes* or *no*. {{company/logo}}{{/company/logo}}"
+  "{{^company/logo}}We don't yet have an logo to display on your company's dashboard. *Provide a link* (square works best) or reply with *later*{{/company/logo}}"]
  [:company/logo :no]
- ["Understood. What logo should I use? (please provide a link)"]
+ ["Understood. What logo should I use? The best dashboard logos fit into a square, roughly 180 x 180 pixels, like what you'd use for a Twitter avatar. You can answer with a URL (e.g. http://acme.com/logo.png). You can also answer with *later*."]
  [:company/logo :not-now]
- ["OK, sure. You can always go to your dashboard to change the logo."]
+ ["OK, you can always update the logo later at: {{env/origin}}/{{company/slug}}/profile"]
  [:company/logo :image-url]
- ["OK, I'll update the logo to {{company/logo}}. Sound right?"]
+ ["OK, I'll update the logo to this: {{company/logo}}. Looks right?"]
  [:company/logo :yes-after-update]
- ["Cool, got it."]
+ ["Cool, got it."
+  "Good work {{user/name}}, your new OpenCompany dashboard is ready at {{env/origin}}/{{company/slug}}! Now it’s easy to keep your team, investors and other stakeholders engaged and up to date."]
  [:company/logo :yes]
- ["Great. We'll keep the image as is."]
+ ["Great. We'll keep the image as is."
+  "Good work {{user/name}}, your new OpenCompany dashboard is ready at {{env/origin}}/{{company/slug}}! Now it’s easy to keep your team, investors and other stakeholders engaged and up to date."]
 
  ;; [:company/description :no]
  ;; ["Ok. You can always go to your dashboard later and add a description."
