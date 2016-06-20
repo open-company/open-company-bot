@@ -60,6 +60,13 @@
     [(a/+ [:no [update-transition (a/$ :update)]])
      [:yes (a/$ :confirm)]])])
 
+(defn skippable-fact-check [update-transition]
+  [(a/or
+    [:yes (a/$ :confirm)]
+    [:no :not-now]
+    [(a/+ [:no [update-transition (a/$ :update)]])
+     [:yes (a/$ :confirm)]])])
+
 (defn optional-input [update-transition]
   [(a/or [:not-now]
          [update-transition (a/$ :update)
@@ -70,7 +77,7 @@
 (def onboard-fsm
   (a/compile [:init
               ;; company/logo
-              (presence-branch (fact-check :image-url)
+              (presence-branch (skippable-fact-check :image-url)
                                (optional-input :image-url))
               [:next-stage (a/$ :next-stage)]]
              {:signal   first
@@ -102,7 +109,7 @@
   (require 'automat.viz)
 
   (automat.viz/view (fact-check :str))
-  (automat.viz/view (presence-branch (fact-check :image-url)
+  (automat.viz/view (presence-branch (skippable-fact-check :image-url)
                                      (optional-input :image-url)))
   
   )
