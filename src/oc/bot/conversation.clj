@@ -29,7 +29,7 @@
    into `out` after sending a few 'typing' messages into out."
   [out]
   (fn [msg]
-    (let [wait-time (* 50 (count (:text msg)))
+    (let [wait-time (* 25 (count (:text msg)))
           typing    {:type "typing" :channel (:channel msg)}]
       (-> (apply d/chain
                  nil
