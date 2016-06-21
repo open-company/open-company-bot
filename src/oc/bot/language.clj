@@ -27,7 +27,7 @@
 
 (defn downloadable-image? [s]
   (when-let [url (extract-url s)]
-    @(-> (http/head url)
+    @(-> (http/get url)
          (d/chain (fn [res]
                     (when (and (= 200 (:status res))
                                ;; aleph sets "content-type" https://github.com/ztellman/aleph/blob/1427d8142b1762244645425dc6bee685feb15a95/src/aleph/http/client_middleware.clj#L282-L289
