@@ -44,9 +44,9 @@
 
   (downloadable-image? "<https://logo.clearbit.com/pantheon.io?s=126>")
 
-  (valid-url "https://-R6qwnGcrHlY/AAAAAAAAAAI/AAAAAAAAAAA/SuoCUhq2DAM/w80-h80/photo.jpg")
+  (extract-url "https://-R6qwnGcrHlY/AAAAAAAAAAI/AAAAAAAAAAA/SuoCUhq2DAM/w80-h80/photo.jpg")
 
-  (valid-url "<https://threaded.martinklepsch.org/fav/apple-icon-152x152.png>")
+  (extract-url "<https://threaded.martinklepsch.org/fav/apple-icon-152x152.png>")
 
   (re-seq #"<(.*)>" "<https://threaded.martinklepsch.org/fav/apple-icon-152x152.png>")
 
@@ -54,7 +54,12 @@
 
   (downloadable-image? "<http://media.giphy.com/media/xTiTnlgsJTVPK9hGZa/giphy.gif>")
 
+  (downloadable-image? "<https://media.giphy.com/media/xTiTnlgsJTVPK9hGZa/giphy.gif>")
+
   (downloadable-image? "<https://pbs.twimg.com/profile_images/700577267127193600/PtLt3m6R.png>")
+  (downloadable-image? "<http://pbs.twimg.com/profile_images/700577267127193600/PtLt3m6R.png>")
+
+  (downloadable-image? "<https://bigoven-res.cloudinary.com/image/upload/t_recipe-256/mexican-breakfast-burrito-1365962.jpg>")
 
   ;; https://github.com/ztellman/aleph/issues/253
   @(-> (aleph.http/head "http://aleph.io/images/aleph.png")
