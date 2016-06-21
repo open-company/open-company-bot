@@ -163,7 +163,7 @@
                         :transition transition})
           (s/put! out-stream (->full-msg (str "Sorry, " (-> fsm-state :value :init-msg :script :params :user/name)
                                               ". I'm not sure what to do with this.")))
-          (if-let [guide-msg (not-understood (first allowed?))]
+          (if-let [guide-msg (first (keep not-understood allowed?))]
             (s/put! out-stream (->full-msg guide-msg)))
           (d/success-deferred true)) ; use `drain-into` coming in manifold 0.1.5
         (do

@@ -50,6 +50,12 @@
 
   (re-seq #"<(.*)>" "<https://threaded.martinklepsch.org/fav/apple-icon-152x152.png>")
 
+  (extract-url "<http://media.giphy.com/media/xTiTnlgsJTVPK9hGZa/giphy.gif>")
+
+  (downloadable-image? "<http://media.giphy.com/media/xTiTnlgsJTVPK9hGZa/giphy.gif>")
+
+  (downloadable-image? "<https://pbs.twimg.com/profile_images/700577267127193600/PtLt3m6R.png>")
+
   ;; https://github.com/ztellman/aleph/issues/253
   @(-> (aleph.http/head "http://aleph.io/images/aleph.png")
        (manifold.deferred/chain (fn [res] (prn res))))
