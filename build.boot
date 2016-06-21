@@ -8,7 +8,7 @@
                  [com.stuartsierra/component "0.3.1"]
                  ;; Pure Clojure/Script logging library
                  ;; https://github.com/ptaoussanis/timbre
-                 [com.taoensso/timbre "4.5.0-RC2"]
+                 [com.taoensso/timbre "4.5.0-RC4"]
                  ;; Interface to Sentry error reporting
                  ;; https://github.com/sethtrain/raven-clj
                  [raven-clj "1.4.2"]
@@ -32,7 +32,7 @@
                  [automat "0.2.0-alpha2"]
                  ;; JSON encoding/decoding
                  ;; https://github.com/dakrone/cheshire
-                 [cheshire "5.6.1"]
+                 [cheshire "5.6.2"]
                  ;; Lightweight utility library
                  ;; https://github.com/weavejester/medley
                  [medley "0.8.2"]
