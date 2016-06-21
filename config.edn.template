@@ -1,9 +1,7 @@
-{:aws-access-key-id "..."
- :aws-secret-access-key "..."
- :aws-sqs-queue "https://sqs.REGION.amazonaws.com/.../my-queue"
+{
+  :aws-access-key-id "CHANGE-ME"
+  :aws-secret-access-key "CHANGE-ME"
+  :aws-sqs-queue "https://sqs.REGION.amazonaws.com/CHANGE/ME"
 
- :oc-api-endpoint "http://localhost:3000"
-
- :slack-client-id "..."
- :slack-bot-token "xoxb-..."
- :slack-scopes [:bot :users:read]}
+  :oc-api-endpoint "http://localhost:3000"
+}
