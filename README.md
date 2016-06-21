@@ -5,7 +5,7 @@
 [![Roadmap on Trello](http://img.shields.io/badge/roadmap-trello-blue.svg?style=flat)](https://trello.com/b/3naVWHgZ/open-company-development)
 
 
-## Overview
+## Background
 
 > Today, power is gained by sharing knowledge, not hoarding it.
 
@@ -21,14 +21,17 @@ To maintain transparency, OpenCompany information is always accessible and easy 
 
 Transparency expectations are changing. Startups need to change as well if they are going to attract and retain savvy employees and investors. Just as open source changed the way we build software, transparency changes how we build successful startups with information that is open, interactive, and always accessible. The OpenCompany platform turns transparency into a competitive advantage.
 
-Like the open companies we promote and support, the [OpenCompany](https://opencompany.com/) platform is completely transparent. The company supporting this effort, OpenCompany, Inc., is an open company. The [platform](https://github.com/open-company/open-company-web) is open source software, and open company data is [open data](https://en.wikipedia.org/wiki/Open_data) accessible through the [platform API](https://github.com/open-company/open-company-api).
+Like the open companies we promote and support, the [OpenCompany](https://opencompany.com/) platform is completely transparent. The company supporting this effort, OpenCompany, LLC, is an open company. The [platform](https://github.com/open-company/open-company-web) is open source software, and open company data is [open data](https://en.wikipedia.org/wiki/Open_data) accessible through the [platform API](https://github.com/open-company/open-company-api).
 
 To get started, head to: [OpenCompany](https://opencompany.com/)
 
 
-## Introduction
+## Overview
 
-Users of the [OpenCompany](https://opencompany.com/) platform should get started by going to [OpenCompany](https://opencompany.com/). The following is for developers wanting to work on the platform's Slack bot software.
+The OpenCompany Bot handles interacting with OpenCompany users via Slack conversations.
+
+
+## Introduction
 
 All use cases currently covered by this bot program involve some trigger from the outside world (which is currently done via AWS SQS).
 
@@ -49,8 +52,6 @@ Let’s go through the lifecycle of a *scripted conversation* step-by-step.
 3. If a message **fails** to advance the state of the FSM a generic “I don’t understand” message is sent back to the user.
 4. If a message **succeeds** to advance the FSM the appropriate response is looked up using the `stage` of the FSM as well as the meaning of the user’s message. The response is then sent to the `SlackConnection`.
 5. This process might loop until the conversation’s FSM reaches an accept state in which case it should be removed from the `ConversationManager` (TBD).
-
-## For Your Orientation
 
 #### Namespaces
 
@@ -87,7 +88,7 @@ Generic stuff that is not tied to any particular domain.
 
 **Testing Streams:** A lot of stuff is going through streams. Coming up with a proper testing setup for this is important. 
 
-## Authoring Scripts
+#### Authoring Scripts
 
 Scripts define the messages a bot will send when initiating a conversation or reacting to a user's messages.
 
@@ -129,9 +130,51 @@ Now the empty lists after these `[stage transition-signal]` pairs can be filled 
 
 ## Local Setup
 
-> Make sure you have Boot and Java 8 installed. For details refer [here](https://github.com/open-company/open-company-web#local-setup).
+Users of the [OpenCompany](https://opencompany.com/) platform should get started by going to [OpenCompany](https://opencompany.com/). The following local setup is **for developers** wanting to work on the platform's Bot software.
+
+Most of the dependencies are internal, meaning [Boot](https://github.com/boot-clj/boot) will handle getting them for you. There are a few exceptions:
+
+* [Java 8](http://www.oracle.com/technetwork/java/javase/downloads/index.html) - a Java 8 JRE is needed to run Clojure
+* [Boot](https://github.com/boot-clj/boot) - A Clojure build and dependency management tool
+
+#### Java
+
+Chances are your system already has Java 8+ installed. You can verify this with:
+
+```console
+java -version
+```
+
+If you do not have Java 8+ [download it](http://www.oracle.com/technetwork/java/javase/downloads/index.html) and follow the installation instructions.
+
+#### Boot
+
+Installing Boot is easy, for the most up to date instructions, check out the [Boot README](https://github.com/boot-clj/boot#install).
+You can verify your install with:
+
+```console
+boot -V
+```
+
+#### Required Configuration and Secrets
+
+An [AWS SQS queue](https://aws.amazon.com/sqs/) is used to pass messages to the Bot. Setup an SQS Queue and key/secret access to the queue using the AWS Web Console or API.
+
+The Bot needs access to the OpenCompany API endpoint to make updates to open company content and data based on Bot conversations. 
 
 Before running anything make sure you copy `config.edn.template` to `config.edn` and adjust the values in the contained map.
+
+```clojure
+{
+  :aws-access-key-id "CHANGE-ME"
+  :aws-secret-access-key "CHANGE-ME"
+  :aws-sqs-queue "https://sqs.REGION.amazonaws.com/CHANGE/ME"
+
+  :oc-api-endpoint "http://localhost:3000"
+}
+```
+
+You can also override these settings with environmental variables in the form of `AWS_ACCESS_KEY_ID`, etc. Use environmental variables to provide production secrets when running in production.
 
 
 ## Usage
@@ -160,8 +203,9 @@ boot test!
 
 Please note that this project is released with a [Contributor Code of Conduct](https://github.com/open-company/open-company-web/blob/mainline/CODE-OF-CONDUCT.md). By participating in this project you agree to abide by its terms.
 
+
 ## License
 
 Distributed under the [Mozilla Public License v2.0](http://www.mozilla.org/MPL/2.0/). See `LICENSE` for full text.
 
-Copyright © 2015-2016 OpenCompany, Inc.
+Copyright © 2016 OpenCompany, LLC.
