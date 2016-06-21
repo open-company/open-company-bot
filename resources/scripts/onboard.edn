@@ -10,15 +10,15 @@
  ["OK, I'll update the logo to this: {{company/logo}} Looks right? You can answer with *yes* or *no*."]
  [:company/logo :not-now]
  ["OK, you can always update the logo later at: {{env/origin}}/{{company/slug}}/profile"
-  "Good work {{user/name}}, your new OpenCompany dashboard is ready at: {{env/origin}}/{{company/slug}}"
+  "Your new OpenCompany dashboard is ready at: {{env/origin}}/{{company/slug}}"
   "Now it’ll be easier to keep your team, investors and other stakeholders engaged and up to date."]
  [:company/logo :yes-after-update]
  ["Cool, got it."
   "Good work {{user/name}}, your new OpenCompany dashboard is ready at: {{env/origin}}/{{company/slug}}"
-  "You may need to refresh your dashboard to see your new logo."
+  "(You may need to refresh your dashboard to see the correct logo.)"
   "Now it’ll be easier to keep your team, investors and other stakeholders engaged and up to date."]
  [:company/logo :yes]
  ["Great. We'll keep the image as is."
-  "Good work {{user/name}}, your new OpenCompany dashboard is ready at: {{env/origin}}/{{company/slug}}"
+  "Your new OpenCompany dashboard is ready at: {{env/origin}}/{{company/slug}}"
   "Now it’ll be easier to keep your team, investors and other stakeholders engaged and up to date."]
 }
