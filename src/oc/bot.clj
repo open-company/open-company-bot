@@ -1,7 +1,6 @@
 (ns oc.bot
   (:require [com.stuartsierra.component :as component]
             [amazonica.aws.sqs :as aws-sqs]
-            [clojure.java.io :as io]
             [clojure.string :as string]
             [environ.core :as e]
             [manifold.stream :as s]
