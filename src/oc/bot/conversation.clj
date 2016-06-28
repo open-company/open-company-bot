@@ -117,10 +117,10 @@
   (contains? (-> fsm :value :confirmed) (-> fsm :value :stage)))
 
 (def not-understood
-  {:yes "You can answer with *yes* or *no*."
-   :no "You can answer with *yes* or *no*."
-   :currency "You can provide a currency with *EUR* or *USD*."
-   :image-url "Please provide a link to an image that is publicly accessibly."})
+  {#{:yes} "You can answer with *yes*."
+   #{:yes :no} "You can answer with *yes* or *no*."
+   #{:image-url :not-now} "Please provide a link to an image that is publicly accessibly or reply with *later*."
+   #{:image-url} "Please provide a link to an image that is publicly accessibly."})
 
 (defn init-state [init-msg]
   (let [script-id (-> init-msg :script :id)
@@ -161,10 +161,12 @@
                         :fsm-state fsm-state
                         :msg msg
                         :transition transition})
-          (s/put! out-stream (->full-msg (str "Sorry, " (-> fsm-state :value :init-msg :script :params :user/name)
-                                              ". I'm not sure what to do with this.")))
-          (if-let [guide-msg (first (keep not-understood allowed?))]
-            (s/put! out-stream (->full-msg guide-msg)))
+          (->> (str "Sorry, " (-> fsm-state :value :init-msg :script :params :user/name)
+                    ". I'm not sure what to do with this."
+                    (or (get not-understood allowed?)
+                        (timbre/error "No guide-msg for allowed?" allowed?)))
+               (->full-msg)
+               (s/put! out-stream))
           (d/success-deferred true)) ; use `drain-into` coming in manifold 0.1.5
         (do
           (if (and (stage-confirmed? updated-fsm)
