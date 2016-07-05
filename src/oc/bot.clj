@@ -1,7 +1,6 @@
 (ns oc.bot
   (:require [com.stuartsierra.component :as component]
             [amazonica.aws.sqs :as aws-sqs]
-            [clojure.java.io :as io]
             [clojure.string :as string]
             [environ.core :as e]
             [manifold.stream :as s]
@@ -9,6 +8,7 @@
             [oc.sentry-appender :as sentry]
             [oc.bot.sqs :as sqs]
             [oc.bot.slack :as slack]
+            [oc.bot.slack-api :as slack-api]
             [oc.bot.conversation :as conv]
             [oc.bot.message :as msg])
   (:gen-class))
@@ -40,13 +40,13 @@
     (timbre/info "Adjusting receiver" {:type type})
     (cond
       (and (= :user type) (= \U (-> msg :receiver :id first)))
-      [(assoc msg :receiver {:id (slack/get-im-channel token (-> msg :receiver :id))
+      [(assoc msg :receiver {:id (slack-api/get-im-channel token (-> msg :receiver :id))
                              :type :channel})]
 
       (and (= :all-members type))
-      (for [u (filter real-user? (slack/get-users token))]
+      (for [u (filter real-user? (slack-api/get-users token))]
         (-> (assoc-in msg [:script :params :user/name] (first-name (:real_name u)))
-            (assoc :receiver {:type :channel :id (slack/get-im-channel token (:id u))})))
+            (assoc :receiver {:type :channel :id (slack-api/get-im-channel token (:id u))})))
 
       :else
       (throw (ex-info "Failed to adjust receiver" {:msg msg})))))
@@ -93,28 +93,27 @@
                                         :company/description "Save time managing your social media" :company/currency "USD"
                                         :contact-person "Tom"}}
        :api-token jwt
-       :receiver {:type :channel :id ch-id}
+       :receiver {:type :user :id ch-id}
        :bot      {:token (e/env :slack-bot-token) :id bot-user-id}})
     (defn test-su-trigger [name ch-id]
       {:diff     (rand-int 1000)
        :script   {:id :stakeholder-update :params {:user/name name :company/name "Buffer" :company/slug "buffer" :stakeholder-update/slug "abc" :stakeholder-update/note "We're profitable!!"}}
-       :receiver {:type :user :id ch-id}
+       :receiver {:type :all-members}
        :bot      {:token (e/env :slack-bot-token) :id bot-user-id}})
     (defn test-onboard-user-trigger [name ch-id]
       {:diff     (rand-int 1000)
        :script   {:id :onboard-user :params {:user/name name :company/name "Buffer" :company/slug "buffer" :contact-person "Jim"}}
-       :receiver {:type :channel :id ch-id}
+       :receiver {:type :user :id ch-id}
        :bot      {:token (e/env :slack-bot-token) :id bot-user-id}})
     (defn test-onboard-user-authenticated-trigger [name ch-id]
       {:diff     (rand-int 1000)
        :script   {:id :onboard-user-authenticated :params {:user/name name :company/name "Buffer" :company/slug "buffer"}}
-       :receiver {:type :channel :id ch-id}
+       :receiver {:type :user :id ch-id}
        :bot      {:token (e/env :slack-bot-token) :id bot-user-id}}))
 
-  (aws-sqs/send-message sqs/creds (e/env :aws-sqs-queue) (test-onboard-trigger "Stuart" bot-testing-ch))
+  (test-onboard-trigger "Martin" user-id)
 
-  (aws-sqs/send-message sqs/creds (e/env :aws-sqs-queue) (test-onboard-trigger "Stuart" user-id))
-  (aws-sqs/send-message sqs/creds (e/env :aws-sqs-queue) (test-su-trigger "Martin" user-id))
+  (sqs-handler sys {:body (pr-str (test-onboard-trigger "Martin" user-id))})
 
   (def sys (system {:sqs-queue (e/env :aws-sqs-queue)
                     :sqs-msg-handler sqs-handler}))
@@ -122,6 +121,11 @@
   (alter-var-root #'sys component/start)
 
   (alter-var-root #'sys component/stop)
+
+  (aws-sqs/send-message sqs/creds (e/env :aws-sqs-queue) (test-onboard-trigger "Stuart" bot-testing-ch))
+
+  (aws-sqs/send-message sqs/creds (e/env :aws-sqs-queue) (test-onboard-trigger "Stuart" user-id))
+  (aws-sqs/send-message sqs/creds (e/env :aws-sqs-queue) (test-su-trigger "Martin" user-id))
 
   ;; Messages after bot got invited into channel
   {:type "channel_joined", :channel {:creator "U06SBTXJR", :purpose {:value "Discuss development of the OPENcompany platform", :creator "U06SBTXJR", :last_set 1454426238}, :is_channel true, :name "development", :is_member true, :is_archived false, :created 1448888630, :topic {:value "", :creator "", :last_set 0}, :latest {:type "message", :user "U0JSATHT3", :text "<@U06SBTXJR>: can you kick the bot out of <#C10A1P4H2> please?", :ts "1461337454.001157"}, :id "C0FGNSA2V", :unread_count_display 0, :last_read "1461337454.001157", :members ["U06SBTXJR" "U06SQLDFT" "U06STCKLN" "U0J5LK571" "U0JSATHT3" "U10AR0H50"], :is_general false, :unread_count 0}}
@@ -131,13 +135,13 @@
   )
 
 (comment 
-  (def names (map :real_name (filter real-user? (slack/get-users tkn))))
+  (def names (map :real_name (filter real-user? (slack-api/get-users tkn))))
 
   (map first-name names)
 
-  (map :real_name (filter real-user? (slack/get-users tkn)))
+  (map :real_name (filter real-user? (slack-api/get-users tkn)))
 
-  (set (flatten (map :id (remove :deleted (slack/get-users tkn)))))
+  (set (flatten (map :id (remove :deleted (slack-api/get-users tkn)))))
 
   (adjust-receiver {:bot {:token tkn}
                     :receiver {:type :all-members}})

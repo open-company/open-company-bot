@@ -2,13 +2,13 @@
 (set-env!
  :source-paths #{"src"}
  :resource-paths #{"resources"}
- :dependencies '[[org.clojure/clojure "1.9.0-alpha5"]
+ :dependencies '[[org.clojure/clojure "1.9.0-alpha7"]
                  ;; Managed lifecycle of stateful objects in Clojure
                  ;; https://github.com/stuartsierra/component
                  [com.stuartsierra/component "0.3.1"]
                  ;; Pure Clojure/Script logging library
                  ;; https://github.com/ptaoussanis/timbre
-                 [com.taoensso/timbre "4.4.0-alpha1"]
+                 [com.taoensso/timbre "4.5.0-RC4"]
                  ;; Interface to Sentry error reporting
                  ;; https://github.com/sethtrain/raven-clj
                  [raven-clj "1.4.2"]
@@ -17,10 +17,13 @@
                  [stencil "0.5.0"]
                  ;; A comprehensive Clojure client for the entire Amazon AWS api.
                  ;; https://github.com/mcohen01/amazonica
-                 [amazonica "0.3.59"]
+                 [amazonica "0.3.61"]
                  ;; Asynchronous communication for clojure (http-client)
                  ;; https://github.com/ztellman/aleph
                  [aleph "0.4.2-alpha4"]
+                 ;; Apache Commons Validator provides the building blocks for validation.
+                 ;; https://commons.apache.org/proper/commons-validator/
+                 [commons-validator "1.5.1"]
                  ;; Async programming tools (streams/deferred computation)
                  ;; https://github.com/ztellman/manifold
                  [manifold "0.1.5-alpha1"]
@@ -29,7 +32,7 @@
                  [automat "0.2.0-alpha2"]
                  ;; JSON encoding/decoding
                  ;; https://github.com/dakrone/cheshire
-                 [cheshire "5.6.1"]
+                 [cheshire "5.6.2"]
                  ;; Lightweight utility library
                  ;; https://github.com/weavejester/medley
                  [medley "0.8.2"]

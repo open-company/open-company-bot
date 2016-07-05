@@ -1,59 +1,24 @@
-{[:company/name :init]
- ["Hi {{user/name}}, I’m the Slack bot for your OpenCompany dashboard."
-  "I’ll help you share information about the company to keep everyone engaged and on the same page."
+{[:company/logo :init]
+ ["Hi {{user/name}}, I’m the bot for your OpenCompany dashboard."
+  "I’ll help you share information about {{company/name}} to keep everyone engaged and on the same page."
   "The first thing we ought to do is confirm the information OpenCompany has about {{company/name}}."
-  "Is “{{company/name}}” the right name for the company? You can answer with *yes* or *no*."]
- [:company/name :no]
- ["Understood. What name should I use?"]
- [:company/name :str]
- ["OK, I'll update the company name to {{company/name}}. Sound right?"]
- [:company/name :yes-after-update]
- ["Cool, got it."]
- [:company/name :yes]
- ["Great."]
-
- ;; [:company/description :no]
- ;; ["Ok. You can always go to your dashboard later and add a description."
- ;;  "Good work {{user/name}}, your new company dashboard is ready at https://opencompany.com/{{company/slug}}!"
- ;;  "You’ll find a few common topics are already in your dashboard to give you a head start, but it’s easy to pick the ones you want. As information is updated in your dashboard, I’ll let everyone know via Slack."
- ;;  "Just visit https://opencompany.com/{{company/slug}} to get started!"]
- ;; [:company/description :str]
- ;; ["Nice. The description will be updated to “{{company/description}}”, sound right?"]
- ;; [:company/description :yes-after-update]
- ;; ["Ok, I've updated the description."
- ;;  "Good work {{user/name}}, your new company dashboard is ready at https://opencompany.com/{{company/slug}}!"
- ;;  "You’ll find a few common topics are already in your dashboard to give you a head start, but it’s easy to pick the ones you want. As information is updated in your dashboard, I’ll let everyone know via Slack."
- ;;  "Just visit https://opencompany.com/{{company/slug}} to get started!"]
-
- ;; [:company/currency :no]
- ;; ["OK. What’s the right currency for {{company/name}}?"]
- ;; [:company/currency :currency]
- ;; ["OK. The currency will be updated to “{{company/currency}}”, sound right?"]
- ;; [:company/currency :yes-after-update]
- ;; ["Great, I updated the currency to “{{company/currency}}”"
- ;;  "Good work {{user/name}}, we’re done setting up {{company/name}}. You can revisit these settings at anytime here: https://opencompany.com/{{company/slug}}/settings  or message me with “settings”."
- ;;  "{{company/name}} now has a company transparency dashboard with a set of core topics: Founder’s Update, Growth, Key Challenges, Team and Hiring, Product, Finances, Values, and Mission."
- ;;  "You should visit the dashboard now and start updating the information so all {{company/name}} stakeholders have easy access to up to date information: https://opencompany.com/{{company/slug}}"
- ;;  "You can also add or remove topics to better reflect the information your company stakeholders need."
- ;;  "If some of your fellow colleagues are better sources of some of this core company information, please send them a Slack message and ask them to visit the dashboard and update the information."
- ;;  "Once a month we’ll send a stakeholder update to all internal stakeholders (members of this Slack organization) and to any external stakeholders you identify such as investors and advisors."
- ;;  "Are you the CEO or the person that should be responsible for approving the stakeholder update? You can answer with *yes* or *no*."]
- ;; [:company/currency :yes]
- ;; ["Great."
- ;;  "Good work {{user/name}}, we’re done setting up {{company/name}}. You can revisit these settings at anytime here: https://opencompany.com/{{company/slug}}/settings  or message me with “settings”."
- ;;  "{{company/name}} now has a company transparency dashboard with a set of core topics: Founder’s Update, Growth, Key Challenges, Team and Hiring, Product, Finances, Values, and Mission."
- ;;  "You should visit the dashboard now and start updating the information so all {{company/name}} stakeholders have easy access to up to date information: https://opencompany.com/{{company/slug}}"
- ;;  "You can also add or remove topics to better reflect the information your company stakeholders need."
- ;;  "If some of your fellow colleagues are better sources of some of this core company information, please send them a Slack message and ask them to visit the dashboard and update the information."
- ;;  "Once a month we’ll send a stakeholder update to all internal stakeholders (members of this Slack organization) and to any external stakeholders you identify such as investors and advisors."
- ;;  "Are you the CEO or the person that should be responsible for approving the stakeholder update? You can answer with *yes* or *no*."]
-
- ;; [:ceo :no]
- ;; ["OK, who is the CEO or the person that should be responsible for approving the stakeholder update? You can just type in their Slack name (eg. @johndoe)."]
- ;; [:ceo :str]
- ;; ["OK, so {{ceo}} should be responsible for approving the stakeholder update? You can answer with *yes* or *no*."]
- ;; [:ceo :yes-after-update]
- ;; ["Great. Thanks {{user/name}}."]
- ;; [:ceo :yes]
- ;; ["OK. Let's configure who receives Stakeholder updates then."]
- }
+  "{{#company/logo}}Is this the right logo for {{company/name}}? You can answer with *yes* or *no*. {{company/logo}}{{/company/logo}}"
+  "{{^company/logo}}We don't yet have an logo to display on your company's dashboard. *Provide a link* (square works best) or reply with *later*{{/company/logo}}"]
+ [:company/logo :no]
+ ["Understood. What logo should I use? The best dashboard logos fit into a square, roughly 180 x 180 pixels, like what you'd use for a Twitter avatar. You can answer with a URL (e.g. http://acme.com/logo.png). You can also answer with *later*."]
+ [:company/logo :image-url]
+ ["OK, I'll update the logo to this: {{company/logo}} Looks right? You can answer with *yes* or *no*."]
+ [:company/logo :not-now]
+ ["OK, you can always update the logo later at: {{env/origin}}/{{company/slug}}/profile"
+  "Your new OpenCompany dashboard is ready at: {{env/origin}}/{{company/slug}}"
+  "Now it’ll be easier to keep your team, investors and other stakeholders engaged and up to date."]
+ [:company/logo :yes-after-update]
+ ["Cool, got it."
+  "Good work {{user/name}}, your new OpenCompany dashboard is ready at: {{env/origin}}/{{company/slug}}"
+  "(You may need to refresh your dashboard to see the correct logo.)"
+  "Now it’ll be easier to keep your team, investors and other stakeholders engaged and up to date."]
+ [:company/logo :yes]
+ ["Great. We'll keep the image as is."
+  "Your new OpenCompany dashboard is ready at: {{env/origin}}/{{company/slug}}"
+  "Now it’ll be easier to keep your team, investors and other stakeholders engaged and up to date."]
+}

@@ -40,9 +40,9 @@
   "Check for a message and, if one is available, put it into the given deferrred"
   [queue-url deferred]
   (try
-    (timbre/debug "Checking for message in queue:" queue-url)
+    (timbre/trace "Checking for message in queue:" queue-url)
     (when-let [m (get-message queue-url)]
-      (timbre/debug "Got message from queue:" queue-url)
+      (timbre/info "Got message from queue:" queue-url)
       (d/success! deferred m))
     (catch Throwable e
       (timbre/error "Exception while polling SQS:" e)
