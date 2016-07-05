@@ -133,7 +133,7 @@
      :stages    (-> scripts script-id :stages)}))
 
 (defn -transition-init [fsm-atom out-stream msg]
-  (let [->full-msg (fn [text] {:type "message" :text text :channel (-> msg :receiver :id)})
+  (let [full-msg-fn (fn [text] {:type "message" :text text :channel (-> msg :receiver :id)})
         script-id  (-> msg :script :id)
         transition [:init]
         new-fsm    (a/advance (get-in scripts [script-id :fsm])
@@ -142,11 +142,11 @@
     (timbre/info "Starting new scripted conversation:" script-id)
     (reset! fsm-atom new-fsm)
     (doseq [m' (messages (:value new-fsm) transition)]
-      (s/put! out-stream (->full-msg m')))
+      (s/put! out-stream (full-msg-fn m')))
     (d/success-deferred true))) ; use `drain-into` coming in manifold 0.1.5
 
 (defn -transition-msg [fsm-atom out-stream msg]
-  (let [->full-msg   (fn [text] {:type "message" :text text :channel (:channel msg)})
+  (let [full-msg-fn   (fn [text] {:type "message" :text text :channel (:channel msg)})
         compiled-fsm (get-in scripts [(-> @fsm-atom :value :script-id) :fsm])
         fsm-state    (fsm/advance-presence-branch compiled-fsm @fsm-atom)
         allowed?     (fsm/possible-transitions compiled-fsm fsm-state)
@@ -162,10 +162,10 @@
                         :msg msg
                         :transition transition})
           (->> (str "Sorry, " (-> fsm-state :value :init-msg :script :params :user/name)
-                    ". I'm not sure what to do with this."
+                    ". I'm not sure what to do with this. "
                     (or (get not-understood allowed?)
                         (timbre/error "No guide-msg for allowed?" allowed?)))
-               (->full-msg)
+               (full-msg-fn)
                (s/put! out-stream))
           (d/success-deferred true)) ; use `drain-into` coming in manifold 0.1.5
         (do
@@ -174,9 +174,9 @@
             (reset! fsm-atom (a/advance compiled-fsm updated-fsm [:next-stage]))
             (reset! fsm-atom updated-fsm))
           (if (:error (:value updated-fsm))
-            (s/put! out-stream (->full-msg "Sorry, something broke. We're on it. Please try again later."))
+            (s/put! out-stream (full-msg-fn "Sorry, something broke. We're on it. Please try again later."))
             (doseq [m' (messages (:value updated-fsm) transition)]
-              (s/put! out-stream (->full-msg m'))))
+              (s/put! out-stream (full-msg-fn m'))))
           (d/success-deferred true)))))) ; use `drain-into` coming in manifold 0.1.5
 
 (defn transition-fn
