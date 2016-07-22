@@ -27,29 +27,31 @@
    (make-sentry-appender \"YOUR SENTRY DSN\")"
   [dsn]
   (assert dsn "sentry-appender requires a dsn")
-  (merge
-   {:doc "A timbre appender that sends errors to getsentry.com"
-    :min-level :error
-    :enabled? true
-    :async? true
-    :rate-limit nil
-    :fn (fn [args]
+  {:doc "A timbre appender that sends errors to getsentry.com"
+   :min-level :error
+   :enabled? true
+   :async? true
+   :rate-limit nil
+   :fn (fn [args]
           (let [throwable @(:?err_ args)
-                data      (extract-data throwable @(:vargs_ args))]
+                data      (or (extract-data throwable @(:vargs_ args)) (:vargs args))]
             (when throwable
               (sentry/capture
                dsn
                (-> {:message (.getMessage throwable)}
                    (assoc-in [:extra :exception-data] data)
-                   (sentry-interfaces/stacktrace throwable))))))}))
+                   (sentry-interfaces/stacktrace throwable))))))})
 
 (comment
   ;; for repl testing
   (do (require '[taoensso.timbre :as timbre])
       (require '[oc.sentry-appender :reload true])
-      (timbre/merge-config! {:appenders {:sentry-appender (oc.sentry-appender/sentry-appender {:dsn "https://2ee09cf318a14215af9350bf4151e302:affc13dc0b11466bab6546a190c29ddd@app.getsentry.com/76929"})}})
-      (dotimes [_ 1]
-        (timbre/error (ex-info "921392813" {:foo 1})
-                      {:custom-data {:params {:user-id 1}}})))
-
+      (require '[environ.core :as e])
+      (timbre/merge-config! {:appenders {:sentry-appender (oc.sentry-appender/sentry-appender (e/env :sentry-dsn))}})
+      (timbre/error (ex-info "921392813" {:foo 1}) {:custom-data {:params {:user-id 1}}})
+      (try
+        (/ 1 0)
+        (catch Exception e
+          (timbre/error e)))
+    )
   )

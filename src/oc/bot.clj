@@ -53,6 +53,7 @@
 
 (defn sqs-handler [sys msg]
   (let [msg-body   (read-string (:body msg))
+        error (if (:test-error msg-body) (/ 1 0) false) ; test Sentry error reporting
         bot-token  (-> msg-body :bot :token)
         slack-conn (or (slack/connection-for (:slack sys) bot-token)
                        (slack/initialize-connection! (:slack sys) bot-token))
@@ -126,6 +127,9 @@
 
   (aws-sqs/send-message sqs/creds (e/env :aws-sqs-queue) (test-onboard-trigger "Stuart" user-id))
   (aws-sqs/send-message sqs/creds (e/env :aws-sqs-queue) (test-su-trigger "Martin" user-id))
+
+  ;; send a test message that will cause an exception
+  (aws-sqs/send-message sqs/creds (e/env :aws-sqs-queue) {:test-error true})
 
   ;; Messages after bot got invited into channel
   {:type "channel_joined", :channel {:creator "U06SBTXJR", :purpose {:value "Discuss development of the OPENcompany platform", :creator "U06SBTXJR", :last_set 1454426238}, :is_channel true, :name "development", :is_member true, :is_archived false, :created 1448888630, :topic {:value "", :creator "", :last_set 0}, :latest {:type "message", :user "U0JSATHT3", :text "<@U06SBTXJR>: can you kick the bot out of <#C10A1P4H2> please?", :ts "1461337454.001157"}, :id "C0FGNSA2V", :unread_count_display 0, :last_read "1461337454.001157", :members ["U06SBTXJR" "U06SQLDFT" "U06STCKLN" "U0J5LK571" "U0JSATHT3" "U10AR0H50"], :is_general false, :unread_count 0}}

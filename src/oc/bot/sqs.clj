@@ -30,10 +30,12 @@
   "Yield a deferred that will ultimately call `msg-delete` with message put into it.
   If `msg-handler` throws, `msg-delete` will not be called and an error will be logged."
   [msg-handler msg-delete]
+  ;; (throw (IllegalArgumentException. "Test unhandled exception."))
   (let [res (d/deferred)]
     (-> res
         (d/chain msg-handler msg-delete)
-        (d/catch #(timbre/error "Failed to process SQS message:" %)))
+        (d/catch #(do (timbre/error "Failed to process SQS message due to an exception.")
+                      (timbre/error %))))
     res))
 
 (defn dispatch-message
