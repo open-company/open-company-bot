@@ -34,7 +34,7 @@
    :rate-limit nil
    :fn (fn [args]
           (let [throwable @(:?err_ args)
-                data      (or (extract-data throwable @(:vargs_ args)) (:vargs args))]
+                data      (extract-data throwable @(:vargs_ args))]
             (when throwable
               (sentry/capture
                dsn

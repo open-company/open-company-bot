@@ -30,7 +30,6 @@
   "Yield a deferred that will ultimately call `msg-delete` with message put into it.
   If `msg-handler` throws, `msg-delete` will not be called and an error will be logged."
   [msg-handler msg-delete]
-  ;; (throw (IllegalArgumentException. "Test unhandled exception."))
   (let [res (d/deferred)]
     (-> res
         (d/chain msg-handler msg-delete)
