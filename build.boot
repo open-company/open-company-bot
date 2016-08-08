@@ -2,13 +2,13 @@
 (set-env!
  :source-paths #{"src"}
  :resource-paths #{"resources"}
- :dependencies '[[org.clojure/clojure "1.9.0-alpha7"]
+ :dependencies '[[org.clojure/clojure "1.9.0-alpha10"]
                  ;; Managed lifecycle of stateful objects in Clojure
                  ;; https://github.com/stuartsierra/component
                  [com.stuartsierra/component "0.3.1"]
                  ;; Pure Clojure/Script logging library
                  ;; https://github.com/ptaoussanis/timbre
-                 [com.taoensso/timbre "4.5.0-RC4"]
+                 [com.taoensso/timbre "4.7.3"]
                  ;; Interface to Sentry error reporting
                  ;; https://github.com/sethtrain/raven-clj
                  [raven-clj "1.4.2"]
@@ -17,31 +17,31 @@
                  [stencil "0.5.0"]
                  ;; A comprehensive Clojure client for the entire Amazon AWS api.
                  ;; https://github.com/mcohen01/amazonica
-                 [amazonica "0.3.61"]
+                 [amazonica "0.3.73"]
                  ;; Asynchronous communication for clojure (http-client)
                  ;; https://github.com/ztellman/aleph
-                 [aleph "0.4.2-alpha4"]
+                 [aleph "0.4.2-alpha6"]
                  ;; Apache Commons Validator provides the building blocks for validation.
                  ;; https://commons.apache.org/proper/commons-validator/
                  [commons-validator "1.5.1"]
                  ;; Async programming tools (streams/deferred computation)
                  ;; https://github.com/ztellman/manifold
-                 [manifold "0.1.5-alpha1"]
+                 [manifold "0.1.6-alpha1"]
                  ;; Finite state machines
                  ;; https://github.com/ztellman/automat
                  [automat "0.2.0-alpha2"]
                  ;; JSON encoding/decoding
                  ;; https://github.com/dakrone/cheshire
-                 [cheshire "5.6.2"]
+                 [cheshire "5.6.3"]
                  ;; Lightweight utility library
                  ;; https://github.com/weavejester/medley
                  [medley "0.8.2"]
                  ;; Environment variables
                  ;; https://github.com/weavejester/environ
-                 [environ "1.0.3"]
+                 [environ "1.1.0"]
                  ;; Boot tasks ==========================================
-                 [boot-environ "1.0.3" :scope "test"] ; environ integration
-                 [adzerk/boot-test "1.1.1" :scope "test"] ; clojure.test runner
+                 [boot-environ "1.1.0" :scope "test"] ; environ integration
+                 [adzerk/boot-test "1.1.2" :scope "test"] ; clojure.test runner
                  ])
 
 (require '[clojure.java.io :as io]
