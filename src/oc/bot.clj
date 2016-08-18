@@ -59,20 +59,29 @@
                        (slack/initialize-connection! (:slack sys) bot-token))
         sink       (s/stream)]
     (timbre/infof "Received message from SQS: %s\n" msg-body)
-    (s/connect (s/throttle 0.3 sink) (:in-proxy slack-conn))
+    (s/connect (s/throttle 1.0 sink) (:in-proxy slack-conn))
     (doseq [m (adjust-receiver msg-body)]
       (s/put! sink (assoc m :type ::initialize))))
   msg)
 
 (defn -main []
-  (timbre/merge-config!
-   {:level     :info
-    :appenders {:sentry (sentry/sentry-appender (e/env :sentry-dsn))}})
+  (if (e/env :sentry-dsn)
+    (timbre/merge-config!
+     {:level     :info
+      :appenders {:sentry (sentry/sentry-appender (e/env :sentry-dsn))}}))
 
   (Thread/setDefaultUncaughtExceptionHandler
    (reify Thread$UncaughtExceptionHandler
      (uncaughtException [_ thread ex]
        (timbre/error ex "Uncaught exception on" (.getName thread) (.getMessage ex)))))
+
+  (println (str "\n"
+    (str (slurp (clojure.java.io/resource "oc/assets/ascii_art.txt")) "\n")
+    "OpenCompany Bot Service\n\n"
+    "AWS SQS queue: " (e/env :aws-sqs-queue) "\n"
+    "AWS API endpoint: " (e/env :oc-api-endpoint) "\n"
+    "Sentry: " (or (e/env :sentry-dsn) "false") "\n\n"
+    "Ready to serve...\n"))
 
   (component/start (system {:sqs-queue (e/env :aws-sqs-queue)
                             :sqs-msg-handler sqs-handler}))

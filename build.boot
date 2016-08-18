@@ -17,25 +17,25 @@
                  [stencil "0.5.0"]
                  ;; A comprehensive Clojure client for the entire Amazon AWS api.
                  ;; https://github.com/mcohen01/amazonica
-                 [amazonica "0.3.73"]
+                 [amazonica "0.3.74"]
                  ;; Asynchronous communication for clojure (http-client)
                  ;; https://github.com/ztellman/aleph
-                 [aleph "0.4.2-alpha6"]
-                 ;; Apache Commons Validator provides the building blocks for validation.
-                 ;; https://commons.apache.org/proper/commons-validator/
-                 [commons-validator "1.5.1"]
+                 [aleph "0.4.2-alpha4"] ; don't upgrade to 0.4.2-alpha6
                  ;; Async programming tools (streams/deferred computation)
                  ;; https://github.com/ztellman/manifold
                  [manifold "0.1.6-alpha1"]
+                 ;; Apache Commons Validator provides the building blocks for validation.
+                 ;; https://commons.apache.org/proper/commons-validator/
+                 [commons-validator "1.5.1"]
                  ;; Finite state machines
                  ;; https://github.com/ztellman/automat
-                 [automat "0.2.0-alpha2"]
+                 [automat "0.2.0"]
                  ;; JSON encoding/decoding
                  ;; https://github.com/dakrone/cheshire
                  [cheshire "5.6.3"]
                  ;; Lightweight utility library
                  ;; https://github.com/weavejester/medley
-                 [medley "0.8.2"]
+                 [medley "0.8.3"]
                  ;; Environment variables
                  ;; https://github.com/weavejester/environ
                  [environ "1.1.0"]
@@ -57,10 +57,8 @@
 (deftask start []
   (comp (environ :env config)
         (with-pre-wrap fs
-          (require 'oc.bot 'com.stuartsierra.component)
-          ((resolve 'com.stuartsierra.component/start)
-           ((resolve 'oc.bot/system) {:sqs-queue       (:aws-sqs-queue config)
-                                      :sqs-msg-handler (resolve 'oc.bot/sqs-handler)}))
+          (require 'oc.bot)
+          ((resolve 'oc.bot/-main))
           fs)
         (wait)))
 
