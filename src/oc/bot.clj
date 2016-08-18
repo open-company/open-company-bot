@@ -76,7 +76,7 @@
        (timbre/error ex "Uncaught exception on" (.getName thread) (.getMessage ex)))))
 
   (println (str "\n"
-    (str (slurp (clojure.java.io/resource "oc/assets/ascii_art.txt")) "\n")
+    ;;(str (slurp (clojure.java.io/resource "oc/assets/ascii_art.txt")) "\n")
     "OpenCompany Bot Service\n\n"
     "AWS SQS queue: " (e/env :aws-sqs-queue) "\n"
     "AWS API endpoint: " (e/env :oc-api-endpoint) "\n"
