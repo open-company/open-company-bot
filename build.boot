@@ -23,7 +23,7 @@
                  [aleph "0.4.2-alpha4"] ; don't upgrade to 0.4.2-alpha6
                  ;; Async programming tools (streams/deferred computation)
                  ;; https://github.com/ztellman/manifold
-                 [manifold "0.1.6-alpha1"]
+                 [manifold "0.1.5-alpha1"] ; don't upgrade to 0.1.6-alpha1
                  ;; Apache Commons Validator provides the building blocks for validation.
                  ;; https://commons.apache.org/proper/commons-validator/
                  [commons-validator "1.5.1"]
