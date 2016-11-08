@@ -1,9 +1,11 @@
 (ns oc.bot.slack-api
   "Make simple (not web socket) Slack Web API HTTP requests and extract the response."
   (:require [aleph.http :as http]
-            [manifold.deferred :as d]))
+            [manifold.deferred :as d]
+            [taoensso.timbre :as timbre]))
 
 (defn slack-api [method params]
+  (timbre/info "Making slack request:" method)
   (-> (http/get (str "https://slack.com/api/" (name method))
                 {:query-params params :as :json})
       (d/chain #(if (-> % :body :ok)

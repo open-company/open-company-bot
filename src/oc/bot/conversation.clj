@@ -38,7 +38,7 @@
                  (conj (for-duration-chain typing wait-time 3000 out)
                        (fn [_] (s/put! out msg))
                        (fn [success?] (when-not success?
-                                        (throw (ex-info "Failed to out message" {:out out, :msg msg}))))))
+                                        (throw (ex-info "Failed to out message" {:out out :msg msg}))))))
           (d/catch Exception #(throw %))))))
 
 (defrecord ConversationManager [in out dispatcher]

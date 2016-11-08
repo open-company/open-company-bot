@@ -18,9 +18,13 @@
   (stream/put! conn (chesire/generate-string {:type "ping" :id id})))
 
 (defn add-id-and-jsonify [out id msg]
-  (let [msg' (assoc msg :id id)]
-    (timbre/info "Sending to Slack:" msg')
-    (stream/put! out (chesire/generate-string msg'))))
+  (cond 
+    (> (count msg) 4000) (throw (ex-info "Refusing to send large message over Slack limit." {:msg msg}))
+    (s/blank? msg) (throw (ex-info "Refusing to send blank message, not allowed by Slack."))
+    :else
+      (let [msg' (assoc msg :id id)]
+        (timbre/info "Sending to Slack:" msg')
+        (stream/put! out (chesire/generate-string msg')))))
 
 (defn parse [msg out]
   (timbre/info "Event from Slack")
@@ -44,7 +48,7 @@
           ;; TODO the keep alive routine should also check if the connection is open and create a new connection if necessary
           keep-alive (t/every 5000 #(send-ping! conn (swap! msg-idx inc)))]
       
-      ;; Send outgoing messages via function that handles ID passing and incrementing and JSON
+      ;; Send outgoing messages via function that handles ID passing and incrementing and JSON and size limits
       (stream/connect-via out-proxy #(add-id-and-jsonify conn (swap! msg-idx inc) %) conn)
       ;; Receive incoming messages via function that parses JSON and checks for errors
       (stream/connect-via conn #(parse % in-proxy) in-proxy)
