@@ -1,4 +1,5 @@
 (ns oc.bot.slack
+  "Handle a web socket streaming discussion with the Slack real-time API."
   (:require [aleph.http :as http]
             [com.stuartsierra.component :as component]
             [taoensso.timbre :as timbre]
@@ -43,8 +44,6 @@
           ;; TODO the keep alive routine should also check if the connection is open and create a new connection if necessary
           keep-alive (t/every 5000 #(send-ping! conn (swap! msg-idx inc)))]
       
-      (println "Here!")
-
       ;; Send outgoing messages via function that handles ID passing and incrementing and JSON
       (stream/connect-via out-proxy #(add-id-and-jsonify conn (swap! msg-idx inc) %) conn)
       ;; Receive incoming messages via function that parses JSON and checks for errors

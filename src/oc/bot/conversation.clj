@@ -7,7 +7,7 @@
             [automat.core :as a]
             [clojure.string :as string]
             [medley.core :as med]
-            [oc.lib.utils :as u]
+            [oc.bot.lib.utils :as u]
             [oc.bot.slack-api :as slack-api]
             [oc.bot.fsm :as fsm]
             [oc.bot.message :as m]

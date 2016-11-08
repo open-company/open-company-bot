@@ -1,6 +1,6 @@
 (ns oc.bot.utils-test
   (:require
-   [oc.bot.utils :as u]
+   [oc.bot.lib.utils :as u]
    [clojure.test :as test :refer [deftest is]]))
 
 (deftest next-in-test

@@ -51,7 +51,9 @@
       :else
       (throw (ex-info "Failed to adjust receiver" {:msg msg})))))
 
-(defn sqs-handler [sys msg]
+(defn sqs-handler
+  "Handle an incoming SQS message to the bot."
+  [sys msg]
   (let [msg-body   (read-string (:body msg))
         error (if (:test-error msg-body) (/ 1 0) false) ; test Sentry error reporting
         bot-token  (-> msg-body :bot :token)
@@ -79,6 +81,7 @@
      (uncaughtException [_ thread ex]
        (timbre/error ex "Uncaught exception on" (.getName thread) (.getMessage ex)))))
 
+  ;; Echo config information
   (println (str "\n"
     (when c/intro? (str (slurp (clojure.java.io/resource "oc/assets/ascii_art.txt")) "\n"))
     "OpenCompany Bot Service\n\n"
@@ -87,6 +90,7 @@
     "Sentry: " (or c/dsn "false") "\n\n"
     "Ready to serve...\n"))
 
+  ;; Start the system
   (component/start (system {:sqs-queue c/aws-sqs-bot-queue
                             :sqs-msg-handler sqs-handler}))
 

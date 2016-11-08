@@ -2,7 +2,7 @@
   (:require [automat.core :as a]
             [automat.fsm :as f]
             [taoensso.timbre :as timbre]
-            [oc.lib.utils :as u]
+            [oc.bot.lib.utils :as u]
             [oc.lib.api-client :as api]))
 
 (defn dry-run-wrap

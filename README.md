@@ -58,17 +58,8 @@ Let’s go through the lifecycle of a *scripted conversation* step-by-step.
 **oc.bot**
 Consider this the core of things. It’s very little code but it’s where you go if you want to boot up the entire system.
 
-**oc.api-client**
-The start of a OpenCompany API client written in Clojure.
-
-**oc.bot.sqs**
-Code for long-polling SQS, handling messages and deleting them in the case of success.
-
-**oc.bot.language**
-Various helper functions to check if a string matches a certain pattern (yes, no, etc.). Intended be expanded as requirements evolve.
-
-**oc.bot.message**
-Messages sent to users need to be formatted, they need to be parameterised and they need to be read from a description provided inside `scripts/`. This namespace does all of that.
+**oc.bot.config**
+Various helper functions to gather the configuration of the bot and expose it to the system.
 
 **oc.bot.conversation**
 This is responsible for all the state management inside conversations as well as for all message routing from Slack to individual conversations.
@@ -76,10 +67,19 @@ This is responsible for all the state management inside conversations as well as
 **oc.bot.fsm**
 Defines all the state machines that make up conversations and a few helpers related to these.
 
-**oc.bot.slack**
-We want to interact with Slack through their Realtime API, potentially the bot should run on multiple teams for which multiple connections are required. This namespace implements basic building blocks to create, manage and destroy websocket connections to Slacks API.
+**oc.bot.language**
+Various helper functions to check if a string matches a certain pattern (yes, no, etc.). Intended be expanded as requirements evolve.
 
-**oc.bot.utils**
+**oc.bot.message**
+Messages sent to users need to be formatted, they need to be parameterised and they need to be read from a description provided inside `scripts/`. This namespace does all of that.
+
+**oc.bot.slack**
+We want to interact with Slack through their Real Time Messaging API. Potentially the bot should run on multiple teams for which multiple connections are required. This namespace implements basic building blocks to create, manage and destroy websocket connections to Slack's Real Time Messaging API.
+
+**oc.bot.slack-api**
+We also need to interact with Slack through their Web API. This namespace wraps simple HTTP requests to the Slack API.
+
+**oc.bot.lib.utils**
 Generic stuff that is not tied to any particular domain.
 
 #### Notes on Overall Design
@@ -132,10 +132,10 @@ Now the empty lists after these `[stage transition-signal]` pairs can be filled 
 
 Users of the [OpenCompany](https://opencompany.com/) platform should get started by going to [OpenCompany](https://opencompany.com/). The following local setup is **for developers** wanting to work on the platform's Bot software.
 
-Most of the dependencies are internal, meaning [Boot](https://github.com/boot-clj/boot) will handle getting them for you. There are a few exceptions:
+Most of the dependencies are internal, meaning [Leiningen](https://github.com/technomancy/leiningen) will handle getting them for you. There are a few exceptions:
 
 * [Java 8](http://www.oracle.com/technetwork/java/javase/downloads/index.html) - a Java 8 JRE is needed to run Clojure
-* [Boot](https://github.com/boot-clj/boot) - A Clojure build and dependency management tool
+* [Leiningen](https://github.com/technomancy/leiningen) 2.5.1+ - Clojure's build and dependency management tool
 
 #### Java
 
@@ -147,13 +147,21 @@ java -version
 
 If you do not have Java 8+ [download it](http://www.oracle.com/technetwork/java/javase/downloads/index.html) and follow the installation instructions.
 
-#### Boot
+#### Leiningen
 
-Installing Boot is easy, for the most up to date instructions, check out the [Boot README](https://github.com/boot-clj/boot#install).
-You can verify your install with:
+Leiningen is easy to install:
+
+1. Download the latest [lein script from the stable branch](https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein).
+1. Place it somewhere that's on your $PATH (`env | grep PATH`). `/usr/local/bin` is a good choice if it is on your PATH.
+1. Set it to be executable. `chmod 755 /usr/local/bin/lein`
+1. Run it: `lein` This will finish the installation.
+
+Then let Leiningen install the rest of the dependencies:
 
 ```console
-boot -V
+git clone https://github.com/open-company/open-company-bot.git
+cd open-company-bot
+lein deps
 ```
 
 #### Required Configuration and Secrets
@@ -179,9 +187,9 @@ You can also override these settings with environmental variables in the form of
 
 ## Usage
 
-Run the bot with: `boot start`
+Run the bot with: `lein start`
 
-Or start a REPL with: `boot dev`
+Or start a REPL with: `lein repl`
 
 The `oc.bot` namespace contains a `comment` form with everything needed to get the system into a running state in the REPL.
 
@@ -195,7 +203,7 @@ Tests are run in continuous integration of the `master` and `mainline` branches 
 To run the tests locally:
 
 ```console
-boot test!
+lein test
 ```
 
 

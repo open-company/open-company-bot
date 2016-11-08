@@ -1,4 +1,4 @@
-(ns oc.lib.utils)
+(ns oc.bot.lib.utils)
 
 (defn predicate-map-lookup [pred-map v]
   (reduce (fn [acc pred]
