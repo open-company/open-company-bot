@@ -62,10 +62,10 @@
   (downloadable-image? "<https://bigoven-res.cloudinary.com/image/upload/t_recipe-256/mexican-breakfast-burrito-1365962.jpg>")
 
   ;; https://github.com/ztellman/aleph/issues/253
-  @(-> (aleph.http/head "http://aleph.io/images/aleph.png")
+  @(-> (http/head "http://aleph.io/images/aleph.png")
        (manifold.deferred/chain (fn [res] (prn res))))
 
-  @(-> (aleph.http/get "http://aleph.io/images/aleph.png")
+  @(-> (http/get "http://aleph.io/images/aleph.png")
        (manifold.deferred/chain (fn [res] (prn res))))
 
 

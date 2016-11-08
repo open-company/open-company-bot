@@ -7,11 +7,11 @@
             [automat.core :as a]
             [clojure.string :as string]
             [medley.core :as med]
+            [oc.lib.utils :as u]
+            [oc.bot.slack-api :as slack-api]
             [oc.bot.fsm :as fsm]
             [oc.bot.message :as m]
-            [oc.bot.slack-api :as slack-api]
-            [oc.bot.language :as lang]
-            [oc.bot.utils :as u])
+            [oc.bot.language :as lang])
   (:import [java.time LocalDateTime]))
 
 (defn for-duration-chain

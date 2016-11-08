@@ -1,17 +1,17 @@
 (ns oc.bot
-  (:require [com.stuartsierra.component :as component]
+  (:gen-class)
+  (:require [clojure.string :as s]
+            [com.stuartsierra.component :as component]
             [amazonica.aws.sqs :as aws-sqs]
-            [clojure.string :as string]
-            [environ.core :as e]
-            [manifold.stream :as s]
+            [manifold.stream :as stream]
             [taoensso.timbre :as timbre]
-            [oc.sentry-appender :as sentry]
-            [oc.bot.sqs :as sqs]
-            [oc.bot.slack :as slack]
+            [oc.lib.sentry-appender :as sentry]
+            [oc.lib.sqs :as sqs]
             [oc.bot.slack-api :as slack-api]
+            [oc.bot.config :as c]
+            [oc.bot.slack :as slack]
             [oc.bot.conversation :as conv]
-            [oc.bot.message :as msg])
-  (:gen-class))
+            [oc.bot.message :as msg]))
 
 (defn system [config-options]
   (let [{:keys [sqs-queue sqs-msg-handler]} config-options]
@@ -29,7 +29,7 @@
        (not (= "USLACKBOT" (:id user)))))
 
 (defn first-name [name]
-  (first (string/split name #"\s")))
+  (first (clojure.string/split name #"\s")))
 
 (defn adjust-receiver
   "Inspect the receiver field and return one or more initialization messages
@@ -39,8 +39,8 @@
         type  (-> msg :receiver :type)]
     (timbre/info "Adjusting receiver" {:type type})
     (cond
-      (and (= :user type) (= \U (-> msg :receiver :id first)))
-      [(assoc msg :receiver {:id (slack-api/get-im-channel token (-> msg :receiver :id))
+      (and (= :user type) (s/starts-with? (-> msg :receiver :id) "slack-U"))
+      [(assoc msg :receiver {:id (slack-api/get-im-channel token (last (s/split (-> msg :receiver :id) #"-")))
                              :type :channel})]
 
       (and (= :all-members type))
@@ -57,36 +57,40 @@
         bot-token  (-> msg-body :bot :token)
         slack-conn (or (slack/connection-for (:slack sys) bot-token)
                        (slack/initialize-connection! (:slack sys) bot-token))
-        sink       (s/stream)]
+        sink       (stream/stream)]
     (timbre/infof "Received message from SQS: %s\n" msg-body)
-    (s/connect (s/throttle 1.0 sink) (:in-proxy slack-conn))
+    (stream/connect (stream/throttle 1.0 sink) (:in-proxy slack-conn))
     (doseq [m (adjust-receiver msg-body)]
-      (s/put! sink (assoc m :type ::initialize))))
+      (stream/put! sink (assoc m :type ::initialize))))
   msg)
 
 (defn -main []
-  (if (e/env :sentry-dsn)
-    (timbre/merge-config!
-     {:level     :info
-      :appenders {:sentry (sentry/sentry-appender (e/env :sentry-dsn))}}))
 
+  ;; Log errors go to Sentry
+  (if c/dsn
+    (timbre/merge-config!
+      {:level     :info
+       :appenders {:sentry (sentry/sentry-appender c/dsn)}})
+    (timbre/merge-config! {:level :debug}))
+
+  ;; Uncaught exceptions go to Sentry
   (Thread/setDefaultUncaughtExceptionHandler
    (reify Thread$UncaughtExceptionHandler
      (uncaughtException [_ thread ex]
        (timbre/error ex "Uncaught exception on" (.getName thread) (.getMessage ex)))))
 
   (println (str "\n"
-    ;;(str (slurp (clojure.java.io/resource "oc/assets/ascii_art.txt")) "\n")
+    (when c/intro? (str (slurp (clojure.java.io/resource "oc/assets/ascii_art.txt")) "\n"))
     "OpenCompany Bot Service\n\n"
-    "AWS SQS queue: " (e/env :aws-sqs-queue) "\n"
-    "AWS API endpoint: " (e/env :oc-api-endpoint) "\n"
-    "Sentry: " (or (e/env :sentry-dsn) "false") "\n\n"
+    "AWS SQS queue: " c/aws-sqs-bot-queue "\n"
+    "AWS API endpoint: " c/oc-api-endpoint "\n"
+    "Sentry: " (or c/dsn "false") "\n\n"
     "Ready to serve...\n"))
 
-  (component/start (system {:sqs-queue (e/env :aws-sqs-queue)
+  (component/start (system {:sqs-queue c/aws-sqs-bot-queue
                             :sqs-msg-handler sqs-handler}))
 
-  (deref (s/take! (s/stream)))) ; block forever
+  (deref (stream/take! (stream/stream)))) ; block forever
 
 (comment
   (do
@@ -125,7 +129,7 @@
 
   (sqs-handler sys {:body (pr-str (test-onboard-trigger "Martin" user-id))})
 
-  (def sys (system {:sqs-queue (e/env :aws-sqs-queue)
+  (def sys (system {:sqs-queue c/aws-sqs-bot-queue
                     :sqs-msg-handler sqs-handler}))
 
   (alter-var-root #'sys component/start)

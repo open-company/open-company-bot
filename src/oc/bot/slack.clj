@@ -1,49 +1,59 @@
 (ns oc.bot.slack
-  (:require [oc.bot.conversation :as conv]
-            [oc.bot.slack-api :as slack-api]
-            [aleph.http :as http]
+  (:require [aleph.http :as http]
             [com.stuartsierra.component :as component]
-            [clojure.string :as string]
             [taoensso.timbre :as timbre]
-            [manifold.stream :as s]
+            [manifold.stream :as stream]
             [manifold.time :as t]
-            [manifold.deferred :as d]
-            [environ.core :as e]
-            [cheshire.core :as chesire]))
+            [cheshire.core :as chesire]
+            [oc.bot.slack-api :as slack-api]
+            [oc.bot.conversation :as conv]))
 
 (defn send-ping!
   "Send a ping message to the Slack RTM API to make sure the connection stays alive
    see: https://api.slack.com/rtm#ping_and_pong"
   [conn id]
   ;; Add some error handling/logging
-  (s/put! conn (chesire/generate-string {:type "ping" :id id})))
+  (timbre/info "Pinging Slack")
+  (stream/put! conn (chesire/generate-string {:type "ping" :id id})))
 
 (defn add-id-and-jsonify [out id msg]
   (let [msg' (assoc msg :id id)]
     (timbre/info "Sending to Slack:" msg')
-    (s/put! out (chesire/generate-string msg'))))
+    (stream/put! out (chesire/generate-string msg'))))
 
 (defn parse [msg out]
+  (timbre/info "Event from Slack")
   (let [m (chesire/parse-string msg keyword)]
     (when-not (get m :ok ::ok)
       (timbre/error "Error event from Slack" m))
-    (s/put! out m)))
+    (stream/put! out m)))
 
 (defrecord SlackConnection [ws-url]
   component/Lifecycle
+
   (start [component]
+    
     (timbre/info "Starting SlackConnection" ws-url)
     (assert ws-url "Websocket URL required to establish connection")
+    
     (let [msg-idx    (atom 0) ; messages need pos-int ids for same conn
-          conn       @(aleph.http/websocket-client ws-url)
-          out-proxy  (s/stream)
-          in-proxy   (s/stream)
+          conn       @(http/websocket-client ws-url) ; websocket connection to Slack
+          out-proxy  (stream/stream) ; stream for incoming messages
+          in-proxy   (stream/stream) ; stream for outgoing messages
           ;; TODO the keep alive routine should also check if the connection is open and create a new connection if necessary
           keep-alive (t/every 5000 #(send-ping! conn (swap! msg-idx inc)))]
-      ;; TODO use s/transform here to generate new sources (maybe)
-      (s/connect-via out-proxy #(add-id-and-jsonify conn (swap! msg-idx inc) %) conn)
-      (s/connect-via conn #(parse % in-proxy) in-proxy)
-      (s/on-closed conn #(timbre/info "SlackConnection closed" ws-url))
+      
+      (println "Here!")
+
+      ;; Send outgoing messages via function that handles ID passing and incrementing and JSON
+      (stream/connect-via out-proxy #(add-id-and-jsonify conn (swap! msg-idx inc) %) conn)
+      ;; Receive incoming messages via function that parses JSON and checks for errors
+      (stream/connect-via conn #(parse % in-proxy) in-proxy)
+      
+      ;; Log closing of the connection
+      (stream/on-closed conn #(timbre/info "SlackConnection closed" ws-url))
+      
+      ;; Component state
       (assoc component
              :msg-idx msg-idx
              :conn conn
@@ -54,9 +64,9 @@
 
   (stop [component]
     (timbre/info "Stopping SlackConnection" ws-url)
-    (s/close! (:conn component))
-    (s/close! (:in-proxy component))
-    (s/close! (:out-proxy component))
+    (stream/close! (:conn component))
+    (stream/close! (:in-proxy component))
+    (stream/close! (:out-proxy component))
     (component/stop (:conversation-manager component))
     ((:keep-alive component))
     (dissoc component :conn :keep-alive :msg-idx :conversation-manager)))
@@ -68,9 +78,11 @@
 
 (defrecord SlackConnectionManager []
   component/Lifecycle
+  
   (start [component]
     (timbre/info "Starting SlackConnectionManager")
     (assoc component :connections (atom {})))
+  
   (stop [component]
     (timbre/info "Stopping SlackConnectionManager")
     (doseq [c (vals @(:connections component))]
@@ -92,7 +104,7 @@
 
 (comment
   (def bot
-    (map->SlackConnection {:ws-url (get-websocket-url (e/env :slack-bot-token))}))
+    (map->SlackConnection {:ws-url (get-websocket-url c/slack-bot-token)}))
 
   (alter-var-root #'bot component/start)
 

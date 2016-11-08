@@ -2,8 +2,8 @@
   (:require [automat.core :as a]
             [automat.fsm :as f]
             [taoensso.timbre :as timbre]
-            [oc.bot.utils :as u]
-            [oc.api-client :as api]))
+            [oc.lib.utils :as u]
+            [oc.lib.api-client :as api]))
 
 (defn dry-run-wrap
   "Wrap `action-fn` so that it only calls `action-fn` if the FSM's state

@@ -1,7 +1,5 @@
-;; mostly copied from https://github.com/yeller/yeller-timbre-appender/blob/master/src/yeller/timbre_appender.clj
-;; Thanks Tom!
-
-(ns oc.sentry-appender
+;; Based on https://github.com/yeller/yeller-timbre-appender/blob/master/src/yeller/timbre_appender.clj
+(ns oc.lib.sentry-appender
   (:require [raven-clj.core :as sentry]
             [raven-clj.interfaces :as sentry-interfaces]))
 

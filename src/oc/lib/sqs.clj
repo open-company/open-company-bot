@@ -1,15 +1,15 @@
-(ns oc.bot.sqs
+(ns oc.lib.sqs
   (:require [amazonica.aws.sqs :as sqs]
             [com.stuartsierra.component :as component]
             [taoensso.timbre :as timbre]
             [manifold.stream :as s]
             [manifold.time :as t]
             [manifold.deferred :as d]
-            [environ.core :as e]))
+            [oc.bot.config :as c]))
 
 (def creds
-  {:access-key (e/env :aws-access-key-id)
-   :secret-key (e/env :aws-secret-access-key)})
+  {:access-key c/aws-access-key-id
+   :secret-key c/aws-secret-access-key})
 
 (defn get-message
   "Get a single message from SQS"

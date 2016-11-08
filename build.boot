@@ -2,13 +2,13 @@
 (set-env!
  :source-paths #{"src"}
  :resource-paths #{"resources"}
- :dependencies '[[org.clojure/clojure "1.9.0-alpha10"]
+ :dependencies '[[org.clojure/clojure "1.9.0-alpha11"]
                  ;; Managed lifecycle of stateful objects in Clojure
                  ;; https://github.com/stuartsierra/component
                  [com.stuartsierra/component "0.3.1"]
                  ;; Pure Clojure/Script logging library
                  ;; https://github.com/ptaoussanis/timbre
-                 [com.taoensso/timbre "4.7.3"]
+                 [com.taoensso/timbre "4.7.4"]
                  ;; Interface to Sentry error reporting
                  ;; https://github.com/sethtrain/raven-clj
                  [raven-clj "1.4.2"]
@@ -17,7 +17,7 @@
                  [stencil "0.5.0"]
                  ;; A comprehensive Clojure client for the entire Amazon AWS api.
                  ;; https://github.com/mcohen01/amazonica
-                 [amazonica "0.3.74"]
+                 [amazonica "0.3.75"]
                  ;; Asynchronous communication for clojure (http-client)
                  ;; https://github.com/ztellman/aleph
                  [aleph "0.4.2-alpha4"] ; don't upgrade to 0.4.2-alpha6
