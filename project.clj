@@ -1,4 +1,4 @@
-(defproject open-company-email "0.2.0-SNAPSHOT"
+(defproject open-company-bot "0.2.0-SNAPSHOT"
   :description "OpenCompany Bot Service"
   :url "https://opencompany.com/"
   :license {
