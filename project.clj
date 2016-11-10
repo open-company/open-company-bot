@@ -57,6 +57,7 @@
         :aws-sqs-bot-queue "https://sqs.REGION.amazonaws.com/CHANGE/ME"
         :oc-api-endpoint "http://localhost:3000"
         :intro "true"
+        :log-level "trace"
       }
       :plugins [
         [lein-bikeshed "0.3.0"] ; Check for code smells https://github.com/dakrone/lein-bikeshed

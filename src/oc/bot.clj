@@ -13,11 +13,13 @@
             [oc.bot.conversation :as conv]
             [oc.bot.message :as msg]))
 
-(defn system [config-options]
-  (let [{:keys [sqs-queue sqs-msg-handler]} config-options]
+(defn system
+  "Define our system. There are 2 components of our system, an SQS listener, and a Slack connection manager."
+  [config-options]
+  (let [{:keys [sqs-creds sqs-queue-url sqs-msg-handler]} config-options]
     (component/system-map
       :slack (slack/slack-connection-manager)
-      :sqs   (-> (sqs/sqs-listener sqs-queue sqs-msg-handler)
+      :sqs   (-> (sqs/sqs-listener sqs-creds sqs-queue-url sqs-msg-handler)
                  (component/using [:slack])))))
 
 (defn slack-handler [conn msg-idx msg] (prn msg))
@@ -54,14 +56,18 @@
 (defn sqs-handler
   "Handle an incoming SQS message to the bot."
   [sys msg]
-  (let [msg-body   (read-string (:body msg))
-        error (if (:test-error msg-body) (/ 1 0) false) ; test Sentry error reporting
+  {:pre [(:body msg)]}
+  (let [msg-body (read-string (:body msg))
+        error (if (:test-error msg-body) (/ 1 0) false) ; a message testing Sentry error reporting
         bot-token  (-> msg-body :bot :token)
+        _missing_token (if bot-token false (throw (ex-info "Message body missing bot token." {:msg-body msg-body})))
+        ;; Get the existing slack connection for this bot token from the slack connection manager or initialize
+        ;; a new one
         slack-conn (or (slack/connection-for (:slack sys) bot-token)
                        (slack/initialize-connection! (:slack sys) bot-token))
-        sink       (stream/stream)]
+        sink       (stream/stream 1000)] ; stream w/ a buffer to handle requests from this SQS message to the Slack connection
     (timbre/infof "Received message from SQS: %s\n" msg-body)
-    (stream/connect (stream/throttle 1.0 sink) (:in-proxy slack-conn))
+    (stream/connect sink (:in-proxy slack-conn))
     (doseq [m (adjust-receiver msg-body)]
       (stream/put! sink (assoc m :type ::initialize))))
   msg)
@@ -71,9 +77,9 @@
   ;; Log errors go to Sentry
   (if c/dsn
     (timbre/merge-config!
-      {:level     :info
-       :appenders {:sentry (sentry/sentry-appender c/dsn)}})
-    (timbre/merge-config! {:level :debug}))
+      {:appenders {:level (keyword c/log-level)
+                   :sentry (sentry/sentry-appender c/dsn)}})
+    (timbre/merge-config! {:level (keyword c/log-level)}))
 
   ;; Uncaught exceptions go to Sentry
   (Thread/setDefaultUncaughtExceptionHandler
@@ -90,9 +96,11 @@
     "Sentry: " (or c/dsn "false") "\n\n"
     "Ready to serve...\n"))
 
-  ;; Start the system
-  (component/start (system {:sqs-queue c/aws-sqs-bot-queue
-                            :sqs-msg-handler sqs-handler}))
+  ;; Start the system, which will start long polling SQS
+  (component/start (system {:sqs-queue-url c/aws-sqs-bot-queue
+                            :sqs-msg-handler sqs-handler
+                            :sqs-creds {:access-key c/aws-access-key-id
+                                        :secret-key c/aws-secret-access-key}}))
 
   (deref (stream/take! (stream/stream)))) ; block forever
 

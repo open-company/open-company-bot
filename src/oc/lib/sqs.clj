@@ -1,65 +1,74 @@
 (ns oc.lib.sqs
-  (:require [amazonica.aws.sqs :as sqs]
-            [com.stuartsierra.component :as component]
-            [taoensso.timbre :as timbre]
+  "
+  A component to consume messages from an SQS queue with a long poll and pass them off to a handler, deleting them if
+  they are processed successfully (no exception) by the handler.
+
+  https://github.com/stuartsierra/component
+  "
+  (:require [com.stuartsierra.component :as component]
+            [amazonica.aws.sqs :as sqs]
             [manifold.stream :as s]
             [manifold.time :as t]
             [manifold.deferred :as d]
-            [oc.bot.config :as c]))
+            [taoensso.timbre :as timbre]))
 
-(def creds
-  {:access-key c/aws-access-key-id
-   :secret-key c/aws-secret-access-key})
-
-(defn get-message
+(defn- get-message
   "Get a single message from SQS"
-  [queue-url]
-  (-> (sqs/receive-message creds
-                           :queue-url queue-url
+  [sqs-creds sqs-queue-url]
+  (-> (sqs/receive-message sqs-creds
+                           :queue-url sqs-queue-url
                            :wait-time-seconds 2
                            :max-number-of-messages 1)
       :messages first))
 
-(defn delete-message!
+(defn- delete-message!
   "Delete a previously received message so it cannot be retrieved by other consumers"
-  [creds queue-url msg]
-  ;; (prn 'deleting-msg (:body msg))
-  (sqs/delete-message creds (assoc msg :queue-url queue-url)))
+  [sqs-creds sqs-queue-url msg]
+  (timbre/trace "Deleteing message" msg  "in queue" sqs-queue-url)
+  (sqs/delete-message sqs-creds (assoc msg :queue-url sqs-queue-url)))
 
-(defn process
-  "Yield a deferred that will ultimately call `msg-delete` with message put into it.
-  If `msg-handler` throws, `msg-delete` will not be called and an error will be logged."
+(defn- msg-tracer [m]
+  (timbre/trace "Processing message:" m)
+  m)
+
+(defn- process
+  "
+  Yield to a message handling deferred function that will ultimately call the `msg-delete` function if handling
+  succeeds.
+  
+  If the `msg-handler` function throws an exception, `msg-delete` will not be called and an error will be logged.
+  "
   [msg-handler msg-delete]
   (let [res (d/deferred)]
     (-> res
-        (d/chain msg-handler msg-delete)
+        (d/chain msg-tracer msg-handler msg-delete)
         (d/catch #(do (timbre/error "Failed to process SQS message due to an exception.")
                       (timbre/error %))))
     res))
 
-(defn dispatch-message
+(defn- dispatch-message
   "Check for a message and, if one is available, put it into the given deferrred"
-  [queue-url deferred]
+  [sqs-creds sqs-queue-url deferred]
+  (timbre/trace "Checking for messages in queue:" sqs-queue-url)
   (try
-    (timbre/trace "Checking for message in queue:" queue-url)
-    (when-let [m (get-message queue-url)]
-      (timbre/info "Got message from queue:" queue-url)
+    (when-let [m (get-message sqs-creds sqs-queue-url)]
+      (timbre/info "Got message from queue:" sqs-queue-url)
       (d/success! deferred m))
     (catch Throwable e
       (timbre/error "Exception while polling SQS:" e)
       (throw e))))
 
-(defrecord SQSListener [queue-url message-handler]
+(defrecord SQSListener [sqs-creds sqs-queue-url message-handler]
+  
   ;; Implement the Lifecycle protocol
   component/Lifecycle
+  
   (start [component]
     (timbre/info "Starting SQSListener")
-    (let [delete!   (partial delete-message! creds queue-url)
-          handle!   (partial message-handler component)
+    (let [handle! (partial message-handler component)
+          delete! (partial delete-message! sqs-creds sqs-queue-url)
           processor (fn [] (process handle! delete!))
-          retriever (t/every 3000 #(dispatch-message queue-url (processor)))]
-      ;; (s/consume (partial (:message-nfhandler component) conn (swap! msg-idx inc)) conn)
-      ;; (d/catch conn #(str "something unexpected: " (.getMessage %))) ; not sure if this actually does anything 
+          retriever (t/every 3000 #(dispatch-message sqs-creds sqs-queue-url (processor)))]
       (assoc component :retriever retriever)))
 
   (stop [component]
@@ -67,63 +76,5 @@
     (when-let [r (:retriever component)] (r))
     (dissoc component :retriever)))
 
-(defn sqs-listener [queue-url message-handler]
-  (map->SQSListener {:queue-url queue-url :message-handler message-handler}))
-
-(comment
-  (def sqs (sqs-listener "https://sqs.us-east-1.amazonaws.com/892554801312/my-queue" nil))
-  
-  (alter-var-root #'sqs component/start)
-
-  (alter-var-root #'sqs component/stop)
-
-  (sqs/create-queue creds
-                    :queue-name "my-queue"
-                    :attributes
-                    {:VisibilityTimeout 30 ; sec
-                     :MaximumMessageSize 65536 ; bytes
-                     :MessageRetentionPeriod 1209600 ; sec
-                     :ReceiveMessageWaitTimeSeconds 3}) ; sec
-
-  ;; full list of attributes at
-  ;; http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/sqs/model/GetQueueAttributesRequest.html
-
-  (def st (s/periodically 3000 #(get-message (e/env :aws-sqs-queue))))
-
-  (s/periodically 3000 #(prn :x))
-
-  (get-message (e/env :aws-sqs-queue))
-
-  (e/env :aws-sqs-queue)
-
-  (sqs/create-queue creds "DLQ")
-
-  (sqs/list-queues creds)
-
-  (def queue (sqs/find-queue creds "my-queue"))
-
-  (sqs/assign-dead-letter-queue
-   creds
-   queue
-   (sqs/find-queue "DLQ")
-   10)
-
-  (def msgs (sqs/receive-message creds queue))
-
-  (sqs/receive-message creds (e/env :aws-sqs-queue))
-
-
-  ;; (sqs/receive-message creds queue)
-
-  (sqs/receive-message creds
-                       :queue-url queue
-                       :wait-time-seconds 2
-                       :max-number-of-messages 1
-                       ;; :delete true ;; deletes any received messages after receipt
-                       ;; :attribute-names ["All"]
-                       )
-
-  (-> "my-queue" sqs/find-queue sqs/delete-queue)
-  (->> "DLQ" (sqs/find-queue creds) (sqs/delete-queue creds))
-
-  )
+(defn sqs-listener [sqs-creds sqs-queue-url message-handler]
+  (map->SQSListener {:sqs-creds sqs-creds :sqs-queue-url sqs-queue-url :message-handler message-handler}))

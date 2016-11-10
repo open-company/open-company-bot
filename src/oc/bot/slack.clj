@@ -1,6 +1,7 @@
 (ns oc.bot.slack
   "Handle a web socket streaming discussion with the Slack real-time API."
-  (:require [aleph.http :as http]
+  (:require [clojure.string :as s]
+            [aleph.http :as http]
             [com.stuartsierra.component :as component]
             [taoensso.timbre :as timbre]
             [manifold.stream :as stream]
@@ -14,21 +15,26 @@
    see: https://api.slack.com/rtm#ping_and_pong"
   [conn id]
   ;; Add some error handling/logging
-  (timbre/info "Pinging Slack")
+  (timbre/info "Pinging Slack...")
   (stream/put! conn (chesire/generate-string {:type "ping" :id id})))
 
 (defn add-id-and-jsonify [out id msg]
-  (cond 
-    (> (count msg) 4000) (throw (ex-info "Refusing to send large message over Slack limit." {:msg msg}))
-    (s/blank? msg) (throw (ex-info "Refusing to send blank message, not allowed by Slack."))
-    :else
-      (let [msg' (assoc msg :id id)]
-        (timbre/info "Sending to Slack:" msg')
-        (stream/put! out (chesire/generate-string msg')))))
+  {:pre [(number? id)
+         (map? msg)
+         (string? (:type msg))
+         (or (nil? (:text msg)) (string? (:text msg)))]}
+  (let [text (:text msg)
+        msg' (assoc msg :id id)]
+    (cond 
+      (and text (> (count text) 4000)) (throw (ex-info "Refusing to send large message over Slack limit." {:msg msg}))
+      (and text (s/blank? text)) (throw (ex-info "Refusing to send blank message, not allowed by Slack." {:msg msg}))
+      :else (do (timbre/info "Sending to Slack:" msg')
+                (stream/put! out (chesire/generate-string msg'))))))
 
 (defn parse [msg out]
-  (timbre/info "Event from Slack")
+  (timbre/trace "Event received from Slack.")
   (let [m (chesire/parse-string msg keyword)]
+    (timbre/trace "Event from Slack:" m)
     (when-not (get m :ok ::ok)
       (timbre/error "Error event from Slack" m))
     (stream/put! out m)))
@@ -43,10 +49,10 @@
     
     (let [msg-idx    (atom 0) ; messages need pos-int ids for same conn
           conn       @(http/websocket-client ws-url) ; websocket connection to Slack
-          out-proxy  (stream/stream) ; stream for incoming messages
-          in-proxy   (stream/stream) ; stream for outgoing messages
+          out-proxy  (stream/stream 5000) ; buffered stream for outgoing messages
+          in-proxy   (stream/stream 1000) ; buffered stream for incoming messages
           ;; TODO the keep alive routine should also check if the connection is open and create a new connection if necessary
-          keep-alive (t/every 5000 #(send-ping! conn (swap! msg-idx inc)))]
+          keep-alive (t/every 3000 #(send-ping! conn (swap! msg-idx inc)))]
       
       ;; Send outgoing messages via function that handles ID passing and incrementing and JSON and size limits
       (stream/connect-via out-proxy #(add-id-and-jsonify conn (swap! msg-idx inc) %) conn)
@@ -95,12 +101,18 @@
 (defn slack-connection-manager []
   (map->SlackConnectionManager {}))
 
-(defn initialize-connection! [^SlackConnectionManager conn-man bot-token]
+(defn initialize-connection! 
+  "Create a Slack RTM API web socket connection for the specified bot token and assoc it by bot token into the
+  connections atom."
+  [^SlackConnectionManager conn-man bot-token]
+  (timbre/info "Initializing new Slack RTM web socket connection for" bot-token)
   (let [c (component/start (slack-connection bot-token))]
     (swap! (:connections conn-man) assoc bot-token c)
     c))
 
-(defn connection-for [^SlackConnectionManager conn-man bot-token]
+(defn connection-for
+  "If there is a Slack RTM API web socket for the specified bot token already in the connections atom, return it."
+  [^SlackConnectionManager conn-man bot-token]
   (-> conn-man :connections deref (get bot-token)))
 
 ;; REPL stuff =========================================================

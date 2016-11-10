@@ -9,6 +9,10 @@
 
 (defonce intro? (bool (or (env :intro ) false)))
 
+;; ----- Logging -----
+
+(defonce log-level (or (env :log-level) :info))
+
 ;; ----- Sentry -----
 
 (defonce dsn (or (env :sentry-dsn) false))
