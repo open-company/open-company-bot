@@ -28,3 +28,21 @@
 
 (defn get-websocket-url [token]
   (-> @(slack-api :rtm.start {:token token}) :body :url))
+
+(defn post-message [token channel text]
+  (-> @(slack-api :chat.postMessage {:token token
+                                     :text text
+                                     :channel channel
+                                     :unfurl_links false}) :body :ok))
+
+(comment
+
+  (require '[oc.bot.slack-api :as sapi] :reload)
+
+  (def token "xoxb-103298796854-bdmHI5DS6AwWE5AkuR5KqNoR")
+  (def user-id "U1B0U2XC7")
+
+  (def im-channel (sapi/get-im-channel token user-id))
+  (sapi/post-message token im-channel "Test it.")
+
+  )

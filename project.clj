@@ -14,11 +14,11 @@
   ;; All profile dependencies
   :dependencies [
     [org.clojure/clojure "1.9.0-alpha14"] ; Lisp on the JVM http://clojure.org/documentation
+    [org.clojure/core.async "0.2.395"] ; Async programming and communication https://github.com/clojure/core.async
     [environ "1.1.0"] ; Environment settings from different sources https://github.com/weavejester/environ
     [com.taoensso/timbre "4.8.0-alpha1"] ; Logging https://github.com/ptaoussanis/timbre
     [raven-clj "1.5.0"] ; Interface to Sentry error reporting https://github.com/sethtrain/raven-clj
-    [com.stuartsierra/component "0.3.1"] ; Component Lifecycle
-    [amazonica "0.3.77"] ; A comprehensive Clojure client for the entire Amazon AWS api https://github.com/mcohen01/amazonica
+    [com.stuartsierra/component "0.3.1"] ; Component Lifecycle https://github.com/stuartsierra/component
     [medley "0.8.3"] ; Lightweight utility library https://github.com/weavejester/medley
     [cheshire "5.6.3"] ; JSON encoding / decoding https://github.com/dakrone/cheshire
     [automat "0.2.0"] ; Finite state machines https://github.com/ztellman/automat
@@ -27,6 +27,7 @@
     [clj-http "3.3.0"] ; HTTP client https://github.com/dakrone/clj-http
     [aleph "0.4.2-alpha8"] ; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph don't upgrade to 0.4.2-alpha
     [manifold "0.1.6-alpha3"] ; Async programming tools https://github.com/ztellman/manifold
+    [open-company/lib "0.0.6-04c024d"] ; Library for OC projects https://github.com/open-company/open-company-lib
   ]
 
   ;; All profile plugins
@@ -60,7 +61,7 @@
         :log-level "trace"
       }
       :plugins [
-        [lein-bikeshed "0.3.0"] ; Check for code smells https://github.com/dakrone/lein-bikeshed
+        [lein-bikeshed "0.4.0"] ; Check for code smells https://github.com/dakrone/lein-bikeshed
         [lein-checkall "0.1.1"] ; Runs bikeshed, kibit and eastwood https://github.com/itang/lein-checkall
         [lein-pprint "1.1.2"] ; pretty-print the lein project map https://github.com/technomancy/leiningen/tree/master/lein-pprint
         [lein-ancient "0.6.10"] ; Check for outdated dependencies https://github.com/xsc/lein-ancient
