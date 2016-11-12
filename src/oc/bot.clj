@@ -2,10 +2,12 @@
   (:gen-class)
   (:require [clojure.string :as s]
             [clojure.core.async :as async :refer (<!! >!!)]
+            [cuerdas.core :as str]
             [manifold.stream :as stream]
             [com.stuartsierra.component :as component]
             [amazonica.aws.sqs :as aws-sqs]
             [taoensso.timbre :as timbre]
+            [clj-time.format :as format]
             [oc.lib.sentry-appender :as sentry]
             [oc.lib.sqs :as sqs]
             [oc.bot.slack-api :as slack-api]
@@ -14,6 +16,9 @@
             [oc.bot.message :as msg]))
 
 (def bot-chan (async/chan 10000)) ; buffered channel to protect Slack from too many requests
+
+(def iso-format (format/formatters :date-time)) ; ISO 8601
+(def link-format (format/formatter "YYYY-MM-dd")) ; Format for date in URL of stakeholder-update links
 
 (defn- system
   "Define our system. There are 2 components of our system, an SQS listener, and a Slack connection manager."
@@ -82,20 +87,26 @@
          (map? (-> msg :script :params))
          (string? (-> msg :script :params :company/slug))
          (string? (-> msg :script :params :stakeholder-update/slug))
+         (string? (-> msg :script :params :stakeholder-update/created-at))
          (string? (-> msg :script :params :env/origin))]}
   (timbre/info "Sending stakeholder update message to Slack channel:" channel)
   (let [params (-> msg :script :params)
         origin-url (:env/origin params)
         company-slug (:company/slug params)        
         update-slug (:stakeholder-update/slug params)
+        created-at (format/parse iso-format (:stakeholder-update/created-at params))
+        update-time (format/unparse link-format created-at)
         user-name (:user/name params)
         user-prompt (if user-name (str " " user-name ", ") ", ")
         company-name (:company/name params)
         company-prompt (if company-name (str " for " company-name " ") " ")
         note (:stakeholder-update/note params)
-        clean-note (when note (s/replace note #"&nbsp;" " "))
+        clean-note (when note (-> note ; remove HTML
+                                (s/replace #"&nbsp;" " ")
+                                (str/strip-tags)
+                                (str/strip-newlines)))
         channel (-> msg :receiver :id)
-        update-url (s/join "/" [origin-url company-slug "updates" update-slug])
+        update-url (s/join "/" [origin-url company-slug "updates" update-time update-slug])
         basic-text (str "Hey" user-prompt "I’ve got great news. The newest stakeholder update for" company-prompt
                         "is available at " update-url)
         full-text (if (s/blank? note) basic-text (str basic-text "\n> " clean-note))]

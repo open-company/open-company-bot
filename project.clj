@@ -19,11 +19,13 @@
     [com.taoensso/timbre "4.8.0-alpha1"] ; Logging https://github.com/ptaoussanis/timbre
     [raven-clj "1.5.0"] ; Interface to Sentry error reporting https://github.com/sethtrain/raven-clj
     [com.stuartsierra/component "0.3.1"] ; Component Lifecycle https://github.com/stuartsierra/component
+    [funcool/cuerdas "2.0.0"] ; String manipulation library https://github.com/funcool/cuerdas
     [medley "0.8.3"] ; Lightweight utility library https://github.com/weavejester/medley
     [cheshire "5.6.3"] ; JSON encoding / decoding https://github.com/dakrone/cheshire
     [automat "0.2.0"] ; Finite state machines https://github.com/ztellman/automat
     [commons-validator "1.5.1"] ; provides the building blocks for validation https://commons.apache.org/proper/commons-validator/
     [stencil "0.5.0"] ; Clojure implementation of Mustache https://github.com/davidsantiago/stencil
+    [clj-time "0.12.2"] ; Date and time lib https://github.com/clj-time/clj-time
     [clj-http "3.3.0"] ; HTTP client https://github.com/dakrone/clj-http
     [aleph "0.4.2-alpha8"] ; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph don't upgrade to 0.4.2-alpha
     [manifold "0.1.6-alpha3"] ; Async programming tools https://github.com/ztellman/manifold
