@@ -33,7 +33,7 @@
   (and (not (:deleted user))
        (not (:is_bot user))
        (not (:is_restricted user))
-       (not (= "USLACKBOT" (:id user)))))
+       (not= "USLACKBOT" (:id user))))
 
 (defn- first-name [name]
   (first (clojure.string/split name #"\s")))
@@ -59,8 +59,8 @@
       ;; To every full member of the Slack org (fan out)
       (= :all-members type)
       (for [u (filter real-user? (slack-api/get-users token))]
-        (-> (assoc-in msg [:script :params :user/name] (first-name (:real_name u)))
-            (assoc :receiver {:type :channel :id (slack-api/get-im-channel token (:id u))})))
+        (let [with-first-name (assoc-in msg [:script :params :user/name] (first-name (:real_name u)))]
+          (assoc with-first-name :receiver {:type :channel, :id (slack-api/get-im-channel token (:id u))})))
 
       :else
       (throw (ex-info "Failed to adjust receiver" {:msg msg})))))

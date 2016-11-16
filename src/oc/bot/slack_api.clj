@@ -6,13 +6,13 @@
 
 (defn slack-api [method params]
   (timbre/info "Making slack request:" method)
-  (-> (http/get (str "https://slack.com/api/" (name method))
-                {:query-params params :as :json})
-      (d/chain #(if (-> % :body :ok)
-                  %
-                  (throw (ex-info "Error from Slack API"
-                                  {:method method :params params
-                                   :response (select-keys % [:body :status])}))))))
+  (d/chain
+    (http/get (str "https://slack.com/api/" (name method)) {:query-params params :as :json})
+    #(if (-> % :body :ok)
+        %
+        (throw (ex-info "Error from Slack API"
+                {:method method :params params
+                 :response (select-keys % [:body :status])})))))
 
 (defn get-channels [token]
   (-> @(slack-api :channels.list {:token token}) :body :channels))
