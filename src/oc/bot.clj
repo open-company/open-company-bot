@@ -13,6 +13,8 @@
             [oc.bot.slack-api :as slack-api]
             [oc.bot.config :as c]))
 
+(def forever true) ; makes Eastwood happy to have a forever while loop be "conditional" on something
+
 (def bot-chan (async/chan 10000)) ; buffered channel to protect Slack from too many requests
 
 (def iso-format (format/formatters :date-time)) ; ISO 8601
@@ -50,12 +52,12 @@
                              :type :channel})]
       
       ;; To a specific channel
-      (and (= :channel type))
+      (and (= :channel type) (not (s/blank? (-> msg :receiver :id))))
       [(assoc msg :receiver {:id (-> msg :receiver :id)
                              :type :channel})]
 
       ;; To every full member of the Slack org (fan out)
-      (and (= :all-members type))
+      (= :all-members type)
       (for [u (filter real-user? (slack-api/get-users token))]
         (-> (assoc-in msg [:script :params :user/name] (first-name (:real_name u)))
             (assoc :receiver {:type :channel :id (slack-api/get-im-channel token (:id u))})))
@@ -121,20 +123,6 @@
       (send-stakeholder-update token channel msg)
       (timbre/warn "Ignoring message with script ID:" script-id))))
 
-;; Consume the bot channel
-(async/go
-  (while true
-    (timbre/info "Waiting for message on bot channel...")
-    (let [m (<!! bot-chan)]
-      (timbre/trace "Processing message on bot channel...")
-      (try
-        (bot-handler m)
-        (timbre/trace "Processing complete.")
-        (catch Exception e
-          (timbre/error e)))
-      (timbre/trace "Delaying...")
-      (Thread/sleep 1000)))) ; 1 second delay, can't hit Slack too aggressively due to rate limits
-
 (defn -main []
 
   ;; Log errors go to Sentry
@@ -164,5 +152,19 @@
                             :sqs-msg-handler sqs-handler
                             :sqs-creds {:access-key c/aws-access-key-id
                                         :secret-key c/aws-secret-access-key}}))
+
+  ;; Consume the bot channel
+  (async/go
+    (while forever
+      (timbre/info "Waiting for message on bot channel...")
+      (let [m (<!! bot-chan)]
+        (timbre/trace "Processing message on bot channel...")
+        (try
+          (bot-handler m)
+          (timbre/trace "Processing complete.")
+          (catch Exception e
+            (timbre/error e)))
+        (timbre/trace "Delaying...")
+        (Thread/sleep 1000)))) ; 1 second delay, can't hit Slack too aggressively due to rate limits
 
   (deref (stream/take! (stream/stream)))) ; block forever
