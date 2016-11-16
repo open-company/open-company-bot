@@ -49,10 +49,17 @@
         type  (-> msg :receiver :type)]
     (timbre/info "Adjusting receiver" {:type type})
     (cond
+      ;; Directly to a specific user
       (and (= :user type) (s/starts-with? (-> msg :receiver :id) "slack-U"))
       [(assoc msg :receiver {:id (slack-api/get-im-channel token (last (s/split (-> msg :receiver :id) #"-")))
                              :type :channel})]
+      
+      ;; To a specific channel
+      (and (= :channel type))
+      [(assoc msg :receiver {:id (-> msg :receiver :id)
+                             :type :channel})]
 
+      ;; To every full member of the Slack org (fan out)
       (and (= :all-members type))
       (for [u (filter real-user? (slack-api/get-users token))]
         (-> (assoc-in msg [:script :params :user/name] (first-name (:real_name u)))
