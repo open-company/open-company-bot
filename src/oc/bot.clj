@@ -96,9 +96,9 @@
         created-at (format/parse iso-format (:stakeholder-update/created-at params))
         update-time (format/unparse link-format created-at)
         user-name (:user/name params)
-        user-prompt (if user-name (str " " user-name ", ") ", ")
+        user-prompt (if (and user-name (not= (-> msg :receiver :type) :channel)) (str " " user-name ", ") ", ")
         company-name (:company/name params)
-        company-prompt (if company-name (str " for " company-name " ") " ")
+        company-prompt (if (s/blank? company-name) " " (str " for " company-name " "))
         note (:stakeholder-update/note params)
         clean-note (when note (-> note ; remove HTML
                                 (s/replace #"&nbsp;" " ")
@@ -106,7 +106,7 @@
                                 (str/strip-newlines)))
         channel (-> msg :receiver :id)
         update-url (s/join "/" [origin-url company-slug "updates" update-time update-slug])
-        basic-text (str "Hey" user-prompt "I’ve got great news. The newest stakeholder update for" company-prompt
+        basic-text (str "Hey" user-prompt "I’ve got great news. The newest stakeholder update" company-prompt
                         "is available at " update-url)
         full-text (if (s/blank? note) basic-text (str basic-text "\n> " clean-note))]
     (slack-api/post-message token channel full-text)))
