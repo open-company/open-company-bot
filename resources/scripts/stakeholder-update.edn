@@ -1,3 +1,0 @@
-{[:init :init]
- ["Hey {{user/name}}, I’ve got great news. The newest stakeholder update for {{company/name}} is available {{env/origin}}/{{company/slug}}/updates/{{stakeholder-update/slug}}."
-  "{{#stakeholder-update/note}}> {{stakeholder-update/note}}{{/stakeholder-update/note}}"]}

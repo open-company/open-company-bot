@@ -1,6 +1,14 @@
-config.edn
-.nrepl-history
-.nrepl-port
+/target
+/classes
+/checkouts
+pom.xml
+pom.xml.asc
+*.jar
+*.class
+/.lein-*
+/.nrepl-*
+.hgignore
+.hg/
 
 .ruby-gemset
 .ruby-version
