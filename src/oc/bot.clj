@@ -21,7 +21,7 @@
 (def link-format (format/formatter "YYYY-MM-dd")) ; Format for date in URL of stakeholder-update links
 
 (defn- system
-  "Define our system. There are 2 components of our system, an SQS listener, and a Slack connection manager."
+  "Define our system that has only 1 component: the SQS listener."
   [config-options]
   (let [{:keys [sqs-creds sqs-queue-url sqs-msg-handler]} config-options]
     (component/system-map
