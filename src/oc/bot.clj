@@ -49,18 +49,22 @@
       ;; Directly to a specific user
       (and (= :user type) (s/starts-with? (-> msg :receiver :id) "slack-U"))
       [(assoc msg :receiver {:id (slack-api/get-im-channel token (last (s/split (-> msg :receiver :id) #"-")))
-                             :type :channel})]
+                             :type :channel
+                             :dm true})]
       
       ;; To a specific channel
       (and (= :channel type) (not (s/blank? (-> msg :receiver :id))))
       [(assoc msg :receiver {:id (-> msg :receiver :id)
-                             :type :channel})]
+                             :type :channel
+                             :dm false})]
 
       ;; To every full member of the Slack org (fan out)
       (= :all-members type)
       (for [u (filter real-user? (slack-api/get-users token))]
         (let [with-first-name (assoc-in msg [:script :params :user/name] (first-name (:real_name u)))]
-          (assoc with-first-name :receiver {:type :channel, :id (slack-api/get-im-channel token (:id u))})))
+          (assoc with-first-name :receiver {:type :channel
+                                            :id (slack-api/get-im-channel token (:id u))
+                                            :dm true})))
 
       :else
       (throw (ex-info "Failed to adjust receiver" {:msg msg})))))
@@ -93,12 +97,15 @@
         origin-url (:env/origin params)
         company-slug (:company/slug params)        
         update-slug (:stakeholder-update/slug params)
+        title (:stakeholder-update/title params)
         created-at (format/parse iso-format (:stakeholder-update/created-at params))
         update-time (format/unparse link-format created-at)
         user-name (:user/name params)
-        user-prompt (if (and user-name (not= (-> msg :receiver :type) :channel)) (str " " user-name ", ") ", ")
+        user-prompt (if (and user-name (-> msg :receiver :dm))
+                      (str "Hey " user-name ", check it out! Here's the latest update")
+                      "What time is it? Update time! Check out the latest")
         company-name (:company/name params)
-        company-prompt (if (s/blank? company-name) " " (str " for " company-name " "))
+        company-prompt (if (s/blank? company-name) " " (str " from " company-name))
         note (:stakeholder-update/note params)
         clean-note (when note (-> note ; remove HTML
                                 (s/replace #"&nbsp;" " ")
@@ -106,8 +113,9 @@
                                 (str/strip-newlines)))
         channel (-> msg :receiver :id)
         update-url (s/join "/" [origin-url company-slug "updates" update-time update-slug])
-        basic-text (str "Hey" user-prompt "I’ve got great news. The newest stakeholder update" company-prompt
-                        "is available at " update-url)
+        update-markdown (if (s/blank? title) update-url (str "<" update-url "|" title ">"))
+        basic-text (str user-prompt company-prompt
+                        ": " update-markdown)
         full-text (if (s/blank? note) basic-text (str basic-text "\n> " clean-note))]
     (slack-api/post-message token channel full-text)))
 
