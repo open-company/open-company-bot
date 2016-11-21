@@ -103,7 +103,7 @@
         user-name (:user/name params)
         user-prompt (if (and user-name (-> msg :receiver :dm))
                       (str "Hey " user-name ", check it out! Here's the latest update")
-                      "What time is it? Update time! Check out the latest")
+                      "Hey, check it out! Here's the latest update")
         company-name (:company/name params)
         company-prompt (if (s/blank? company-name) " " (str " from " company-name))
         note (:stakeholder-update/note params)
