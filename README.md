@@ -119,4 +119,4 @@ Please note that this project is released with a [Contributor Code of Conduct](h
 
 Distributed under the [Mozilla Public License v2.0](http://www.mozilla.org/MPL/2.0/). See `LICENSE` for full text.
 
-Copyright © 2016 OpenCompany, LLC.
+Copyright © 2016-2017 OpenCompany, LLC.
