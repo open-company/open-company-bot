@@ -22,7 +22,7 @@
     [clj-http "3.4.1"] ; HTTP client https://github.com/dakrone/clj-http
     [aleph "0.4.3"] ; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
 
-    [open-company/lib "0.6.14-22f40e5"] ; Library for OC projects https://github.com/open-company/open-company-lib
+    [open-company/lib "0.6.15-ecdd62f"] ; Library for OC projects https://github.com/open-company/open-company-lib
     ; In addition to common functions, brings in the following common dependencies used by this project:
     ; core.async - Async programming and communication https://github.com/clojure/core.async
     ; manifold - Async programming tools https://github.com/ztellman/manifold
