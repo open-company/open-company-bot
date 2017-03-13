@@ -127,7 +127,7 @@
         channel (-> msg :receiver :id)
         script-id (-> msg :script :id)]
     (timbre/trace "Routing message with script ID:" script-id)
-    (if (= script-id :shae-update)
+    (if (= script-id :update)
       (share-update token channel msg)
       (timbre/warn "Ignoring message with script ID:" script-id))))
 
