@@ -82,39 +82,39 @@
       (>!! bot-chan m))) ; send the message to the bot's channel
   msg)
 
-(defn- send-stakeholder-update [token channel msg]
+(defn- share-update [token channel msg]
   {:pre [(string? token)
          (string? channel)
          (map? msg)
          (map? (:script msg))
          (map? (-> msg :script :params))
-         (string? (-> msg :script :params :company/slug))
-         (string? (-> msg :script :params :stakeholder-update/slug))
-         (string? (-> msg :script :params :stakeholder-update/created-at))
+         (string? (-> msg :script :params :org/slug))
+         (string? (-> msg :script :params :update/slug))
+         (string? (-> msg :script :params :update/created-at))
          (string? (-> msg :script :params :env/origin))]}
   (timbre/info "Sending stakeholder update message to Slack channel:" channel)
   (let [params (-> msg :script :params)
         origin-url (:env/origin params)
-        company-slug (:company/slug params)        
-        update-slug (:stakeholder-update/slug params)
-        title (:stakeholder-update/title params)
-        created-at (format/parse iso-format (:stakeholder-update/created-at params))
+        org-slug (:org/slug params)        
+        update-slug (:update/slug params)
+        title (:update/title params)
+        created-at (format/parse iso-format (:update/created-at params))
         update-time (format/unparse link-format created-at)
         user-name (:user/name params)
         user-prompt (if (and user-name (-> msg :receiver :dm))
                       (str "Hey " user-name ", check it out! Here's the latest update")
                       "Hey, check it out! Here's the latest update")
-        company-name (:company/name params)
-        company-prompt (if (s/blank? company-name) " " (str " from " company-name))
-        note (:stakeholder-update/note params)
+        org-name (:org/name params)
+        org-prompt (if (s/blank? org-name) " " (str " from " org-name))
+        note (:update/note params)
         clean-note (when note (-> note ; remove HTML
                                 (s/replace #"&nbsp;" " ")
                                 (str/strip-tags)
                                 (str/strip-newlines)))
         channel (-> msg :receiver :id)
-        update-url (s/join "/" [origin-url company-slug "updates" update-time update-slug])
+        update-url (s/join "/" [origin-url org-slug "updates" update-time update-slug])
         update-markdown (if (s/blank? title) update-url (str "<" update-url "|" title ">"))
-        basic-text (str user-prompt company-prompt
+        basic-text (str user-prompt org-prompt
                         ": " update-markdown)
         full-text (if (s/blank? note) basic-text (str basic-text "\n> " clean-note))]
     (slack-api/post-message token channel full-text)))
@@ -127,8 +127,8 @@
         channel (-> msg :receiver :id)
         script-id (-> msg :script :id)]
     (timbre/trace "Routing message with script ID:" script-id)
-    (if (= script-id :stakeholder-update)
-      (send-stakeholder-update token channel msg)
+    (if (= script-id :shae-update)
+      (share-update token channel msg)
       (timbre/warn "Ignoring message with script ID:" script-id))))
 
 (defn -main []
