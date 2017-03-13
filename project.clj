@@ -14,22 +14,25 @@
   ;; All profile dependencies
   :dependencies [
     [org.clojure/clojure "1.9.0-alpha14"] ; Lisp on the JVM http://clojure.org/documentation
-    [org.clojure/core.async "0.2.395"] ; Async programming and communication https://github.com/clojure/core.async
-    [environ "1.1.0"] ; Environment settings from different sources https://github.com/weavejester/environ
-    [com.taoensso/timbre "4.8.0"] ; Logging https://github.com/ptaoussanis/timbre
-    [raven-clj "1.5.0"] ; Interface to Sentry error reporting https://github.com/sethtrain/raven-clj
-    [com.stuartsierra/component "0.3.2"] ; Component Lifecycle https://github.com/stuartsierra/component
-    [funcool/cuerdas "2.0.2"] ; String manipulation library https://github.com/funcool/cuerdas
+    [funcool/cuerdas "2.0.3"] ; String manipulation library https://github.com/funcool/cuerdas
     [medley "0.8.4"] ; Lightweight utility library https://github.com/weavejester/medley
-    [cheshire "5.6.3"] ; JSON encoding / decoding https://github.com/dakrone/cheshire
-    [automat "0.2.0"] ; Finite state machines https://github.com/ztellman/automat
-    [commons-validator "1.5.1"] ; provides the building blocks for validation https://commons.apache.org/proper/commons-validator/
+    [automat "0.2.2"] ; Finite state machines https://github.com/ztellman/automat
+    [commons-validator "1.6"] ; provides the building blocks for validation https://commons.apache.org/proper/commons-validator/
     [stencil "0.5.0"] ; Clojure implementation of Mustache https://github.com/davidsantiago/stencil
-    [clj-time "0.13.0"] ; Date and time lib https://github.com/clj-time/clj-time
     [clj-http "3.4.1"] ; HTTP client https://github.com/dakrone/clj-http
-    [aleph "0.4.2-alpha12"] ; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph don't upgrade to 0.4.2-alpha
-    [manifold "0.1.6-alpha4"] ; Async programming tools https://github.com/ztellman/manifold
-    [open-company/lib "0.0.11-deee910"] ; Library for OC projects https://github.com/open-company/open-company-lib
+    [aleph "0.4.3"] ; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
+
+    [open-company/lib "0.6.14-22f40e5"] ; Library for OC projects https://github.com/open-company/open-company-lib
+    ; In addition to common functions, brings in the following common dependencies used by this project:
+    ; core.async - Async programming and communication https://github.com/clojure/core.async
+    ; manifold - Async programming tools https://github.com/ztellman/manifold
+    ; Component - Component Lifecycle https://github.com/stuartsierra/component
+    ; Timbre - Pure Clojure/Script logging library https://github.com/ptaoussanis/timbre
+    ; Amazonica - A comprehensive Clojure client for the AWS API. https://github.com/mcohen01/amazonica
+    ; Raven - Interface to Sentry error reporting https://github.com/sethtrain/raven-clj
+    ; Cheshire - JSON encoding / decoding https://github.com/dakrone/cheshire
+    ; clj-time - Date and time lib https://github.com/clj-time/clj-time
+    ; environ - Environment settings from different sources https://github.com/weavejester/environ  ]
   ]
 
   ;; All profile plugins
@@ -60,7 +63,6 @@
         :aws-sqs-bot-queue "https://sqs.REGION.amazonaws.com/CHANGE/ME"
         :oc-api-endpoint "http://localhost:3000"
         :intro "true"
-        :log-level "trace"
       }
       :plugins [
         [lein-bikeshed "0.4.1"] ; Check for code smells https://github.com/dakrone/lein-bikeshed
