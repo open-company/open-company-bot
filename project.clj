@@ -13,19 +13,19 @@
 
   ;; All profile dependencies
   :dependencies [
-    [org.clojure/clojure "1.9.0-alpha14"] ; Lisp on the JVM http://clojure.org/documentation
+    [org.clojure/clojure "1.9.0-alpha15"] ; Lisp on the JVM http://clojure.org/documentation
     [funcool/cuerdas "2.0.3"] ; String manipulation library https://github.com/funcool/cuerdas
     [medley "0.8.4"] ; Lightweight utility library https://github.com/weavejester/medley
     [automat "0.2.2"] ; Finite state machines https://github.com/ztellman/automat
     [commons-validator "1.6"] ; provides the building blocks for validation https://commons.apache.org/proper/commons-validator/
     [stencil "0.5.0"] ; Clojure implementation of Mustache https://github.com/davidsantiago/stencil
     [clj-http "3.4.1"] ; HTTP client https://github.com/dakrone/clj-http
-    [aleph "0.4.3"] ; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
+    [aleph "0.4.4-alpha2"] ; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
+    [manifold "0.1.6"] ; Async programming tools https://github.com/ztellman/manifold
 
-    [open-company/lib "0.6.15-ecdd62f"] ; Library for OC projects https://github.com/open-company/open-company-lib
+    [open-company/lib "0.8.0-fe165be"] ; Library for OC projects https://github.com/open-company/open-company-lib
     ; In addition to common functions, brings in the following common dependencies used by this project:
     ; core.async - Async programming and communication https://github.com/clojure/core.async
-    ; manifold - Async programming tools https://github.com/ztellman/manifold
     ; Component - Component Lifecycle https://github.com/stuartsierra/component
     ; Timbre - Pure Clojure/Script logging library https://github.com/ptaoussanis/timbre
     ; Amazonica - A comprehensive Clojure client for the AWS API. https://github.com/mcohen01/amazonica
@@ -72,13 +72,13 @@
         [lein-spell "0.1.0"] ; Catch spelling mistakes in docs and docstrings https://github.com/cldwalker/lein-spell
         [lein-deps-tree "0.1.2"] ; Print a tree of project dependencies https://github.com/the-kenny/lein-deps-tree
         [venantius/yagni "0.1.4"] ; Dead code finder https://github.com/venantius/yagni
-        [com.jakemccrary/lein-test-refresh "0.18.1"] ; Autotest https://github.com/jakemcc/lein-test-refresh
+        [com.jakemccrary/lein-test-refresh "0.19.0"] ; Autotest https://github.com/jakemcc/lein-test-refresh
       ]  
     }]
 
     :repl-config [:dev {
       :dependencies [
-        [org.clojure/tools.nrepl "0.2.12"] ; Network REPL https://github.com/clojure/tools.nrepl
+        [org.clojure/tools.nrepl "0.2.13"] ; Network REPL https://github.com/clojure/tools.nrepl
         [aprint "0.1.3"] ; Pretty printing in the REPL (aprint ...) https://github.com/razum2um/aprint
       ]
       ;; REPL injections

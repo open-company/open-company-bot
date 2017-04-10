@@ -23,9 +23,9 @@
 (defn- system
   "Define our system that has only 1 component: the SQS listener."
   [config-options]
-  (let [{:keys [sqs-creds sqs-queue-url sqs-msg-handler]} config-options]
+  (let [{:keys [sqs-creds sqs-queue sqs-msg-handler]} config-options]
     (component/system-map
-      :sqs (sqs/sqs-listener sqs-creds sqs-queue-url sqs-msg-handler))))
+      :sqs (sqs/sqs-listener sqs-creds sqs-queue sqs-msg-handler))))
 
 (defn- slack-handler [conn msg-idx msg] (prn msg))
 
@@ -71,7 +71,7 @@
 
 (defn sqs-handler
   "Handle an incoming SQS message to the bot."
-  [sys msg]
+  [msg done-channel]
   {:pre [(:body msg)]}
   (let [msg-body (read-string (:body msg))
         error (if (:test-error msg-body) (/ 1 0) false) ; a message testing Sentry error reporting
@@ -80,7 +80,7 @@
     (timbre/infof "Received message from SQS: %s\n" msg-body)
     (doseq [m (adjust-receiver msg-body)]
       (>!! bot-chan m))) ; send the message to the bot's channel
-  msg)
+  (sqs/ack done-channel msg))
 
 (defn- share-update [token channel msg]
   {:pre [(string? token)
@@ -156,7 +156,7 @@
     "Ready to serve...\n"))
 
   ;; Start the system, which will start long polling SQS
-  (component/start (system {:sqs-queue-url c/aws-sqs-bot-queue
+  (component/start (system {:sqs-queue c/aws-sqs-bot-queue
                             :sqs-msg-handler sqs-handler
                             :sqs-creds {:access-key c/aws-access-key-id
                                         :secret-key c/aws-secret-access-key}}))
