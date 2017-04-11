@@ -23,7 +23,7 @@
     [aleph "0.4.4-alpha2"] ; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
     [manifold "0.1.6"] ; Async programming tools https://github.com/ztellman/manifold
 
-    [open-company/lib "0.8.0-fe165be"] ; Library for OC projects https://github.com/open-company/open-company-lib
+    [open-company/lib "0.8.1-e4fe975"] ; Library for OC projects https://github.com/open-company/open-company-lib
     ; In addition to common functions, brings in the following common dependencies used by this project:
     ; core.async - Async programming and communication https://github.com/clojure/core.async
     ; Component - Component Lifecycle https://github.com/stuartsierra/component
