@@ -19,11 +19,11 @@
     [automat "0.2.2"] ; Finite state machines https://github.com/ztellman/automat
     [commons-validator "1.6"] ; provides the building blocks for validation https://commons.apache.org/proper/commons-validator/
     [stencil "0.5.0"] ; Clojure implementation of Mustache https://github.com/davidsantiago/stencil
-    [clj-http "3.4.1"] ; HTTP client https://github.com/dakrone/clj-http
+    [clj-http "3.5.1"] ; HTTP client https://github.com/dakrone/clj-http
     [aleph "0.4.4-alpha2"] ; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
     [manifold "0.1.6"] ; Async programming tools https://github.com/ztellman/manifold
 
-    [open-company/lib "0.8.1-e4fe975"] ; Library for OC projects https://github.com/open-company/open-company-lib
+    [open-company/lib "0.8.2-df1018e"] ; Library for OC projects https://github.com/open-company/open-company-lib
     ; In addition to common functions, brings in the following common dependencies used by this project:
     ; core.async - Async programming and communication https://github.com/clojure/core.async
     ; Component - Component Lifecycle https://github.com/stuartsierra/component
