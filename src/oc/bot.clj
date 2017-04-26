@@ -92,7 +92,7 @@
          (string? (-> msg :script :params :update/slug))
          (string? (-> msg :script :params :update/created-at))
          (string? (-> msg :script :params :env/origin))]}
-  (timbre/info "Sending stakeholder update message to Slack channel:" channel)
+  (timbre/info "Sending update message to Slack channel:" channel)
   (let [params (-> msg :script :params)
         origin-url (:env/origin params)
         org-slug (:org/slug params)        
@@ -119,6 +119,34 @@
         full-text (if (s/blank? note) basic-text (str basic-text "\n> " clean-note))]
     (slack-api/post-message token channel full-text)))
 
+(defn- invite [token channel msg]
+  {:pre [(string? token)
+         (string? channel)
+         (map? msg)
+         (map? (:script msg))
+         (map? (-> msg :script :params))
+         (string? (-> msg :script :params :from))
+         (or (string? (-> msg :script :params :from-id))
+             (nil? (-> msg :script :params :from-id)))
+         (string? (-> msg :script :params :org-name))
+         (string? (-> msg :script :params :first-name))
+         (string? (-> msg :script :params :url))]}
+  (timbre/info "Sending invite to Slack channel:" channel)
+  (let [params (-> msg :script :params)
+        org-name (:org-name params)
+        from (:from params)
+        from-id (:from-id params)
+        first-name (:first-name params)
+        url (:url params)
+        url-display (last (s/split url #"//"))
+        user-prompt (if (s/blank? first-name) "Hey, " (str "Hey " first-name ", "))
+        from-person (if (s/blank? from) nil (if from-id (str "<@" from-id "|" from ">") from))
+        from-msg (if (s/blank? from-person) "you've been invited to join " (str from-person " would like you to join "))
+        org-msg (if (s/blank? org-name) "us " (str "*" org-name "* "))
+        full-text (str user-prompt from-msg org-msg "on OpenCompany at: <" url "|" url-display ">")
+        channel (-> msg :receiver :id)]
+    (slack-api/post-message token channel full-text)))
+
 (defn- bot-handler [msg]
   {:pre [(keyword? (-> msg :script :id))
          (string? (-> msg :receiver :id))
@@ -127,8 +155,9 @@
         channel (-> msg :receiver :id)
         script-id (-> msg :script :id)]
     (timbre/trace "Routing message with script ID:" script-id)
-    (if (= script-id :update)
-      (share-update token channel msg)
+    (case script-id 
+      :update (share-update token channel msg)
+      :invite (invite token channel msg)
       (timbre/warn "Ignoring message with script ID:" script-id))))
 
 (defn -main []
