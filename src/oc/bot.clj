@@ -47,8 +47,8 @@
     (timbre/info "Adjusting receiver" {:type type})
     (cond
       ;; Directly to a specific user
-      (and (= :user type) (s/starts-with? (-> msg :receiver :id) "slack-U"))
-      [(assoc msg :receiver {:id (slack-api/get-im-channel token (last (s/split (-> msg :receiver :id) #"-")))
+      (and (= :user type) (s/starts-with? (-> msg :receiver :id) "U"))
+      [(assoc msg :receiver {:id (slack-api/get-im-channel token (-> msg :receiver :id))
                              :type :channel
                              :dm true})]
       
