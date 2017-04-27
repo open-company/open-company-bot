@@ -15,11 +15,10 @@
   :dependencies [
     [org.clojure/clojure "1.9.0-alpha15"] ; Lisp on the JVM http://clojure.org/documentation
     [funcool/cuerdas "2.0.3"] ; String manipulation library https://github.com/funcool/cuerdas
-    [medley "0.8.4"] ; Lightweight utility library https://github.com/weavejester/medley
+    [medley "1.0.0"] ; Lightweight utility library https://github.com/weavejester/medley
     [automat "0.2.2"] ; Finite state machines https://github.com/ztellman/automat
     [commons-validator "1.6"] ; provides the building blocks for validation https://commons.apache.org/proper/commons-validator/
     [stencil "0.5.0"] ; Clojure implementation of Mustache https://github.com/davidsantiago/stencil
-    [clj-http "3.5.0"] ; HTTP client https://github.com/dakrone/clj-http
     [aleph "0.4.4-alpha2"] ; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
     [manifold "0.1.6"] ; Async programming tools https://github.com/ztellman/manifold
 
