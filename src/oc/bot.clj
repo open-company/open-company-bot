@@ -140,7 +140,7 @@
         url (:url params)
         url-display (last (s/split url #"//"))
         user-prompt (if (s/blank? first-name) "Hey, " (str "Hey " first-name ", "))
-        from-person (if (s/blank? from) nil (if from-id (str "<@" from-id "|" from ">") from))
+        from-person (when-not (s/blank? from) (if from-id (str "<@" from-id "|" from ">") from))
         from-msg (if (s/blank? from-person) "you've been invited to join " (str from-person " would like you to join "))
         org-msg (if (s/blank? org-name) "us " (str "*" org-name "* "))
         full-text (str user-prompt from-msg org-msg "on OpenCompany at: <" url "|" url-display ">")
