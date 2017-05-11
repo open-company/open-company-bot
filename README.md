@@ -106,7 +106,8 @@ Tests are run in continuous integration of the `master` and `mainline` branches 
 To run the tests locally:
 
 ```console
-lein test
+lein kibit
+lein eastwood
 ```
 
 
