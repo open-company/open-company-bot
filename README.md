@@ -7,9 +7,9 @@
 
 ## Background
 
-> Today, power is gained by sharing knowledge, not hoarding it.
+> In the kingdom of glass everything is transparent, and there is no place to hide a dark heart.
 
-> -- [Dharmesh Shah](https://twitter.com/dharmesh)
+> -- [Vera Nazarian](http://www.veranazarian.com/)
 
 Employees and investors, co-founders and execs, they all want more transparency from their startups, but there's no consensus about what it means to be transparent. OpenCompany is a platform that simplifies how key business information is shared with stakeholders.
 
