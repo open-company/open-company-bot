@@ -1,4 +1,4 @@
-(ns oc.bot.slack-api
+(ns oc.bot.api.slack
   "Make simple (not web socket) Slack Web API HTTP requests and extract the response."
   (:require [aleph.http :as http]
             [manifold.deferred :as d]
@@ -37,7 +37,7 @@
 
 (comment
 
-  (require '[oc.bot.slack-api :as sapi] :reload)
+  (require '[oc.bot.api.slack :as sapi] :reload)
 
   (def token "xoxb-103298796854-bdmHI5DS6AwWE5AkuR5KqNoR")
   (def user-id "U1B0U2XC7")

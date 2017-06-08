@@ -1,4 +1,4 @@
-(ns oc.bot
+(ns oc.bot.app
   (:gen-class)
   (:require [clojure.string :as s]
             [clojure.core.async :as async :refer (<!! >!!)]
@@ -10,7 +10,7 @@
             [clj-time.format :as format]
             [oc.lib.sentry-appender :as sentry]
             [oc.lib.sqs :as sqs]
-            [oc.bot.slack-api :as slack-api]
+            [oc.bot.api.slack :as slack-api]
             [oc.bot.config :as c]))
 
 (def forever true) ; makes Eastwood happy to have a forever while loop be "conditional" on something
