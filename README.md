@@ -95,7 +95,7 @@ Run the bot with: `lein start`
 
 Or start a REPL with: `lein repl`
 
-The `oc.bot` namespace contains a `comment` form with everything needed to get the system into a running state in the REPL.
+Start the Bot service at the REPL with `(go)` and stop it with `(stop)`.
 
 
 ## Testing

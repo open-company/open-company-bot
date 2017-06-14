@@ -7,17 +7,20 @@
   [val]
   (boolean (Boolean/valueOf val)))
 
-(defonce intro? (bool (or (env :intro ) false)))
+;; ----- System -----
 
-;; ----- Logging -----
-
-(defonce log-level (or (env :log-level) :info))
+(defonce prod? (= "production" (env :env)))
+(defonce intro? (not prod?))
 
 ;; ----- Sentry -----
 
 (defonce dsn (or (env :sentry-dsn) false))
 
-;; ------ OC API -----
+;; ----- Logging -----
+
+(defonce log-level (or (env :log-level) :info))
+
+;; ------ OC Storage Service -----
 
 (defonce oc-api-endpoint (or (env :oc-api-endpoint) "http://localhost:3000"))
 

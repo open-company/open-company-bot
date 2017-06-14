@@ -17,8 +17,9 @@
     [funcool/cuerdas "2.0.3"] ; String manipulation library https://github.com/funcool/cuerdas
     [aleph "0.4.4-alpha4"] ; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
     [manifold "0.1.7-alpha5"] ; Async programming tools https://github.com/ztellman/manifold
+    [org.clojure/tools.namespace "0.3.0-alpha4"] ; Namespace management https://github.com/clojure/tools.namespace
 
-    [open-company/lib "0.11.7"] ; Library for OC projects https://github.com/open-company/open-company-lib
+    [open-company/lib "0.11.9"] ; Library for OC projects https://github.com/open-company/open-company-lib
     ; In addition to common functions, brings in the following common dependencies used by this project:
     ; core.async - Async programming and communication https://github.com/clojure/core.async
     ; Component - Component Lifecycle https://github.com/stuartsierra/component
@@ -57,7 +58,6 @@
         :aws-secret-access-key "CHANGE-ME"
         :aws-sqs-bot-queue "https://sqs.REGION.amazonaws.com/CHANGE/ME"
         :oc-api-endpoint "http://localhost:3000"
-        :intro "true"
       }
       :plugins [
         [lein-bikeshed "0.4.1"] ; Check for code smells https://github.com/dakrone/lein-bikeshed
@@ -95,18 +95,20 @@
 
   :repl-options {
     :welcome (println (str "\n" (slurp (clojure.java.io/resource "oc/assets/ascii_art.txt")) "\n"
-                      "OpenCompany Bot Service REPL\n"))
+                      "OpenCompany Bot Service REPL\n"
+                      "\nReady to do your bidding... I suggest (go) as your first command.\n"))
+    :init-ns dev
   }
 
   :aliases {
     "build" ["with-profile" "prod" "do" "clean," "uberjar"] ; clean and build code
     "repl" ["with-profile" "+repl-config" "repl"]
-    "start" ["run" "-m" "oc.bot"] ; start a development server
+    "start" ["run" "-m" "oc.bot.app"] ; start a development server
     "start!" ["with-profile" "prod" "do" "start"] ; start a server in production
     "spell!" ["spell" "-n"] ; check spelling in docs and docstrings
     "bikeshed!" ["bikeshed" "-v" "-m" "120"] ; code check with max line length warning of 120 characters
     "ancient" ["ancient" ":all" ":allow-qualified"] ; check for out of date dependencies
   }
 
-  :main oc.bot
+  :main oc.bot.app
 )
