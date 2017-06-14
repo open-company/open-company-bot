@@ -8,24 +8,36 @@
             [amazonica.aws.sqs :as aws-sqs]
             [taoensso.timbre :as timbre]
             [clj-time.format :as format]
-            [oc.lib.sentry-appender :as sentry]
+            [raven-clj.core :as sentry]
+            [raven-clj.interfaces :as sentry-interfaces]
+            [oc.lib.sentry-appender :as sa]
             [oc.lib.sqs :as sqs]
-            [oc.bot.api.slack :as slack-api]
+            [oc.lib.slack :as slack]
             [oc.bot.config :as c]))
 
-(def forever true) ; makes Eastwood happy to have a forever while loop be "conditional" on something
+;; ----- Unhandled Exceptions -----
 
-(def bot-chan (async/chan 10000)) ; buffered channel to protect Slack from too many requests
+;; Send unhandled exceptions to log and Sentry
+;; See https://stuartsierra.com/2015/05/27/clojure-uncaught-exceptions
+(Thread/setDefaultUncaughtExceptionHandler
+ (reify Thread$UncaughtExceptionHandler
+   (uncaughtException [_ thread ex]
+     (timbre/error ex "Uncaught exception on" (.getName thread) (.getMessage ex))
+     (when c/dsn
+       (sentry/capture c/dsn (-> {:message (.getMessage ex)}
+                                 (assoc-in [:extra :exception-data] (ex-data ex))
+                                 (sentry-interfaces/stacktrace ex)))))))
+
+;; ----- core.async -----
+
+(defonce bot-chan (async/chan 10000)) ; buffered channel to protect Slack from too many requests
+
+(defonce bot-go (atom nil))
+
+;; ----- Utility functions -----
 
 (def iso-format (format/formatters :date-time)) ; ISO 8601
 (def link-format (format/formatter "YYYY-MM-dd")) ; Format for date in URL of stakeholder-update links
-
-(defn- system
-  "Define our system that has only 1 component: the SQS listener."
-  [config-options]
-  (let [{:keys [sqs-creds sqs-queue sqs-msg-handler]} config-options]
-    (component/system-map
-      :sqs (sqs/sqs-listener sqs-creds sqs-queue sqs-msg-handler))))
 
 (defn- slack-handler [conn msg-idx msg] (prn msg))
 
@@ -38,6 +50,8 @@
 (defn- first-name [name]
   (first (clojure.string/split name #"\s")))
 
+;; ----- Bot Request handling -----
+
 (defn- adjust-receiver
   "Inspect the receiver field and return one or more initialization messages
    with proper DM channels and update :user/name script param."
@@ -48,7 +62,7 @@
     (cond
       ;; Directly to a specific user
       (and (= :user type) (s/starts-with? (-> msg :receiver :id) "U"))
-      [(assoc msg :receiver {:id (slack-api/get-im-channel token (-> msg :receiver :id))
+      [(assoc msg :receiver {:id (slack/get-dm-channel token (-> msg :receiver :id))
                              :type :channel
                              :dm true})]
       
@@ -60,10 +74,10 @@
 
       ;; To every full member of the Slack org (fan out)
       (= :all-members type)
-      (for [u (filter real-user? (slack-api/get-users token))]
+      (for [u (filter real-user? (slack/get-users token))]
         (let [with-first-name (assoc-in msg [:script :params :user/name] (first-name (:real_name u)))]
           (assoc with-first-name :receiver {:type :channel
-                                            :id (slack-api/get-im-channel token (:id u))
+                                            :id (slack/get-dm-channel token (:id u))
                                             :dm true})))
 
       :else
@@ -117,7 +131,7 @@
         basic-text (str user-prompt org-prompt
                         ": " update-markdown)
         full-text (if (s/blank? note) basic-text (str basic-text "\n> " clean-note))]
-    (slack-api/post-message token channel full-text)))
+    (slack/post-message token channel full-text)))
 
 (defn- invite [token channel msg]
   {:pre [(string? token)
@@ -145,7 +159,7 @@
         org-msg (if (s/blank? org-name) "us " (str "*" org-name "* "))
         full-text (str user-prompt from-msg org-msg "on OpenCompany at: <" url "|" url-display ">")
         channel (-> msg :receiver :id)]
-    (slack-api/post-message token channel full-text)))
+    (slack/post-message token channel full-text)))
 
 (defn- bot-handler [msg]
   {:pre [(keyword? (-> msg :script :id))
@@ -160,29 +174,77 @@
       :invite (invite token channel msg)
       (timbre/warn "Ignoring message with script ID:" script-id))))
 
-(defn -main []
+;; ----- System Startup -----
+
+(defn- bot-loop
+  "Start a core.async consumer of the bot channel."
+  []
+  (reset! bot-go true)
+  (async/go (while @bot-go
+      (timbre/info "Waiting for message on bot channel...")
+      (let [m (<!! bot-chan)]
+        (timbre/trace "Processing message on bot channel...")
+        (if (:stop m)
+          (do (reset! bot-go false) (timbre/info "Bot stopped."))
+          (try
+            (bot-handler m)
+            (timbre/trace "Processing complete.")
+            (catch Exception e
+              (timbre/error e))))
+        (timbre/trace "Delaying...")
+        (Thread/sleep 1000))))) ; 1 second delay, can't hit Slack too aggressively due to rate limits
+
+(defn- stop-bot
+ "Stop the core.async bot channel consumer."
+  []
+  (when @bot-go
+    (timbre/info "Stopping bot...")
+    (>!! bot-chan {:stop true})))
+
+(defrecord BotChannelConsumer [bot]
+  component/Lifecycle
+  (start [component]
+    (timbre/info "[bot] starting")
+    (bot-loop)
+    (assoc component :bot true))
+  (stop [{:keys [bot] :as component}]
+    (if bot
+      (do
+        (stop-bot)
+        (dissoc component :bot))
+      component)))
+
+(defn system
+  "Define our system that has 2 components: the SQS listener, and the Bot channel consumer."
+  [config-options]
+  (let [{:keys [sqs-creds sqs-queue sqs-msg-handler]} config-options]
+    (component/system-map
+      :bot (component/using (map->BotChannelConsumer {}) [])
+      :sqs (sqs/sqs-listener sqs-creds sqs-queue sqs-msg-handler))))
+
+(defn echo-config []
+  (println (str "\n"
+    "AWS SQS queue: " c/aws-sqs-bot-queue "\n"
+    "AWS API endpoint: " c/oc-api-endpoint "\n"
+    "Sentry: " (or c/dsn "false") "\n\n"
+    (when c/intro? "Ready to serve...\n"))))
+
+(defn start
+  "Start an instance of the Bot service."
+  []
 
   ;; Log errors go to Sentry
   (if c/dsn
     (timbre/merge-config!
       {:level (keyword c/log-level)
-       :appenders {:sentry (sentry/sentry-appender c/dsn)}})
+       :appenders {:sentry (sa/sentry-appender c/dsn)}})
     (timbre/merge-config! {:level (keyword c/log-level)}))
-
-  ;; Uncaught exceptions go to Sentry
-  (Thread/setDefaultUncaughtExceptionHandler
-   (reify Thread$UncaughtExceptionHandler
-     (uncaughtException [_ thread ex]
-       (timbre/error ex "Uncaught exception on" (.getName thread) (.getMessage ex)))))
 
   ;; Echo config information
   (println (str "\n"
     (when c/intro? (str (slurp (clojure.java.io/resource "oc/assets/ascii_art.txt")) "\n"))
-    "OpenCompany Bot Service\n\n"
-    "AWS SQS queue: " c/aws-sqs-bot-queue "\n"
-    "AWS API endpoint: " c/oc-api-endpoint "\n"
-    "Sentry: " (or c/dsn "false") "\n\n"
-    "Ready to serve...\n"))
+    "OpenCompany Bot Service\n"))
+  (echo-config)
 
   ;; Start the system, which will start long polling SQS
   (component/start (system {:sqs-queue c/aws-sqs-bot-queue
@@ -190,18 +252,7 @@
                             :sqs-creds {:access-key c/aws-access-key-id
                                         :secret-key c/aws-secret-access-key}}))
 
-  ;; Consume the bot channel
-  (async/go
-    (while forever
-      (timbre/info "Waiting for message on bot channel...")
-      (let [m (<!! bot-chan)]
-        (timbre/trace "Processing message on bot channel...")
-        (try
-          (bot-handler m)
-          (timbre/trace "Processing complete.")
-          (catch Exception e
-            (timbre/error e)))
-        (timbre/trace "Delaying...")
-        (Thread/sleep 1000)))) ; 1 second delay, can't hit Slack too aggressively due to rate limits
-
   (deref (stream/take! (stream/stream)))) ; block forever
+
+(defn -main []
+  (start))
