@@ -17,6 +17,7 @@
     [funcool/cuerdas "2.0.3"] ; String manipulation library https://github.com/funcool/cuerdas
     [aleph "0.4.4-alpha4"] ; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
     [manifold "0.1.7-alpha5"] ; Async programming tools https://github.com/ztellman/manifold
+    [org.clojure/tools.namespace "0.3.0-alpha4"] ; Namespace management https://github.com/clojure/tools.namespace
 
     [open-company/lib "0.11.9"] ; Library for OC projects https://github.com/open-company/open-company-lib
     ; In addition to common functions, brings in the following common dependencies used by this project:
@@ -72,7 +73,6 @@
 
     :repl-config [:dev {
       :dependencies [
-        [org.clojure/tools.namespace "0.3.0-alpha4"] ; Namespace management https://github.com/clojure/tools.namespace
         [org.clojure/tools.nrepl "0.2.13"] ; Network REPL https://github.com/clojure/tools.nrepl
         [aprint "0.1.3"] ; Pretty printing in the REPL (aprint ...) https://github.com/razum2um/aprint
       ]
