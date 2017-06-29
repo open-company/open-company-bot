@@ -19,7 +19,7 @@
     [manifold "0.1.7-alpha5"] ; Async programming tools https://github.com/ztellman/manifold
     [org.clojure/tools.namespace "0.3.0-alpha4"] ; Namespace management https://github.com/clojure/tools.namespace
 
-    [open-company/lib "0.11.10"] ; Library for OC projects https://github.com/open-company/open-company-lib
+    [open-company/lib "0.11.14"] ; Library for OC projects https://github.com/open-company/open-company-lib
     ; In addition to common functions, brings in the following common dependencies used by this project:
     ; core.async - Async programming and communication https://github.com/clojure/core.async
     ; Component - Component Lifecycle https://github.com/stuartsierra/component
@@ -43,7 +43,7 @@
       :env {
       }
       :dependencies [
-        [philoskim/debux "0.2.1"] ; `dbg` macro around -> or let https://github.com/philoskim/debux
+        [philoskim/debux "0.3.1"] ; `dbg` macro around -> or let https://github.com/philoskim/debux
       ]
       :plugins [
         [jonase/eastwood "0.2.4"] ; Linter https://github.com/jonase/eastwood
