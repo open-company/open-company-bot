@@ -43,7 +43,7 @@
       :env {
       }
       :dependencies [
-        [philoskim/debux "0.3.1"] ; `dbg` macro around -> or let https://github.com/philoskim/debux
+        [philoskim/debux "0.3.4"] ; `dbg` macro around -> or let https://github.com/philoskim/debux
       ]
       :plugins [
         [jonase/eastwood "0.2.4"] ; Linter https://github.com/jonase/eastwood
