@@ -1,6 +1,6 @@
 (defproject open-company-bot "0.2.0-SNAPSHOT"
   :description "OpenCompany Bot Service"
-  :url "https://opencompany.com/"
+  :url "https://github.com/open-company/open-company-bot"
   :license {
     :name "Mozilla Public License v2.0"
     :url "http://www.mozilla.org/MPL/2.0/"
@@ -43,7 +43,7 @@
       :env {
       }
       :dependencies [
-        [philoskim/debux "0.3.4"] ; `dbg` macro around -> or let https://github.com/philoskim/debux
+        [philoskim/debux "0.3.6"] ; `dbg` macro around -> or let https://github.com/philoskim/debux
       ]
       :plugins [
         [jonase/eastwood "0.2.4"] ; Linter https://github.com/jonase/eastwood
