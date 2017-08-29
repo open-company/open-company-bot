@@ -36,9 +36,6 @@
 
 ;; ----- Utility functions -----
 
-(def iso-format (format/formatters :date-time)) ; ISO 8601
-(def link-format (format/formatter "YYYY-MM-dd")) ; Format for date in URL of stakeholder-update links
-
 (defn- slack-handler [conn msg-idx msg] (prn msg))
 
 (defn- real-user? [user]
@@ -96,83 +93,66 @@
       (>!! bot-chan m))) ; send the message to the bot's channel
   (sqs/ack done-channel msg))
 
-(defn- share-update [token channel msg]
+(defn- share-snapshot [token receiver {:keys [org-slug org-name org-logo-url title note secure-uuid]}]
   {:pre [(string? token)
-         (string? channel)
-         (map? msg)
-         (map? (:script msg))
-         (map? (-> msg :script :params))
-         (string? (-> msg :script :params :org/slug))
-         (string? (-> msg :script :params :update/slug))
-         (string? (-> msg :script :params :update/created-at))
-         (string? (-> msg :script :params :env/origin))]}
-  (timbre/info "Sending update message to Slack channel:" channel)
-  (let [params (-> msg :script :params)
-        origin-url (:env/origin params)
-        org-slug (:org/slug params)        
-        update-slug (:update/slug params)
-        title (:update/title params)
-        created-at (format/parse iso-format (:update/created-at params))
-        update-time (format/unparse link-format created-at)
-        user-name (:user/name params)
-        user-prompt (if (and user-name (-> msg :receiver :dm))
+         (map? receiver)]}
+  (timbre/info "Sending snapshot share to Slack channel:" receiver)
+  (let [user-name nil ; TODO don't have this yet
+        user-prompt (if (and user-name (:db receiver))
                       (str "Hey " user-name ", check it out! Here's the latest update")
                       "Hey, check it out! Here's the latest update")
-        org-name (:org/name params)
         org-prompt (if (s/blank? org-name) " " (str " from " org-name))
-        note (:update/note params)
         clean-note (when note (-> note ; remove HTML
                                 (s/replace #"&nbsp;" " ")
                                 (str/strip-tags)
                                 (str/strip-newlines)))
-        channel (-> msg :receiver :id)
-        update-url (s/join "/" [origin-url org-slug "updates" update-time update-slug])
+        channel (:id receiver)
+        update-url (s/join "/" [c/web-url org-slug "story" secure-uuid])
         update-markdown (if (s/blank? title) update-url (str "<" update-url "|" title ">"))
         basic-text (str user-prompt org-prompt
                         ": " update-markdown)
         full-text (if (s/blank? note) basic-text (str basic-text "\n> " clean-note))]
     (slack/post-message token channel full-text)))
 
-(defn- invite [token channel msg]
-  {:pre [(string? token)
-         (string? channel)
-         (map? msg)
-         (map? (:script msg))
-         (map? (-> msg :script :params))
-         (string? (-> msg :script :params :from))
-         (or (string? (-> msg :script :params :from-id))
-             (nil? (-> msg :script :params :from-id)))
-         (string? (-> msg :script :params :org-name))
-         (string? (-> msg :script :params :first-name))
-         (string? (-> msg :script :params :url))]}
-  (timbre/info "Sending invite to Slack channel:" channel)
-  (let [params (-> msg :script :params)
-        org-name (:org-name params)
-        from (:from params)
-        from-id (:from-id params)
-        first-name (:first-name params)
-        url (:url params)
-        url-display (last (s/split url #"//"))
-        user-prompt (if (s/blank? first-name) "Hey, " (str "Hey " first-name ", "))
-        from-person (when-not (s/blank? from) (if from-id (str "<@" from-id "|" from ">") from))
-        from-msg (if (s/blank? from-person) "you've been invited to join " (str from-person " would like you to join "))
-        org-msg (if (s/blank? org-name) "us " (str "*" org-name "* "))
-        full-text (str user-prompt from-msg org-msg "on OpenCompany at: <" url "|" url-display ">")
-        channel (-> msg :receiver :id)]
-    (slack/post-message token channel full-text)))
+; (defn- invite [token channel msg]
+;   {:pre [(string? token)
+;          (string? channel)
+;          (map? msg)
+;          (map? (:script msg))
+;          (map? (-> msg :script :params))
+;          (string? (-> msg :script :params :from))
+;          (or (string? (-> msg :script :params :from-id))
+;              (nil? (-> msg :script :params :from-id)))
+;          (string? (-> msg :script :params :org-name))
+;          (string? (-> msg :script :params :first-name))
+;          (string? (-> msg :script :params :url))]}
+;   (timbre/info "Sending invite to Slack channel:" channel)
+;   (let [params (-> msg :script :params)
+;         org-name (:org-name params)
+;         from (:from params)
+;         from-id (:from-id params)
+;         first-name (:first-name params)
+;         url (:url params)
+;         url-display (last (s/split url #"//"))
+;         user-prompt (if (s/blank? first-name) "Hey, " (str "Hey " first-name ", "))
+;         from-person (when-not (s/blank? from) (if from-id (str "<@" from-id "|" from ">") from))
+;         from-msg (if (s/blank? from-person) "you've been invited to join " (str from-person " would like you to join "))
+;         org-msg (if (s/blank? org-name) "us " (str "*" org-name "* "))
+;         full-text (str user-prompt from-msg org-msg "on OpenCompany at: <" url "|" url-display ">")
+;         channel (-> msg :receiver :id)]
+;     (slack/post-message token channel full-text)))
 
 (defn- bot-handler [msg]
-  {:pre [(keyword? (-> msg :script :id))
-         (string? (-> msg :receiver :id))
-         (string? (-> msg :bot :token))]}       
+  {:pre [(string? (-> msg :type))
+         (map? (-> msg :receiver))
+         (string? (-> msg :bot :token))]}
   (let [token (-> msg :bot :token)
-        channel (-> msg :receiver :id)
-        script-id (-> msg :script :id)]
-    (timbre/trace "Routing message with script ID:" script-id)
-    (case script-id 
-      :update (share-update token channel msg)
-      :invite (invite token channel msg)
-      (timbre/warn "Ignoring message with script ID:" script-id))))
+        receiver (-> msg :receiver)
+        script-type (-> msg :type)]
+    (timbre/trace "Routing message with type:" script-type)
+    (case script-type
+      "share-snapshot" (share-snapshot token receiver msg)
+      (timbre/warn "Ignoring message with script type:" script-type))))
 
 ;; ----- System Startup -----
 
@@ -226,6 +206,7 @@
   (println (str "\n"
     "AWS SQS queue: " c/aws-sqs-bot-queue "\n"
     "AWS API endpoint: " c/oc-api-endpoint "\n"
+    "Web URL: " c/web-url "\n"
     "Sentry: " (or c/dsn "false") "\n\n"
     (when c/intro? "Ready to serve...\n"))))
 

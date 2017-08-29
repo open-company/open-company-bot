@@ -12,13 +12,17 @@
 (defonce prod? (= "production" (env :env)))
 (defonce intro? (not prod?))
 
+;; ----- Logging -----
+
+(defonce log-level (or (env :log-level) :info))
+
 ;; ----- Sentry -----
 
 (defonce dsn (or (env :sentry-dsn) false))
 
-;; ----- Logging -----
+;; ------ OC Web -----
 
-(defonce log-level (or (env :log-level) :info))
+(defonce web-url (or (env :oc-web-url) "http://localhost:3559"))
 
 ;; ------ OC Storage Service -----
 
