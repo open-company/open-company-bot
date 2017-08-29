@@ -83,7 +83,6 @@
 (defn sqs-handler
   "Handle an incoming SQS message to the bot."
   [msg done-channel]
-  {:pre [(:body msg)]}
   (let [msg-body (read-string (:body msg))
         error (if (:test-error msg-body) (/ 1 0) false) ; a message testing Sentry error reporting
         bot-token  (-> msg-body :bot :token)
@@ -93,12 +92,13 @@
       (>!! bot-chan m))) ; send the message to the bot's channel
   (sqs/ack done-channel msg))
 
-(defn- share-snapshot [token receiver {:keys [org-slug org-name org-logo-url title note secure-uuid]}]
+(defn- share-snapshot [token receiver {:keys [org-slug org-name org-logo-url title note secure-uuid] :as msg}]
   {:pre [(string? token)
-         (map? receiver)]}
+         (map? receiver)
+         (map? msg)]}
   (timbre/info "Sending snapshot share to Slack channel:" receiver)
-  (let [user-name nil ; TODO don't have this yet
-        user-prompt (if (and user-name (:db receiver))
+  (let [user-name (:user-name msg) ; TODO don't have this yet
+        user-prompt (if user-name
                       (str "Hey " user-name ", check it out! Here's the latest update")
                       "Hey, check it out! Here's the latest update")
         org-prompt (if (s/blank? org-name) " " (str " from " org-name))
@@ -143,12 +143,12 @@
 ;     (slack/post-message token channel full-text)))
 
 (defn- bot-handler [msg]
-  {:pre [(string? (-> msg :type))
-         (map? (-> msg :receiver))
+  {:pre [(string? (:type msg))
+         (map? (:receiver msg))
          (string? (-> msg :bot :token))]}
   (let [token (-> msg :bot :token)
-        receiver (-> msg :receiver)
-        script-type (-> msg :type)]
+        receiver (:receiver msg)
+        script-type (:type msg)]
     (timbre/trace "Routing message with type:" script-type)
     (case script-type
       "share-snapshot" (share-snapshot token receiver msg)
