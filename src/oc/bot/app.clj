@@ -114,33 +114,19 @@
         full-text (if (s/blank? note) basic-text (str basic-text "\n> " clean-note))]
     (slack/post-message token channel full-text)))
 
-; (defn- invite [token channel msg]
-;   {:pre [(string? token)
-;          (string? channel)
-;          (map? msg)
-;          (map? (:script msg))
-;          (map? (-> msg :script :params))
-;          (string? (-> msg :script :params :from))
-;          (or (string? (-> msg :script :params :from-id))
-;              (nil? (-> msg :script :params :from-id)))
-;          (string? (-> msg :script :params :org-name))
-;          (string? (-> msg :script :params :first-name))
-;          (string? (-> msg :script :params :url))]}
-;   (timbre/info "Sending invite to Slack channel:" channel)
-;   (let [params (-> msg :script :params)
-;         org-name (:org-name params)
-;         from (:from params)
-;         from-id (:from-id params)
-;         first-name (:first-name params)
-;         url (:url params)
-;         url-display (last (s/split url #"//"))
-;         user-prompt (if (s/blank? first-name) "Hey, " (str "Hey " first-name ", "))
-;         from-person (when-not (s/blank? from) (if from-id (str "<@" from-id "|" from ">") from))
-;         from-msg (if (s/blank? from-person) "you've been invited to join " (str from-person " would like you to join "))
-;         org-msg (if (s/blank? org-name) "us " (str "*" org-name "* "))
-;         full-text (str user-prompt from-msg org-msg "on OpenCompany at: <" url "|" url-display ">")
-;         channel (-> msg :receiver :id)]
-;     (slack/post-message token channel full-text)))
+(defn- invite [token receiver {:keys [org-name from from-id first-name url] :as msg}]
+  {:pre [(string? token)
+         (map? receiver)
+         (map? msg)]}
+  (timbre/info "Sending invite to Slack channel:" receiver)
+  (let [url-display (last (s/split url #"//"))
+        user-prompt (if (s/blank? first-name) "Hey, " (str "Hey " first-name ", "))
+        from-person (when-not (s/blank? from) (if from-id (str "<@" from-id "|" from ">") from))
+        from-msg (if (s/blank? from-person) "you've been invited to join " (str from-person " would like you to join "))
+        org-msg (if (s/blank? org-name) "us " (str "*" org-name "* "))
+        full-text (str user-prompt from-msg org-msg "on Carrot at: <" url "|" url-display ">")
+        channel (-> msg :receiver :id)]
+    (slack/post-message token channel full-text)))
 
 (defn- bot-handler [msg]
   {:pre [(string? (:type msg))
@@ -152,6 +138,7 @@
     (timbre/trace "Routing message with type:" script-type)
     (case script-type
       "share-snapshot" (share-snapshot token receiver msg)
+      "invite" (invite token receiver msg)
       (timbre/warn "Ignoring message with script type:" script-type))))
 
 ;; ----- System Startup -----

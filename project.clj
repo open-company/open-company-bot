@@ -13,13 +13,13 @@
 
   ;; All profile dependencies
   :dependencies [
-    [org.clojure/clojure "1.9.0-alpha19"] ; Lisp on the JVM http://clojure.org/documentation
+    [org.clojure/clojure "1.9.0-alpha20"] ; Lisp on the JVM http://clojure.org/documentation
     [funcool/cuerdas "2.0.3"] ; String manipulation library https://github.com/funcool/cuerdas
     [aleph "0.4.4-alpha4"] ; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
     [manifold "0.1.7-alpha5"] ; Async programming tools https://github.com/ztellman/manifold
     [org.clojure/tools.namespace "0.3.0-alpha4"] ; Namespace management https://github.com/clojure/tools.namespace
 
-    [open-company/lib "0.12.15"] ; Library for OC projects https://github.com/open-company/open-company-lib
+    [open-company/lib "0.12.16"] ; Library for OC projects https://github.com/open-company/open-company-lib
     ; In addition to common functions, brings in the following common dependencies used by this project:
     ; core.async - Async programming and communication https://github.com/clojure/core.async
     ; Component - Component Lifecycle https://github.com/stuartsierra/component
