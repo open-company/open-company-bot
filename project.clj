@@ -13,13 +13,13 @@
 
   ;; All profile dependencies
   :dependencies [
-    [org.clojure/clojure "1.9.0-alpha20"] ; Lisp on the JVM http://clojure.org/documentation
+    [org.clojure/clojure "1.9.0-beta1"] ; Lisp on the JVM http://clojure.org/documentation
     [funcool/cuerdas "2.0.3"] ; String manipulation library https://github.com/funcool/cuerdas
     [aleph "0.4.4-alpha4"] ; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
     [manifold "0.1.7-alpha5"] ; Async programming tools https://github.com/ztellman/manifold
     [org.clojure/tools.namespace "0.3.0-alpha4"] ; Namespace management https://github.com/clojure/tools.namespace
 
-    [open-company/lib "0.12.19"] ; Library for OC projects https://github.com/open-company/open-company-lib
+    [open-company/lib "0.13.1"] ; Library for OC projects https://github.com/open-company/open-company-lib
     ; In addition to common functions, brings in the following common dependencies used by this project:
     ; core.async - Async programming and communication https://github.com/clojure/core.async
     ; Component - Component Lifecycle https://github.com/stuartsierra/component
@@ -63,7 +63,7 @@
         [lein-bikeshed "0.4.1"] ; Check for code smells https://github.com/dakrone/lein-bikeshed
         [lein-checkall "0.1.1"] ; Runs bikeshed, kibit and eastwood https://github.com/itang/lein-checkall
         [lein-pprint "1.1.2"] ; pretty-print the lein project map https://github.com/technomancy/leiningen/tree/master/lein-pprint
-        [lein-ancient "0.6.10"] ; Check for outdated dependencies https://github.com/xsc/lein-ancient
+        [lein-ancient "0.6.12"] ; Check for outdated dependencies https://github.com/xsc/lein-ancient
         [lein-spell "0.1.0"] ; Catch spelling mistakes in docs and docstrings https://github.com/cldwalker/lein-spell
         [lein-deps-tree "0.1.2"] ; Print a tree of project dependencies https://github.com/the-kenny/lein-deps-tree
         [venantius/yagni "0.1.4"] ; Dead code finder https://github.com/venantius/yagni
