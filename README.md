@@ -83,8 +83,6 @@ Before running anything make sure you copy `config.edn.template` to `config.edn`
   :aws-access-key-id "CHANGE-ME"
   :aws-secret-access-key "CHANGE-ME"
   :aws-sqs-queue "https://sqs.REGION.amazonaws.com/CHANGE/ME"
-
-  :oc-api-endpoint "http://localhost:3000"
 }
 ```
 

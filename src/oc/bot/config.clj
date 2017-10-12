@@ -24,10 +24,6 @@
 
 (defonce web-url (or (env :oc-web-url) "http://localhost:3559"))
 
-;; ------ OC Storage Service -----
-
-(defonce oc-api-endpoint (or (env :oc-api-endpoint) "http://localhost:3000"))
-
 ;; ----- AWS SQS -----
 
 (defonce aws-access-key-id (env :aws-access-key-id))

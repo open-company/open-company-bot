@@ -13,27 +13,35 @@
 
   ;; All profile dependencies
   :dependencies [
-    [org.clojure/clojure "1.9.0-beta1"] ; Lisp on the JVM http://clojure.org/documentation
-    [funcool/cuerdas "2.0.3"] ; String manipulation library https://github.com/funcool/cuerdas
-    [aleph "0.4.4-alpha4"] ; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
-    [manifold "0.1.7-alpha5"] ; Async programming tools https://github.com/ztellman/manifold
-    [org.clojure/tools.namespace "0.3.0-alpha4"] ; Namespace management https://github.com/clojure/tools.namespace
+    ;; Lisp on the JVM http://clojure.org/documentation
+    [org.clojure/clojure "1.9.0-beta2"]
+    ;; String manipulation library https://github.com/funcool/cuerdas
+    [funcool/cuerdas "2.0.4"] 
+    ;; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
+    [aleph "0.4.4-alpha4"]
+    ;; Async programming tools https://github.com/ztellman/manifold
+    [manifold "0.1.7-alpha6"]
+    ;; Namespace management https://github.com/clojure/tools.namespace
+    ;; NB: org.clojure/tools.reader pulled in by oc.lib
+    [org.clojure/tools.namespace "0.3.0-alpha4" :exclusions [org.clojure/tools.reader]] 
 
-    [open-company/lib "0.13.1"] ; Library for OC projects https://github.com/open-company/open-company-lib
-    ; In addition to common functions, brings in the following common dependencies used by this project:
-    ; core.async - Async programming and communication https://github.com/clojure/core.async
-    ; Component - Component Lifecycle https://github.com/stuartsierra/component
-    ; Timbre - Pure Clojure/Script logging library https://github.com/ptaoussanis/timbre
-    ; Amazonica - A comprehensive Clojure client for the AWS API. https://github.com/mcohen01/amazonica
-    ; Raven - Interface to Sentry error reporting https://github.com/sethtrain/raven-clj
-    ; Cheshire - JSON encoding / decoding https://github.com/dakrone/cheshire
-    ; clj-time - Date and time lib https://github.com/clj-time/clj-time
-    ; environ - Environment settings from different sources https://github.com/weavejester/environ  ]
+    ;; Library for OC projects https://github.com/open-company/open-company-lib
+    [open-company/lib "0.14.5"]
+    ;; In addition to common functions, brings in the following common dependencies used by this project:
+    ;; core.async - Async programming and communication https://github.com/clojure/core.async
+    ;; Component - Component Lifecycle https://github.com/stuartsierra/component
+    ;; Timbre - Pure Clojure/Script logging library https://github.com/ptaoussanis/timbre
+    ;; Amazonica - A comprehensive Clojure client for the AWS API. https://github.com/mcohen01/amazonica
+    ;; Raven - Interface to Sentry error reporting https://github.com/sethtrain/raven-clj
+    ;; Cheshire - JSON encoding / decoding https://github.com/dakrone/cheshire
+    ;; clj-time - Date and time lib https://github.com/clj-time/clj-time
+    ;; environ - Environment settings from different sources https://github.com/weavejester/environ  ]
   ]
 
   ;; All profile plugins
   :plugins [
-    [lein-environ "1.1.0"] ; Get environment settings from different sources https://github.com/weavejester/environ
+    ;; Get environment settings from different sources https://github.com/weavejester/environ
+    [lein-environ "1.1.0"]
   ]
 
   :profiles {
@@ -42,12 +50,11 @@
     :qa {
       :env {
       }
-      :dependencies [
-        [philoskim/debux "0.3.12"] ; `dbg` macro around -> or let https://github.com/philoskim/debux
-      ]
       :plugins [
-        [jonase/eastwood "0.2.4"] ; Linter https://github.com/jonase/eastwood
-        [lein-kibit "0.1.6-beta2"] ; Static code search for non-idiomatic code https://github.com/jonase/kibit
+        ;; Linter https://github.com/jonase/eastwood
+        [jonase/eastwood "0.2.4"]
+        ;; Static code search for non-idiomatic code https://github.com/jonase/kibit        
+        [lein-kibit "0.1.6-beta2" :exclusions [org.clojure/clojure]]
       ]
     }
 
@@ -57,24 +64,32 @@
         :aws-access-key-id "CHANGE-ME"
         :aws-secret-access-key "CHANGE-ME"
         :aws-sqs-bot-queue "https://sqs.REGION.amazonaws.com/CHANGE/ME"
-        :oc-api-endpoint "http://localhost:3000"
       }
       :plugins [
-        [lein-bikeshed "0.4.1"] ; Check for code smells https://github.com/dakrone/lein-bikeshed
-        [lein-checkall "0.1.1"] ; Runs bikeshed, kibit and eastwood https://github.com/itang/lein-checkall
-        [lein-pprint "1.1.2"] ; pretty-print the lein project map https://github.com/technomancy/leiningen/tree/master/lein-pprint
-        [lein-ancient "0.6.12"] ; Check for outdated dependencies https://github.com/xsc/lein-ancient
-        [lein-spell "0.1.0"] ; Catch spelling mistakes in docs and docstrings https://github.com/cldwalker/lein-spell
-        [lein-deps-tree "0.1.2"] ; Print a tree of project dependencies https://github.com/the-kenny/lein-deps-tree
-        [venantius/yagni "0.1.4"] ; Dead code finder https://github.com/venantius/yagni
-        [com.jakemccrary/lein-test-refresh "0.21.1"] ; Autotest https://github.com/jakemcc/lein-test-refresh
+        ;; Check for code smells https://github.com/dakrone/lein-bikeshed
+        ;; NB: org.clojure/tools.cli is pulled in by lein-kibit
+        [lein-bikeshed "0.4.1" :exclusions [org.clojure/tools.cli]] 
+        ;; Runs bikeshed, kibit and eastwood https://github.com/itang/lein-checkall
+        [lein-checkall "0.1.1"]
+        ;; pretty-print the lein project map https://github.com/technomancy/leiningen/tree/master/lein-pprint
+        [lein-pprint "1.1.2"]
+        ;; Check for outdated dependencies https://github.com/xsc/lein-ancient
+        [lein-ancient "0.6.12"]
+        ;; Catch spelling mistakes in docs and docstrings https://github.com/cldwalker/lein-spell
+        [lein-spell "0.1.0"]
+        ;; Dead code finder https://github.com/venantius/yagni
+        [venantius/yagni "0.1.4" :exclusions [org.clojure/clojure]]
+        ;; Autotest https://github.com/jakemcc/lein-test-refresh
+        [com.jakemccrary/lein-test-refresh "0.21.1"]
       ]  
     }]
 
     :repl-config [:dev {
       :dependencies [
-        [org.clojure/tools.nrepl "0.2.13"] ; Network REPL https://github.com/clojure/tools.nrepl
-        [aprint "0.1.3"] ; Pretty printing in the REPL (aprint ...) https://github.com/razum2um/aprint
+        ;; Network REPL https://github.com/clojure/tools.nrepl
+        [org.clojure/tools.nrepl "0.2.13"]
+        ;; Pretty printing in the REPL (aprint ...) https://github.com/razum2um/aprint
+        [aprint "0.1.3"]
       ]
       ;; REPL injections
       :injections [
