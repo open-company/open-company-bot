@@ -92,23 +92,23 @@
       (>!! bot-chan m))) ; send the message to the bot's channel
   (sqs/ack done-channel msg))
 
-(defn- share-snapshot [token receiver {:keys [org-slug org-name org-logo-url title note secure-uuid] :as msg}]
+(defn- share-entry [token receiver {:keys [org-slug org-name org-logo-url headline note secure-uuid] :as msg}]
   {:pre [(string? token)
          (map? receiver)
          (map? msg)]}
-  (timbre/info "Sending snapshot share to Slack channel:" receiver)
+  (timbre/info "Sending entry share to Slack channel:" receiver)
   (let [user-name (:user-name msg) ; TODO don't have this yet
         user-prompt (if user-name
-                      (str "Hey " user-name ", check it out! Here's the latest update")
-                      "Hey, check it out! Here's the latest update")
+                      (str "Hey " user-name ", check it out! Here's the latest post")
+                      "Hey, check it out! Here's the latest post")
         org-prompt (if (s/blank? org-name) " " (str " from " org-name))
         clean-note (when note (-> note ; remove HTML
                                 (s/replace #"&nbsp;" " ")
                                 (str/strip-tags)
                                 (str/strip-newlines)))
         channel (:id receiver)
-        update-url (s/join "/" [c/web-url org-slug "story" secure-uuid])
-        update-markdown (if (s/blank? title) update-url (str "<" update-url "|" title ">"))
+        update-url (s/join "/" [c/web-url org-slug "post" secure-uuid])
+        update-markdown (if (s/blank? headline) update-url (str "<" update-url "|" headline ">"))
         basic-text (str user-prompt org-prompt
                         ": " update-markdown)
         full-text (if (s/blank? note) basic-text (str basic-text "\n> " clean-note))]
@@ -137,7 +137,7 @@
         script-type (:type msg)]
     (timbre/trace "Routing message with type:" script-type)
     (case script-type
-      "share-snapshot" (share-snapshot token receiver msg)
+      "share-entry" (share-entry token receiver msg)
       "invite" (invite token receiver msg)
       (timbre/warn "Ignoring message with script type:" script-type))))
 
@@ -192,7 +192,6 @@
 (defn echo-config []
   (println (str "\n"
     "AWS SQS queue: " c/aws-sqs-bot-queue "\n"
-    "AWS API endpoint: " c/oc-api-endpoint "\n"
     "Web URL: " c/web-url "\n"
     "Sentry: " (or c/dsn "false") "\n\n"
     (when c/intro? "Ready to serve...\n"))))
