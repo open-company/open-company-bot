@@ -14,7 +14,7 @@
   ;; All profile dependencies
   :dependencies [
     ;; Lisp on the JVM http://clojure.org/documentation
-    [org.clojure/clojure "1.9.0-beta2"]
+    [org.clojure/clojure "1.9.0-beta3"]
     ;; String manipulation library https://github.com/funcool/cuerdas
     [funcool/cuerdas "2.0.4"] 
     ;; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
