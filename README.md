@@ -2,8 +2,7 @@
 
 [![MPL License](http://img.shields.io/badge/license-MPL-blue.svg?style=flat)](https://www.mozilla.org/MPL/2.0/)
 [![Build Status](https://travis-ci.org/open-company/open-company-bot.svg?branch=master)](https://travis-ci.org/open-company/open-company-bot)
-[![Dependency Status](https://www.versioneye.com/user/projects/592ab183c0295d003f7c8a1f/badge.svg?style=flat)](https://www.versioneye.com/user/projects/592ab183c0295d003f7c8a1f)
-[![Roadmap on Trello](http://img.shields.io/badge/roadmap-trello-blue.svg?style=flat)](https://trello.com/b/3naVWHgZ/open-company-development)
+[![Dependencies Status](https://versions.deps.co/open-company/open-company-bot/status.svg)](https://versions.deps.co/open-company/open-company-bot)
 
 
 ## Background
