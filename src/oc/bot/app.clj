@@ -47,6 +47,12 @@
 (defn- first-name [name]
   (first (clojure.string/split name #"\s")))
 
+(defn- clean-text [text]
+  (-> text
+    (s/replace #"&nbsp;" " ")
+    (str/strip-tags)
+    (str/strip-newlines)))
+
 ;; ----- Bot Request handling -----
 
 (defn- adjust-receiver
@@ -92,20 +98,17 @@
       (>!! bot-chan m))) ; send the message to the bot's channel
   (sqs/ack done-channel msg))
 
-(defn- share-entry [token receiver {:keys [org-slug org-logo-url headline note secure-uuid] :as msg}]
+(defn- share-entry [token receiver {:keys [org-slug org-logo-url board-name headline note publisher secure-uuid] :as msg}]
   {:pre [(string? token)
          (map? receiver)
          (map? msg)]}
   (timbre/info "Sending entry share to Slack channel:" receiver)
   (let [channel (:id receiver)
         update-url (s/join "/" [c/web-url org-slug "post" secure-uuid])
-        clean-note (when (not (s/blank? note))
-                      (-> note ; remove HTML
-                        (s/replace #"&nbsp;" " ")
-                        (str/strip-tags)
-                        (str/strip-newlines)))
-        update-markdown (if (s/blank? headline) update-url (str "<" update-url "|" headline ">"))
-        text (str (or clean-note "A new post from your team:") " " update-markdown)]
+        clean-note (when-not (s/blank? note) (str (clean-text note) " — "))
+        clean-headline (when-not (s/blank? headline) (clean-text headline))
+        update-markdown (if (s/blank? headline) update-url (str "<" update-url "|" clean-headline ">"))
+        text (str (or clean-note (str "A new post from *" (:name publisher) "* in *" board-name "*:")) " " update-markdown)]
     (slack/post-message token channel text)))
 
 (defn- invite [token receiver {:keys [org-name from from-id first-name url] :as msg}]
