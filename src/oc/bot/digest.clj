@@ -10,15 +10,16 @@
 
 (defn- post-as-attachment [board-name {:keys [publisher url headline published-at]}]
   (let [author-name (:name publisher)
+        clean-headline (.text (soup/parse headline)) ; Strip out any HTML tags
         ts (-> published-at ; since Unix epoch timestamp for Slack
               (coerce/to-long)
               (/ 1000)
               (int))]
     {
-      :fallback (str "A post in " board-name " by " author-name ", '" headline "'.")
+      :fallback (str "A post in " board-name " by " author-name ", '" clean-headline "'.")
       :color "#FFF"
       :author_name author-name
-      :title (.text (soup/parse headline)) ; Strip out any HTML tags
+      :title clean-headline
       :title_link url
       ;:text "" ; use for comments
       :ts ts
