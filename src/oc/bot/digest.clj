@@ -5,25 +5,27 @@
   "
   (:require [taoensso.timbre :as timbre]
             [clj-time.coerce :as coerce]
+            [oc.lib.text :as text]
             [oc.lib.slack :as slack]
             [jsoup.soup :as soup]))
 
-(defn- post-as-attachment [board-name {:keys [publisher url headline published-at]}]
+(defn- post-as-attachment [board-name {:keys [publisher url headline published-at comment-count comment-authors]}]
   (let [author-name (:name publisher)
         clean-headline (.text (soup/parse headline)) ; Strip out any HTML tags
         ts (-> published-at ; since Unix epoch timestamp for Slack
               (coerce/to-long)
               (/ 1000)
-              (int))]
-    {
-      :fallback (str "A post in " board-name " by " author-name ", '" clean-headline "'.")
-      :color "#FFF"
-      :author_name author-name
-      :title clean-headline
-      :title_link url
-      ;:text "" ; use for comments
-      :ts ts
-    }))
+              (int))
+        message {
+          :fallback (str "A post in " board-name " by " author-name ", '" clean-headline "'.")
+          :color "#FFF"
+          :author_name author-name
+          :title clean-headline
+          :title_link url
+          :ts ts}]
+    (if (pos? comment-count)
+      (assoc message :text (text/attribution 3 comment-count "comment" comment-authors))
+      message)))
 
 (defn- posts-for-board [board]
   (let [pretext (:name board)
