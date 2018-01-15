@@ -18,13 +18,13 @@
     ;; String manipulation library https://github.com/funcool/cuerdas
     [funcool/cuerdas "2.0.5"] 
     ;; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
-    [aleph "0.4.5-alpha2"]
+    [aleph "0.4.5-alpha3"]
     ;; Async programming tools https://github.com/ztellman/manifold
     [manifold "0.1.7-alpha6"]
     ;; Namespace management https://github.com/clojure/tools.namespace
     ;; NB: org.clojure/tools.reader pulled in by oc.lib
     [org.clojure/tools.namespace "0.3.0-alpha4" :exclusions [org.clojure/tools.reader]] 
-
+    ;; Clojure wrapper for jsoup HTML parser https://github.com/mfornos/clojure-soup
     [clj-soup/clojure-soup "0.1.3"]
 
     ;; Library for OC projects https://github.com/open-company/open-company-lib
