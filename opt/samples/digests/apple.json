@@ -1,0 +1,59 @@
+{
+  "digest-frequency": "weekly",
+  "org-slug": "apple",
+  "org-name": "Apple",
+  "logo-url": "https://www.apple.com/ac/structured-data/images/knowledge_graph_logo.png",
+  "logo-height": 302,
+  "logo-width": 302,
+  "boards": [
+    {
+      "name": "General",
+      "posts": [
+        {
+          "headline": "Introducing some new faces!",
+          "url": "http://localhost:3000/apple/general/post/e921-4f0c-9b9c",
+          "publisher" : {
+            "avatar-url" : "https://secure.gravatar.com/avatar/866a6350e399e67e749c6f2aef0b96c0.jpg?s=512&d=https%3A%2F%2Fa.slack-edge.com%2F7fa9%2Fimg%2Favatars%2Fava_0020-512.png",
+            "name" : "Lisa Malo",
+            "user-id" : "d6e9-4529-8e7b"
+          },
+          "published-at": "2017-11-5T17:00:48.729Z"
+        }, {
+          "headline": "We've hit 2,000 paid subscribers!",
+          "url": "http://localhost:3000/apple/general/post/e921-4f0c-9b9c",
+          "publisher" : {
+            "avatar-url" : "https://secure.gravatar.com/avatar/866a6350e399e67e749c6f2aef0b96c0.jpg?s=512&d=https%3A%2F%2Fa.slack-edge.com%2F7fa9%2Fimg%2Favatars%2Fava_0020-512.png",
+            "name" : "David Smith",
+            "user-id" : "d6e9-4529-8e7b"
+          },
+          "published-at": "2017-11-5T17:00:48.729Z"
+        }
+      ]
+    }, {
+      "name": "Design",
+      "slug": "design",
+      "uuid": "e921-4f0c-9b9c",
+      "posts": [
+        {
+          "headline": "Building Design Collaboration into our Workflow",
+          "url": "http://localhost:3000/apple/design/post/e921-4f0c-9b9c",
+          "publisher" : {
+            "avatar-url" : "https://secure.gravatar.com/avatar/866a6350e399e67e749c6f2aef0b96c0.jpg?s=512&d=https%3A%2F%2Fa.slack-edge.com%2F7fa9%2Fimg%2Favatars%2Fava_0020-512.png",
+            "name" : "Lisa Malo",
+            "user-id" : "d6e9-4529-8e7b"
+          },
+          "published-at": "2017-11-5T17:00:48.729Z"
+        }, {
+          "headline": "Versioning, Licensing and Sketch 4.0",
+          "url": "http://localhost:3000/apple/design/post/e921-4f0c-9b9c",
+          "publisher" : {
+            "avatar-url" : "https://secure.gravatar.com/avatar/866a6350e399e67e749c6f2aef0b96c0.jpg?s=512&d=https%3A%2F%2Fa.slack-edge.com%2F7fa9%2Fimg%2Favatars%2Fava_0020-512.png",
+            "name" : "David Smith",
+            "user-id" : "d6e9-4529-8e7b"
+          },
+          "published-at": "2017-11-5T17:00:48.729Z"
+        }
+      ]
+    }
+  ]
+}

@@ -13,6 +13,7 @@
             [oc.lib.sentry-appender :as sa]
             [oc.lib.sqs :as sqs]
             [oc.lib.slack :as slack]
+            [oc.bot.digest :as digest]
             [oc.bot.config :as c]))
 
 ;; ----- Unhandled Exceptions -----
@@ -136,16 +137,17 @@
     (slack/post-message token channel full-text)))
 
 (defn- bot-handler [msg]
-  {:pre [(string? (:type msg))
+  {:pre [(or (string? (:type msg)) (keyword? (:type msg)))
          (map? (:receiver msg))
          (string? (-> msg :bot :token))]}
   (let [token (-> msg :bot :token)
         receiver (:receiver msg)
-        script-type (:type msg)]
+        script-type (keyword (:type msg))]
     (timbre/trace "Routing message with type:" script-type)
     (case script-type
-      "share-entry" (share-entry token receiver msg)
-      "invite" (invite token receiver msg)
+      :share-entry (share-entry token receiver msg)
+      :invite (invite token receiver msg)
+      :digest (digest/send-digest token receiver msg)
       (timbre/warn "Ignoring message with script type:" script-type))))
 
 ;; ----- System Startup -----

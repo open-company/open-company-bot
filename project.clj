@@ -16,17 +16,19 @@
     ;; Lisp on the JVM http://clojure.org/documentation
     [org.clojure/clojure "1.9.0"]
     ;; String manipulation library https://github.com/funcool/cuerdas
-    [funcool/cuerdas "2.0.4"] 
+    [funcool/cuerdas "2.0.5"] 
     ;; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
-    [aleph "0.4.4"]
+    [aleph "0.4.5-alpha3"]
     ;; Async programming tools https://github.com/ztellman/manifold
     [manifold "0.1.7-alpha6"]
     ;; Namespace management https://github.com/clojure/tools.namespace
     ;; NB: org.clojure/tools.reader pulled in by oc.lib
     [org.clojure/tools.namespace "0.3.0-alpha4" :exclusions [org.clojure/tools.reader]] 
+    ;; Clojure wrapper for jsoup HTML parser https://github.com/mfornos/clojure-soup
+    [clj-soup/clojure-soup "0.1.3"]
 
     ;; Library for OC projects https://github.com/open-company/open-company-lib
-    [open-company/lib "0.14.8"]
+    [open-company/lib "0.14.15"]
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; core.async - Async programming and communication https://github.com/clojure/core.async
     ;; Component - Component Lifecycle https://github.com/stuartsierra/component
@@ -74,7 +76,7 @@
         ;; pretty-print the lein project map https://github.com/technomancy/leiningen/tree/master/lein-pprint
         [lein-pprint "1.2.0"]
         ;; Check for outdated dependencies https://github.com/xsc/lein-ancient
-        [lein-ancient "0.6.14"]
+        [lein-ancient "0.6.15"]
         ;; Catch spelling mistakes in docs and docstrings https://github.com/cldwalker/lein-spell
         [lein-spell "0.1.0"]
         ;; Dead code finder https://github.com/venantius/yagni
@@ -96,7 +98,10 @@
         (require '[aprint.core :refer (aprint ap)]
                  '[clojure.stacktrace :refer (print-stack-trace)]
                  '[clojure.string :as s]
-                 '[cheshire.core :as json])
+                 '[cheshire.core :as json]
+                 '[clj-time.core :as t]
+                 '[clj-time.coerce :as coerce]
+                 '[clj-time.format :as f])
       ]
     }]
 

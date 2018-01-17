@@ -1,0 +1,59 @@
+{
+  "digest-frequency": "daily",
+  "org-slug": "carrot",
+  "org-name": "Carrot",
+  "logo-url": "https://slack-files2.s3-us-west-2.amazonaws.com/avatars/2017-09-16/243287999207_9e662352c5c6175b971a_230.png",
+  "logo-height": 230,
+  "logo-width": 230,
+  "boards": [
+    {
+      "name": "All-hands 🙌",
+      "posts": [
+        {
+          "headline": "Introducing some new faces!",
+          "url": "http://localhost:3000/carrot/all-hands/post/e921-4f0c-9b9c",
+          "publisher" : {
+            "avatar-url" : "https://secure.gravatar.com/avatar/866a6350e399e67e749c6f2aef0b96c0.jpg?s=512&d=https%3A%2F%2Fa.slack-edge.com%2F7fa9%2Fimg%2Favatars%2Fava_0020-512.png",
+            "name" : "Lisa Malo",
+            "user-id" : "d6e9-4529-8e7b"
+          },
+          "published-at": "2017-11-5T17:00:48.729Z"
+        }, {
+          "headline": "We've hit 2,000 paid subscribers!",
+          "url": "http://localhost:3000/carrot/all-hands/post/e921-4f0c-9b9c",
+          "publisher" : {
+            "avatar-url" : "https://secure.gravatar.com/avatar/866a6350e399e67e749c6f2aef0b96c0.jpg?s=512&d=https%3A%2F%2Fa.slack-edge.com%2F7fa9%2Fimg%2Favatars%2Fava_0020-512.png",
+            "name" : "David Smith",
+            "user-id" : "d6e9-4529-8e7b"
+          },
+          "published-at": "2017-11-5T17:00:48.729Z"
+        }
+      ]
+    }, {
+      "name": "Design",
+      "slug": "design",
+      "uuid": "e921-4f0c-9b9c",
+      "posts": [
+        {
+          "headline": "Building Design Collaboration into our Workflow",
+          "url": "http://localhost:3000/carrot/design/post/e921-4f0c-9b9c",
+          "publisher" : {
+            "avatar-url" : "https://secure.gravatar.com/avatar/866a6350e399e67e749c6f2aef0b96c0.jpg?s=512&d=https%3A%2F%2Fa.slack-edge.com%2F7fa9%2Fimg%2Favatars%2Fava_0020-512.png",
+            "name" : "Lisa Malo",
+            "user-id" : "d6e9-4529-8e7b"
+          },
+          "published-at": "2017-11-5T17:00:48.729Z"
+        }, {
+          "headline": "Versioning, Licensing and Sketch 4.0",
+          "url": "http://localhost:3000/carrot/design/post/e921-4f0c-9b9c",
+          "publisher" : {
+            "avatar-url" : "https://secure.gravatar.com/avatar/866a6350e399e67e749c6f2aef0b96c0.jpg?s=512&d=https%3A%2F%2Fa.slack-edge.com%2F7fa9%2Fimg%2Favatars%2Fava_0020-512.png",
+            "name" : "David Smith",
+            "user-id" : "d6e9-4529-8e7b"
+          },
+          "published-at": "2017-11-5T17:00:48.729Z"
+        }
+      ]
+    }
+  ]
+}
