@@ -18,7 +18,7 @@
     ;; String manipulation library https://github.com/funcool/cuerdas
     [funcool/cuerdas "2.0.5"] 
     ;; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
-    [aleph "0.4.5-alpha3"]
+    [aleph "0.4.5-alpha4"]
     ;; Async programming tools https://github.com/ztellman/manifold
     [manifold "0.1.7-alpha6"]
     ;; Namespace management https://github.com/clojure/tools.namespace
@@ -28,7 +28,7 @@
     [clj-soup/clojure-soup "0.1.3"]
 
     ;; Library for OC projects https://github.com/open-company/open-company-lib
-    [open-company/lib "0.16.0"]
+    [open-company/lib "0.16.1"]
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; core.async - Async programming and communication https://github.com/clojure/core.async
     ;; Component - Component Lifecycle https://github.com/stuartsierra/component

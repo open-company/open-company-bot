@@ -14,6 +14,7 @@
             [oc.lib.sqs :as sqs]
             [oc.lib.slack :as slack]
             [oc.bot.digest :as digest]
+            [oc.bot.resources.slack-org :as slack-org]
             [oc.bot.config :as c]))
 
 ;; ----- Unhandled Exceptions -----
@@ -58,7 +59,7 @@
 
 (defn- adjust-receiver
   "Inspect the receiver field and return one or more initialization messages
-   with proper DM channels and update :user/name script param."
+   with proper DM channels."
   [msg]
   (let [token (-> msg :bot :token)
         type  (-> msg :receiver :type)]
@@ -92,11 +93,11 @@
   [msg done-channel]
   (let [msg-body (read-string (:body msg))
         error (if (:test-error msg-body) (/ 1 0) false) ; a message testing Sentry error reporting
-        bot-token  (-> msg-body :bot :token)
-        _missing_token (if bot-token false (throw (ex-info "Message body missing bot token." {:msg-body msg-body})))]
+        bot-token  (or (-> msg-body :bot :token) (slack-org/bot-token-for (-> msg :receiver :slack-org-id)))
+        _missing_token (if bot-token false (throw (ex-info "Missing bot token for:" {:msg-body msg-body})))]
     (timbre/infof "Received message from SQS: %s\n" msg-body)
     (doseq [m (adjust-receiver msg-body)]
-      (>!! bot-chan m))) ; send the message to the bot's channel
+      (>!! bot-chan (assoc-in m [:bot :token] bot-token)))) ; send the message to the bot's channel
   (sqs/ack done-channel msg))
 
 (defn- share-entry [token receiver {:keys [org-slug org-logo-url board-name headline note
@@ -136,6 +137,12 @@
         channel (-> msg :receiver :id)]
     (slack/post-message token channel full-text)))
 
+(defn- usage [token receiver]
+  {:pre [(string? token)
+         (map? receiver)]}
+  (timbre/info "Sending usage to Slack channel:" receiver)
+  (slack/post-message token (:id receiver) c/usage-message))
+
 (defn- bot-handler [msg]
   {:pre [(or (string? (:type msg)) (keyword? (:type msg)))
          (map? (:receiver msg))
@@ -148,6 +155,7 @@
       :share-entry (share-entry token receiver msg)
       :invite (invite token receiver msg)
       :digest (digest/send-digest token receiver msg)
+      :usage (usage token receiver)
       (timbre/warn "Ignoring message with script type:" script-type))))
 
 ;; ----- System Startup -----
