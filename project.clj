@@ -32,6 +32,8 @@
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; core.async - Async programming and communication https://github.com/clojure/core.async
     ;; Component - Component Lifecycle https://github.com/stuartsierra/component
+    ;; RethinkDB - RethinkDB client for Clojure https://github.com/apa512/clj-rethinkdb
+    ;; Schema - Data validation https://github.com/Prismatic/schema
     ;; Timbre - Pure Clojure/Script logging library https://github.com/ptaoussanis/timbre
     ;; Amazonica - A comprehensive Clojure client for the AWS API. https://github.com/mcohen01/amazonica
     ;; Raven - Interface to Sentry error reporting https://github.com/sethtrain/raven-clj
@@ -51,6 +53,7 @@
     ;; QA environment and dependencies
     :qa {
       :env {
+        :db-name "open_company_auth_qa"
       }
       :plugins [
         ;; Linter https://github.com/jonase/eastwood
@@ -63,6 +66,7 @@
     ;; Dev environment and dependencies
     :dev [:qa {
       :env ^:replace {
+        :db-name "open_company_auth_dev"
         :aws-access-key-id "CHANGE-ME"
         :aws-secret-access-key "CHANGE-ME"
         :aws-sqs-bot-queue "https://sqs.REGION.amazonaws.com/CHANGE/ME"
@@ -106,7 +110,12 @@
     }]
 
     ;; Production environment
-    :prod {}
+    :prod {
+      :env {
+        :db-name "open_company_auth"
+        :env "production"
+      }      
+    }
 
     :uberjar {
       :aot :all
