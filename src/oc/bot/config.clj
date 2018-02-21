@@ -9,12 +9,25 @@
 
 ;; ----- System -----
 
+(defonce processors (.availableProcessors (Runtime/getRuntime)))
+(defonce core-async-limit (+ 42 (* 2 processors)))
+
 (defonce prod? (= "production" (env :env)))
 (defonce intro? (not prod?))
 
 ;; ----- Logging -----
 
 (defonce log-level (or (env :log-level) :info))
+
+;; ----- RethinkDB -----
+
+(defonce db-host (or (env :db-host) "localhost"))
+(defonce db-port (or (env :db-port) 28015))
+(defonce db-name (or (env :db-name) "open_company_auth"))
+(defonce db-pool-size (or (env :db-pool-size) (- core-async-limit 21))) ; conservative with the core.async limit
+
+(defonce db-map {:host db-host :port db-port :db db-name})
+(defonce db-options (flatten (vec db-map))) ; k/v sequence as clj-rethinkdb wants it
 
 ;; ----- Sentry -----
 
@@ -30,3 +43,14 @@
 (defonce aws-secret-access-key (env :aws-secret-access-key))
 
 (defonce aws-sqs-bot-queue (env :aws-sqs-bot-queue))
+
+;; ----- Bot -----
+
+;; https://api.slack.com/docs/message-formatting
+(defonce usage-message (str "You talkin' to me? You talkin' to me??\n\n"
+                            "Well... you shouldn't be, I'm just a Carrot, I've got no ears!\n\n"
+                            "Ha! 😜 I kid of course! But for the most part, I do like to stay deep in the soil, out of your way.\n\n"
+                            "*Here's what I do:*\n"
+                            ">- I ensure all your team's comments from Carrot make it into Slack\n"
+                            ">- I also make sure posts shared from Carrot make it to Slack\n"
+                            ">- And, I can send you a <" web-url "/profile|daily or weekly digest> of new posts from your team"))

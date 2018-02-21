@@ -18,7 +18,7 @@
     ;; String manipulation library https://github.com/funcool/cuerdas
     [funcool/cuerdas "2.0.5"] 
     ;; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
-    [aleph "0.4.5-alpha3"]
+    [aleph "0.4.5-alpha4"]
     ;; Async programming tools https://github.com/ztellman/manifold
     [manifold "0.1.7-alpha6"]
     ;; Namespace management https://github.com/clojure/tools.namespace
@@ -28,10 +28,12 @@
     [clj-soup/clojure-soup "0.1.3"]
 
     ;; Library for OC projects https://github.com/open-company/open-company-lib
-    [open-company/lib "0.16.0"]
+    [open-company/lib "0.16.2"]
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; core.async - Async programming and communication https://github.com/clojure/core.async
     ;; Component - Component Lifecycle https://github.com/stuartsierra/component
+    ;; RethinkDB - RethinkDB client for Clojure https://github.com/apa512/clj-rethinkdb
+    ;; Schema - Data validation https://github.com/Prismatic/schema
     ;; Timbre - Pure Clojure/Script logging library https://github.com/ptaoussanis/timbre
     ;; Amazonica - A comprehensive Clojure client for the AWS API. https://github.com/mcohen01/amazonica
     ;; Raven - Interface to Sentry error reporting https://github.com/sethtrain/raven-clj
@@ -51,6 +53,7 @@
     ;; QA environment and dependencies
     :qa {
       :env {
+        :db-name "open_company_auth_qa"
       }
       :plugins [
         ;; Linter https://github.com/jonase/eastwood
@@ -63,6 +66,7 @@
     ;; Dev environment and dependencies
     :dev [:qa {
       :env ^:replace {
+        :db-name "open_company_auth_dev"
         :aws-access-key-id "CHANGE-ME"
         :aws-secret-access-key "CHANGE-ME"
         :aws-sqs-bot-queue "https://sqs.REGION.amazonaws.com/CHANGE/ME"
@@ -106,7 +110,12 @@
     }]
 
     ;; Production environment
-    :prod {}
+    :prod {
+      :env {
+        :db-name "open_company_auth"
+        :env "production"
+      }      
+    }
 
     :uberjar {
       :aot :all
