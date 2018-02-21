@@ -28,7 +28,7 @@
     [clj-soup/clojure-soup "0.1.3"]
 
     ;; Library for OC projects https://github.com/open-company/open-company-lib
-    [open-company/lib "0.16.1"]
+    [open-company/lib "0.16.2"]
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; core.async - Async programming and communication https://github.com/clojure/core.async
     ;; Component - Component Lifecycle https://github.com/stuartsierra/component

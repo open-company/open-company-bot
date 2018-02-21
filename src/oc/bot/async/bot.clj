@@ -1,4 +1,5 @@
 (ns oc.bot.async.bot
+  "Consume bot requests from SQS, adjust them for our use, and then do the needed bot operation."
   (:require [clojure.string :as s]
             [clojure.core.async :as async :refer (<!! >!!)]
             [cuerdas.core :as str]
@@ -15,6 +16,8 @@
             [oc.bot.digest :as digest]
             [oc.bot.resources.slack-org :as slack-org]
             [oc.bot.config :as c]))
+
+(def db-pool (atom false)) ; atom holding DB pool so it can be used for each SQS message
 
 ;; ----- core.async -----
 
@@ -79,7 +82,7 @@
   [msg done-channel]
   (let [msg-body (read-string (:body msg))
         error (if (:test-error msg-body) (/ 1 0) false) ; a message testing Sentry error reporting
-        bot-token  (or (-> msg-body :bot :token) (slack-org/bot-token-for (-> msg :receiver :slack-org-id)))
+        bot-token  (or (-> msg-body :bot :token) (slack-org/bot-token-for @db-pool (-> msg-body :receiver :slack-org-id)))
         _missing_token (if bot-token false (throw (ex-info "Missing bot token for:" {:msg-body msg-body})))]
     (timbre/infof "Received message from SQS: %s\n" msg-body)
     (doseq [m (adjust-receiver msg-body)]
@@ -170,7 +173,11 @@
 
 (defn start
  "Stop the core.async bot channel consumer."
-  []
+  [pool]
+
+  (reset! db-pool pool) ; hold onto the DB pool reference
+
+  (timbre/info "Starting bot...")
   (bot-loop))
 
 (defn stop
@@ -178,4 +185,5 @@
   []
   (when @bot-go
     (timbre/info "Stopping bot...")
-    (>!! bot-chan {:stop true})))
+    (>!! bot-chan {:stop true}))
+  (reset! db-pool false))

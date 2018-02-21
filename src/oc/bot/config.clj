@@ -1,7 +1,6 @@
 (ns oc.bot.config
   "Namespace for the configuration parameters."
-  (:require [environ.core :refer (env)]
-            [oc.lib.slack :as lib-slack]))
+  (:require [environ.core :refer (env)]))
 
 (defn- bool
   "Handle the fact that we may have true/false strings, when we want booleans."
@@ -48,8 +47,7 @@
 ;; ----- Bot -----
 
 ;; https://api.slack.com/docs/message-formatting
-(defonce usage-message (str lib-slack/marker-char ; let interaction service know this came from us
-                            "You talkin' to me? You talkin' to me??\n\n"
+(defonce usage-message (str "You talkin' to me? You talkin' to me??\n\n"
                             "Well... you shouldn't be, I'm just a Carrot, I've got no ears!\n\n"
                             "Ha! 😜 I kid of course! But for the most part, I do like to stay deep in the soil, out of your way.\n\n"
                             "*Here's what I do:*\n"

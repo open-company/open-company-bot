@@ -25,12 +25,12 @@
         (dissoc component :pool))
       component)))
 
-(defrecord BotChannelConsumer [bot]
+(defrecord BotChannelConsumer [db-pool]
   component/Lifecycle
   
   (start [component]
     (timbre/info "[bot] starting...")
-    (bot/start)
+    (bot/start (:pool db-pool))
     (timbre/info "[bot] started")
     (assoc component :bot true))
   
@@ -43,11 +43,27 @@
         (dissoc component :bot))
       component)))
 
+(defrecord Handler [handler-fn]
+  component/Lifecycle
+
+  (start [component]
+    (timbre/info "[handler] started")
+    (assoc component :handler handler-fn))
+
+  (stop [component]
+    (timbre/info "[handler] stopped")
+    (dissoc component :handler)))
+
 (defn bot-system
   "Define our system that has 2 components: the SQS listener, and the Bot channel consumer."
   [config-options]
   (let [{:keys [sqs-creds sqs-queue sqs-msg-handler]} config-options]
     (component/system-map
       :db-pool (map->RethinkPool {:size c/db-pool-size :regenerate-interval 5})
-      :bot (component/using (map->BotChannelConsumer {}) [])
+      :bot (component/using
+              (map->BotChannelConsumer {})
+              [:db-pool])
+      :handler (component/using
+                (map->Handler {:handler-fn sqs-msg-handler})
+                [])
       :sqs (sqs/sqs-listener sqs-creds sqs-queue sqs-msg-handler))))
