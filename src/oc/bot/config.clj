@@ -53,4 +53,5 @@
                             "*Here's what I do:*\n"
                             ">- I ensure all your team's comments from Carrot make it into Slack\n"
                             ">- I also make sure posts shared from Carrot make it to Slack\n"
+                            ">- I let you know when you've been invited to a private board\n" 
                             ">- And, I can send you a <" web-url "/profile|daily or weekly digest> of new posts from your team"))

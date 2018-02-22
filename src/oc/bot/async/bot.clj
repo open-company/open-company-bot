@@ -113,7 +113,7 @@
                     board-url (s/join "/" [c/web-url
                                            (:slug (:org msg))
                                            (:slug board)])
-                    message (str "You have been invited to a private board. "
+                    message (str "You've been invited to a private board: "
                                  "<" board-url "|" (:name board) ">" )
                     receiver (first (adjust-receiver
                                      {:receiver
@@ -205,6 +205,7 @@
                         (= (:notification-type msg-parsed) "add"))
                        (= (:resource-type msg-parsed) "board"))
                   (timbre/debug "private board notification!")
+                  (timbre/debug msg-parsed)
                   (send-private-board-notification msg-parsed)))
               (let [bot-token  (-> msg :bot :token)
                     _missing_token (if bot-token false (throw (ex-info "Message body missing bot token." {:msg-body msg})))]
