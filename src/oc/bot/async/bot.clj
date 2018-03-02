@@ -100,10 +100,11 @@
 ;; ----- Bot Request handling -----
 
 (defn- send-private-board-notification [msg]
-  (let [notifications (:notifications (:content msg))
-        board (:new (:content msg))
+  (let [notifications (-> msg :content :notifications)
+        board (-> msg :content :new)
         user (:user msg)
         slack-bots (:slack-bots user)]
+
     (doseq [team (:teams user)]
       (let [slack-bot (first ((keyword team) slack-bots))]
         (doseq [notify notifications]
@@ -116,11 +117,9 @@
                     message (str "You've been invited to a private board: "
                                  "<" board-url "|" (:name board) ">" )
                     receiver (first (adjust-receiver
-                                     {:receiver
-                                      {
-                                       :id (:id slack-info)
-                                       :type :user
-                                       }
+                                     {:receiver {
+                                        :id (:id slack-info)
+                                        :type :user}
                                       :bot {:token token}}))]
                 (slack/post-message token
                                     (:id (:receiver receiver))
@@ -199,12 +198,12 @@
           (try
             (if (:Message msg) ;; data change SNS message
               (let [msg-parsed (json/parse-string (:Message msg) true)]
-                (when (and
-                       (or
-                        (= (:notification-type msg-parsed) "update")
-                        (= (:notification-type msg-parsed) "add"))
-                       (= (:resource-type msg-parsed) "board"))
-                  (timbre/debug "private board notification!")
+                (when (and ; update or add on a board
+                        (or
+                          (= (:notification-type msg-parsed) "update")
+                          (= (:notification-type msg-parsed) "add"))
+                        (= (:resource-type msg-parsed) "board"))
+                  (timbre/debug "Received private board notification:")
                   (timbre/debug msg-parsed)
                   (send-private-board-notification msg-parsed)))
               (let [bot-token  (-> msg :bot :token)
