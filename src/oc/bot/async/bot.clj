@@ -7,6 +7,7 @@
             [com.stuartsierra.component :as component]
             [amazonica.aws.sqs :as aws-sqs]
             [taoensso.timbre :as timbre]
+            [cheshire.core :as json]
             [clj-time.format :as format]
             [raven-clj.core :as sentry]
             [raven-clj.interfaces :as sentry-interfaces]
@@ -77,19 +78,52 @@
       :else
       (throw (ex-info "Failed to adjust receiver" {:msg msg})))))
 
+(defn- read-message-body
+  "
+  Try to parse as json, otherwise use read-string.
+  "
+  [msg]
+  (try
+    (json/parse-string msg true)
+    (catch Exception e
+      (read-string msg))))
+
 (defn sqs-handler
   "Handle an incoming SQS message to the bot."
   [msg done-channel]
-  (let [msg-body (read-string (:body msg))
-        error (if (:test-error msg-body) (/ 1 0) false) ; a message testing Sentry error reporting
-        bot-token  (or (-> msg-body :bot :token) (slack-org/bot-token-for @db-pool (-> msg-body :receiver :slack-org-id)))
-        _missing_token (if bot-token false (throw (ex-info "Missing bot token for:" {:msg-body msg-body})))]
+  (let [msg-body (read-message-body (:body msg))
+        error (if (:test-error msg-body) (/ 1 0) false)] ; a message testing Sentry error reporting
     (timbre/infof "Received message from SQS: %s\n" msg-body)
-    (doseq [m (adjust-receiver msg-body)]
-      (>!! bot-chan (assoc-in m [:bot :token] bot-token)))) ; send the message to the bot's channel
+    (>!! bot-chan msg-body)) ; send the message to the bot's channel
   (sqs/ack done-channel msg))
 
 ;; ----- Bot Request handling -----
+
+(defn- send-private-board-notification [msg]
+  (let [notifications (-> msg :content :notifications)
+        board (-> msg :content :new)
+        user (:user msg)
+        slack-bots (:slack-bots user)]
+
+    (doseq [team (:teams user)]
+      (let [slack-bot (first ((keyword team) slack-bots))]
+        (doseq [notify notifications]
+          (let [slack-info (first (vals (:slack-users notify)))]
+            (when slack-info
+              (let [token (:token slack-bot)
+                    board-url (s/join "/" [c/web-url
+                                           (:slug (:org msg))
+                                           (:slug board)])
+                    message (str "You've been invited to a private board: "
+                                 "<" board-url "|" (:name board) ">" )
+                    receiver (first (adjust-receiver
+                                     {:receiver {
+                                        :id (:id slack-info)
+                                        :type :user}
+                                      :bot {:token token}}))]
+                (slack/post-message token
+                                    (:id (:receiver receiver))
+                                    message)))))))))
 
 (defn- share-entry [token receiver {:keys [org-slug org-logo-url board-name headline note
                                            publisher secure-uuid sharer auto-share] :as msg}]
@@ -157,12 +191,25 @@
   (reset! bot-go true)
   (async/go (while @bot-go
       (timbre/info "Waiting for message on bot channel...")
-      (let [m (<!! bot-chan)]
+      (let [msg (<!! bot-chan)]
         (timbre/trace "Processing message on bot channel...")
-        (if (:stop m)
+        (if (:stop msg)
           (do (reset! bot-go false) (timbre/info "Bot stopped."))
           (try
-            (bot-handler m)
+            (if (:Message msg) ;; data change SNS message
+              (let [msg-parsed (json/parse-string (:Message msg) true)]
+                (when (and ; update or add on a board
+                        (or
+                          (= (:notification-type msg-parsed) "update")
+                          (= (:notification-type msg-parsed) "add"))
+                        (= (:resource-type msg-parsed) "board"))
+                  (timbre/debug "Received private board notification:")
+                  (timbre/debug msg-parsed)
+                  (send-private-board-notification msg-parsed)))
+              (let [bot-token  (-> msg :bot :token)
+                    _missing_token (if bot-token false (throw (ex-info "Message body missing bot token." {:msg-body msg})))]
+                (doseq [m (adjust-receiver msg)]
+                  (bot-handler m))))
             (timbre/trace "Processing complete.")
             (catch Exception e
               (timbre/error e))))
