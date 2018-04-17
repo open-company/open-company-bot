@@ -81,7 +81,7 @@ You can also override these settings with environmental variables in the form of
 
 You will also need to subscribe the SQS queue to the storage SNS topic. To do this you will need to go to the AWS console and follow these instruction:
 
-Go to the AWS SQS Console and select the email queue configured above. From the 'Queue Actions' dropdown, select 'Subscribe Queue to SNS Topic'. Select the SNS topic you've configured your Storage Service instance to publish to, and click the 'Subscribe' button.
+Go to the AWS SQS Console and select the bot queue configured above. From the 'Queue Actions' dropdown, select 'Subscribe Queue to SNS Topic'. Select the SNS topic you've configured your Storage Service instance to publish to, and click the 'Subscribe' button.
 
 
 ## Usage
