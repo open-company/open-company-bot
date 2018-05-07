@@ -206,10 +206,10 @@
                   (timbre/debug "Received private board notification:")
                   (timbre/debug msg-parsed)
                   (send-private-board-notification msg-parsed)))
-              (let [bot-token  (-> msg :bot :token)
-                    _missing_token (if bot-token false (throw (ex-info "Message body missing bot token." {:msg-body msg})))]
+              (let [bot-token  (or (-> msg :bot :token) (slack-org/bot-token-for @db-pool (-> msg :receiver :slack-org-id)))
+                    _missing_token (if bot-token false (throw (ex-info "Missing bot token for:" {:msg-body msg})))]
                 (doseq [m (adjust-receiver msg)]
-                  (bot-handler m))))
+                  (bot-handler (assoc-in m [:bot :token] bot-token)))))
             (timbre/trace "Processing complete.")
             (catch Exception e
               (timbre/error e))))
