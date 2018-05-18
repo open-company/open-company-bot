@@ -47,11 +47,12 @@
 ;; ----- Bot -----
 
 ;; https://api.slack.com/docs/message-formatting
-(defonce usage-message (str "You talkin' to me? You talkin' to me??\n\n"
-                            "Well... you shouldn't be, I'm just a Carrot, I've got no ears!\n\n"
-                            "Ha! 😜 I kid of course! But for the most part, I do like to stay deep in the soil, out of your way.\n\n"
-                            "*Here's what I do:*\n"
-                            ">- I ensure all your team's comments from Carrot make it into Slack\n"
+(defonce usage-bullets (str ">- I ensure all your team's comments from Carrot make it into Slack\n"
                             ">- I also make sure posts shared from Carrot make it to Slack\n"
+                            ">- I unfurl links to Carrot that are sent in Slack messages\n" 
                             ">- I let you know when you've been invited to a private board\n" 
                             ">- And, I can send you a <" web-url "/profile|daily or weekly digest> of new posts from your team"))
+(defonce usage-message (str "I'm the Carrot Bot, and it seems you have something to say to me. Well... I'm just a Carrot, I've got no ears!\n\n"
+                            "Ha! 😜 I kid of course! But for the most part, I do like to stay deep in the soil, out of your way.\n\n"
+                            "*Here's what I do:*\n"
+                            usage-bullets))
