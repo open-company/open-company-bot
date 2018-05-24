@@ -56,3 +56,6 @@
                             "Ha! 😜 I kid of course! But for the most part, I do like to stay deep in the soil, out of your way.\n\n"
                             "*Here's what I do:*\n"
                             usage-bullets))
+(defonce welcome-message (str "Hey there! Your slack account has been successfully connected to Carrot.\n\n"
+                              "I'm the Carrot Bot, I work in the background to help out. Here's what I do:\n\n"
+                              usage-bullets))
