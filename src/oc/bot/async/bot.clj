@@ -45,6 +45,8 @@
     (str/strip-tags)
     (str/strip-newlines)))
 
+(def carrot-explainer "Carrot is the company digest that keeps everyone aligned around what matters most.")
+
 ;; ----- SQS handling -----
 
 (defn- adjust-receiver
@@ -111,19 +113,21 @@
           (let [slack-info (first (vals (:slack-users notify)))]
             (when slack-info
               (let [token (:token slack-bot)
+                    note (:note msg)
                     board-url (s/join "/" [c/web-url
                                            (:slug (:org msg))
                                            (:slug board)])
-                    message (str "You've been invited to a private board: "
-                                 "<" board-url "|" (:name board) ">" )
+                    message (str "You've been invited to a private section: "
+                                 "<" board-url "|" (:name board) ">"
+                                 " on Carrot.\n\n" carrot-explainer "\n")
                     receiver (first (adjust-receiver
                                      {:receiver {
                                         :id (:id slack-info)
                                         :type :user}
                                       :bot {:token token}}))]
-                (slack/post-message token
-                                    (:id (:receiver receiver))
-                                    message)))))))))
+                (slack/post-attachments token
+                                        (:id (:receiver receiver))
+                                        [{:pretext note :text message}])))))))))
 
 (defn- share-entry [token receiver {:keys [org-slug org-logo-url board-name headline note
                                            publisher secure-uuid sharer auto-share] :as msg}]
@@ -148,7 +152,7 @@
                 (str share-attribution ": " update-markdown)))]
     (slack/post-message token channel text)))
 
-(defn- invite [token receiver {:keys [org-name from from-id first-name url] :as msg}]
+(defn- invite [token receiver {:keys [org-name from from-id first-name url note] :as msg}]
   {:pre [(string? token)
          (map? receiver)
          (map? msg)]}
@@ -158,9 +162,9 @@
         from-person (when-not (s/blank? from) (if from-id (str "<@" from-id "|" from ">") from))
         from-msg (if (s/blank? from-person) "you've been invited to join " (str from-person " would like you to join "))
         org-msg (if (s/blank? org-name) "us " (str "*" org-name "* "))
-        full-text (str user-prompt from-msg org-msg "on Carrot at: <" url "|" url-display ">")
+        full-text (str user-prompt from-msg org-msg "on Carrot at: <" url "|" url-display ">\n\n" carrot-explainer "\n\n")
         channel (-> msg :receiver :id)]
-    (slack/post-message token channel full-text)))
+    (slack/post-attachments token channel [{:pretext note :text full-text}])))
 
 (defn- usage [token receiver]
   {:pre [(string? token)
