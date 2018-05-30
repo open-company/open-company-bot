@@ -212,6 +212,12 @@
   (timbre/info "Sending usage to Slack channel:" receiver)
   (slack/post-message token (:id receiver) c/usage-message))
 
+(defn- welcome [token receiver]
+  {:pre [(string? token)
+         (map? receiver)]}
+  (timbre/info "Sending welcome message to Slack channel:" receiver)
+  (slack/post-message token (:id receiver) c/welcome-message))
+
 (defn- bot-handler [msg]
   {:pre [(or (string? (:type msg)) (keyword? (:type msg)))
          (map? (:receiver msg))
@@ -225,6 +231,7 @@
       :invite (invite token receiver msg)
       :digest (digest/send-digest token receiver msg)
       :usage (usage token receiver)
+      :welcome (welcome token receiver)
       (timbre/warn "Ignoring message with script type:" script-type))))
 
 ;; ----- Event loop -----
