@@ -164,7 +164,7 @@
         org-msg (if (s/blank? org-name) "us " (str "*" org-name "* "))
         full-text (str user-prompt from-msg org-msg "on Carrot at: <" url "|" url-display ">\n\n" carrot-explainer "\n\n")
         channel (-> msg :receiver :id)]
-    (slack/post-attachments token channel [{:pretext note :text full-text}])))
+    (slack/post-attachments token channel [{:pretext full-text :text note}])))
 
 (defn- usage [token receiver]
   {:pre [(string? token)
