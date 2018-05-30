@@ -127,7 +127,7 @@
                                       :bot {:token token}}))]
                 (slack/post-attachments token
                                         (:id (:receiver receiver))
-                                        [{:pretext note :text message}])))))))))
+                                        [{:pretext message :text note}])))))))))
 
 (defn- share-entry [token receiver {:keys [org-slug org-logo-url board-name headline note
                                            publisher secure-uuid sharer auto-share] :as msg}]
