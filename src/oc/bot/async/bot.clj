@@ -37,7 +37,7 @@
        (not= "USLACKBOT" (:id user))))
 
 (defn- first-name [name]
-  (first (clojure.string/split name #"\s")))
+  (first (s/split name #"\s")))
 
 (defn- clean-text [text]
   (-> text
@@ -114,12 +114,18 @@
             (when slack-info
               (let [token (:token slack-bot)
                     note (:note msg)
+                    expnote (if (s/blank? note)
+                              carrot-explainer
+                              note)
                     board-url (s/join "/" [c/web-url
                                            (:slug (:org msg))
                                            (:slug board)])
-                    message (str "You've been invited to a private section: "
-                                 "<" board-url "|" (:name board) ">"
-                                 " on Carrot.\n\n" carrot-explainer "\n")
+                    start-message (str "You've been invited to a private section: "
+                                       "<" board-url "|" (:name board) ">"
+                                       " on Carrot.\n\n")
+                    message (if (s/blank? note)
+                              start-message
+                              (str start-message carrot-explainer "\n"))
                     receiver (first (adjust-receiver
                                      {:receiver {
                                         :id (:id slack-info)
@@ -127,7 +133,7 @@
                                       :bot {:token token}}))]
                 (slack/post-attachments token
                                         (:id (:receiver receiver))
-                                        [{:pretext message :text note}])))))))))
+                                        [{:pretext message :text expnote}])))))))))
 
 (defn- share-entry [token receiver {:keys [org-slug org-logo-url board-name headline note
                                            publisher secure-uuid sharer auto-share] :as msg}]
@@ -162,9 +168,15 @@
         from-person (when-not (s/blank? from) (if from-id (str "<@" from-id "|" from ">") from))
         from-msg (if (s/blank? from-person) "you've been invited to join " (str from-person " would like you to join "))
         org-msg (if (s/blank? org-name) "us " (str "*" org-name "* "))
-        full-text (str user-prompt from-msg org-msg "on Carrot at: <" url "|" url-display ">\n\n" carrot-explainer "\n\n")
-        channel (-> msg :receiver :id)]
-    (slack/post-attachments token channel [{:pretext full-text :text note}])))
+        ftext (str user-prompt from-msg org-msg "on Carrot at: <" url "|" url-display ">\n\n")
+        full-text (if (s/blank? note)
+                    ftext
+                    (str ftext carrot-explainer "\n\n"))
+        channel (-> msg :receiver :id)
+        expnote (if (s/blank? note)
+                  carrot-explainer
+                  note)]
+    (slack/post-attachments token channel [{:pretext full-text :text expnote}])))
 
 (defn- usage [token receiver]
   {:pre [(string? token)
