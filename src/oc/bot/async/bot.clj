@@ -38,7 +38,7 @@
        (not= "USLACKBOT" (:id user))))
 
 (defn- first-name [name]
-  (first (clojure.string/split name #"\s")))
+  (first (s/split name #"\s")))
 
 (defn- clean-text [text]
   (-> text
@@ -52,6 +52,8 @@
 (defn- post-date [timestamp]
   (let [d (time-format/parse iso-format timestamp)]
     (time-format/unparse date-format d)))
+
+(def carrot-explainer "Carrot is the company digest that keeps everyone aligned around what matters most.")
 
 ;; ----- SQS handling -----
 
@@ -119,19 +121,24 @@
           (let [slack-info (first (vals (:slack-users notify)))]
             (when slack-info
               (let [token (:token slack-bot)
+                    note (:note msg)
+                    expnote (if (s/blank? note)
+                              carrot-explainer
+                              note)
                     board-url (s/join "/" [c/web-url
                                            (:slug (:org msg))
                                            (:slug board)])
-                    message (str "You've been invited to a private board: "
-                                 "<" board-url "|" (:name board) ">" )
+                    message (str "You've been invited to a private section: "
+                                 "<" board-url "|" (:name board) ">"
+                                 " on Carrot.\n\n")
                     receiver (first (adjust-receiver
                                      {:receiver {
                                         :id (:id slack-info)
                                         :type :user}
                                       :bot {:token token}}))]
-                (slack/post-message token
-                                    (:id (:receiver receiver))
-                                    message)))))))))
+                (slack/post-attachments token
+                                        (:id (:receiver receiver))
+                                        [{:pretext message :text expnote}])))))))))
 
 (defn- share-entry [token receiver {:keys [org-slug
                                            org-logo-url
@@ -192,7 +199,7 @@
                       :color "good"}]]
     (slack/post-attachments token channel attachments)))
 
-(defn- invite [token receiver {:keys [org-name from from-id first-name url] :as msg}]
+(defn- invite [token receiver {:keys [org-name from from-id first-name url note] :as msg}]
   {:pre [(string? token)
          (map? receiver)
          (map? msg)]}
@@ -202,9 +209,12 @@
         from-person (when-not (s/blank? from) (if from-id (str "<@" from-id "|" from ">") from))
         from-msg (if (s/blank? from-person) "you've been invited to join " (str from-person " would like you to join "))
         org-msg (if (s/blank? org-name) "us " (str "*" org-name "* "))
-        full-text (str user-prompt from-msg org-msg "on Carrot at: <" url "|" url-display ">")
-        channel (-> msg :receiver :id)]
-    (slack/post-message token channel full-text)))
+        full-text (str user-prompt from-msg org-msg "on Carrot at: <" url "|" url-display ">\n\n")
+        channel (-> msg :receiver :id)
+        expnote (if (s/blank? note)
+                  carrot-explainer
+                  note)]
+    (slack/post-attachments token channel [{:pretext full-text :text expnote}])))
 
 (defn- usage [token receiver]
   {:pre [(string? token)
