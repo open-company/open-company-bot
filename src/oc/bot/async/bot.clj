@@ -8,7 +8,8 @@
             [amazonica.aws.sqs :as aws-sqs]
             [taoensso.timbre :as timbre]
             [cheshire.core :as json]
-            [clj-time.format :as format]
+            [jsoup.soup :as soup]
+            [clj-time.format :as time-format]
             [raven-clj.core :as sentry]
             [raven-clj.interfaces :as sentry-interfaces]
             [oc.lib.sentry-appender :as sa]
@@ -44,6 +45,13 @@
     (s/replace #"&nbsp;" " ")
     (str/strip-tags)
     (str/strip-newlines)))
+
+(def iso-format (time-format/formatters :date-time))
+(def date-format (time-format/formatter "MMMM d"))
+
+(defn- post-date [timestamp]
+  (let [d (time-format/parse iso-format timestamp)]
+    (time-format/unparse date-format d)))
 
 (def carrot-explainer "Carrot is the company digest that keeps everyone aligned around what matters most.")
 
@@ -132,8 +140,19 @@
                                         (:id (:receiver receiver))
                                         [{:pretext message :text expnote}])))))))))
 
-(defn- share-entry [token receiver {:keys [org-slug org-logo-url board-name headline note
-                                           publisher secure-uuid sharer auto-share] :as msg}]
+(defn- share-entry [token receiver {:keys [org-slug
+                                           org-logo-url
+                                           org-name
+                                           board-name
+                                           headline
+                                           note
+                                           body
+                                           comment-count
+                                           publisher
+                                           published-at
+                                           secure-uuid
+                                           sharer
+                                           auto-share] :as msg}]
   {:pre [(string? token)
          (map? receiver)
          (map? msg)]}
@@ -141,7 +160,10 @@
   (let [channel (:id receiver)
         update-url (s/join "/" [c/web-url org-slug "post" secure-uuid])
         clean-note (when-not (s/blank? note) (str (clean-text note)))
-        clean-headline (when-not (s/blank? headline) (clean-text headline))
+        clean-headline (when-not (s/blank? headline)
+                         (clean-text (.text (soup/parse headline))))
+        clean-body (when-not (s/blank? body)
+                     (clean-text (.text (soup/parse body))))
         update-markdown (if (s/blank? headline) update-url (str "<" update-url "|" clean-headline ">"))
         share-attribution (if (= (:name publisher) (:name sharer))
                             (str "*" (:name sharer) "* shared a post in *" board-name "*")
@@ -152,8 +174,30 @@
               ;; Manual share
               (if clean-note
                 (str share-attribution ": " clean-note " — " update-markdown)
-                (str share-attribution ": " update-markdown)))]
-    (slack/post-message token channel text)))
+                (str share-attribution ": " update-markdown)))
+        footer (str "Posted in "
+                    board-name
+                    " by "
+                    (:name publisher)
+                    "  |  "
+                    (post-date published-at)
+                    "  |  "
+                    comment-count
+                    (if (= "1" comment-count)
+                      " comment "
+                      " comments ")
+                    )
+        attachments [{
+                      :author_name org-name
+                      :author_url org-logo-url
+                      :pretext text
+                      :title clean-headline
+                      :title_link update-url
+                      :text clean-body
+                      :footer footer
+                      :attachment_type "default"
+                      :color "good"}]]
+    (slack/post-attachments token channel attachments)))
 
 (defn- invite [token receiver {:keys [org-name from from-id first-name url note] :as msg}]
   {:pre [(string? token)
