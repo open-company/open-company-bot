@@ -120,12 +120,9 @@
                     board-url (s/join "/" [c/web-url
                                            (:slug (:org msg))
                                            (:slug board)])
-                    start-message (str "You've been invited to a private section: "
-                                       "<" board-url "|" (:name board) ">"
-                                       " on Carrot.\n\n")
-                    message (if (s/blank? note)
-                              start-message
-                              (str start-message carrot-explainer "\n"))
+                    message (str "You've been invited to a private section: "
+                                 "<" board-url "|" (:name board) ">"
+                                 " on Carrot.\n\n")
                     receiver (first (adjust-receiver
                                      {:receiver {
                                         :id (:id slack-info)
@@ -168,10 +165,7 @@
         from-person (when-not (s/blank? from) (if from-id (str "<@" from-id "|" from ">") from))
         from-msg (if (s/blank? from-person) "you've been invited to join " (str from-person " would like you to join "))
         org-msg (if (s/blank? org-name) "us " (str "*" org-name "* "))
-        ftext (str user-prompt from-msg org-msg "on Carrot at: <" url "|" url-display ">\n\n")
-        full-text (if (s/blank? note)
-                    ftext
-                    (str ftext carrot-explainer "\n\n"))
+        full-text (str user-prompt from-msg org-msg "on Carrot at: <" url "|" url-display ">\n\n")
         channel (-> msg :receiver :id)
         expnote (if (s/blank? note)
                   carrot-explainer
