@@ -164,6 +164,10 @@
                          (clean-text (.text (soup/parse headline))))
         clean-body (when-not (s/blank? body)
                      (clean-text (.text (soup/parse body))))
+        reduced-body (clojure.string/join " "
+                       (filter not-empty
+                         (take 20 ;; 20 words is the average long sentence
+                           (clojure.string/split clean-body #" "))))
         update-markdown (if (s/blank? headline) update-url (str "<" update-url "|" clean-headline ">"))
         share-attribution (if (= (:name publisher) (:name sharer))
                             (str "*" (:name sharer) "* shared a post in *" board-name "*")
@@ -193,7 +197,9 @@
                       :pretext text
                       :title clean-headline
                       :title_link update-url
-                      :text clean-body
+                      :text (if (< (count reduced-body) (count clean-body))
+                              (str reduced-body " ...")
+                              reduced-body)
                       :footer footer
                       :attachment_type "default"
                       :color "good"}]]
