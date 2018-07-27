@@ -168,17 +168,16 @@
                        (filter not-empty
                          (take 20 ;; 20 words is the average long sentence
                            (clojure.string/split clean-body #" "))))
-        update-markdown (if (s/blank? headline) update-url (str "<" update-url "|" clean-headline ">"))
         share-attribution (if (= (:name publisher) (:name sharer))
                             (str "*" (:name sharer) "* shared a post in *" board-name "*")
                             (str "*" (:name sharer) "* shared a post by *" (:name publisher) "* in *" board-name "*"))
         text (if auto-share
               ;; Post automatically shared on publication
-              (str "A new post from *" (:name publisher) "* in *" board-name "*: " update-markdown)
+              (str "A new post from *" (:name publisher) "* in *" board-name "*")
               ;; Manual share
               (if clean-note
-                (str share-attribution ": " clean-note " — " update-markdown)
-                (str share-attribution ": " update-markdown)))
+                (str share-attribution ": " clean-note)
+                (str share-attribution)))
         footer (str "Posted in "
                     board-name
                     " by "
