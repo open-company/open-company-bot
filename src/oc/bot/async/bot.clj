@@ -175,10 +175,8 @@
               ;; Post automatically shared on publication
               (str "A new post from *" (:name publisher) "* in *" board-name "*")
               ;; Manual share
-              (if clean-note
-                (str share-attribution ": " clean-note)
-                (str share-attribution)))
-        footer (str "Posted in "
+              (str share-attribution))
+        footer (str org-name " | Posted in "
                     board-name
                     " by "
                     (:name publisher)
@@ -190,18 +188,16 @@
                       " comment "
                       " comments ")
                     )
-        attachments [{
-                      :author_name org-name
-                      :author_url org-logo-url
-                      :pretext text
-                      :title clean-headline
-                      :title_link update-url
-                      :text (if (< (count reduced-body) (count clean-body))
-                              (str reduced-body " ...")
-                              reduced-body)
-                      :footer footer
-                      :attachment_type "default"
-                      :color "good"}]]
+        attachment {:title clean-headline
+                    :title_link update-url
+                    :text (if (< (count reduced-body) (count clean-body))
+                            (str reduced-body " ...")
+                            reduced-body)
+                    :footer footer
+                    :color "#FA6452"}
+        attachments (if clean-note
+                        [{:pretext text :text clean-note} attachment]
+                        [(assoc attachment :pretext text)])] ; no optional note provided 
     (slack/post-attachments token channel attachments)))
 
 (defn- invite [token receiver {:keys [org-name from from-id first-name url note] :as msg}]
