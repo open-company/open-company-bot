@@ -252,7 +252,7 @@
   []
   (reset! bot-go true)
   (async/go (while @bot-go
-      (timbre/info "Waiting for message on bot channel...")
+      (timbre/trace "Waiting for message on bot channel...")
       (let [msg (<!! bot-chan)]
         (timbre/trace "Processing message on bot channel...")
         (if (:stop msg)
