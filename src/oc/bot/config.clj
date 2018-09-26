@@ -50,8 +50,9 @@
 (defonce usage-bullets (str ">- I ensure all your team's comments from Carrot make it into Slack\n"
                             ">- I also make sure posts shared from Carrot make it to Slack\n"
                             ">- I unfurl links to Carrot that are sent in Slack messages\n" 
-                            ">- I let you know when you've been invited to a private board\n" 
-                            ">- And, I can send you <" web-url "/profile|daily or weekly notifications> of new posts from your team"))
+                            ">- I let people know when they've been mentioned in Carrot\n" 
+                            ">- I let people know when you've been invited to a private board\n" 
+                            ">- And, I can send <" web-url "/profile|daily or weekly notifications> of new posts from your team"))
 (defonce usage-message (str "I'm the Carrot Bot, and it seems you have something to say to me. Well... I'm just a Carrot, I've got no ears!\n\n"
                             "Ha! 😜 I kid of course! But for the most part, I do like to stay deep in the soil, out of your way.\n\n"
                             "*Here's what I do:*\n"
