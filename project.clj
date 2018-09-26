@@ -2,8 +2,8 @@
   :description "OpenCompany Bot Service"
   :url "https://github.com/open-company/open-company-bot"
   :license {
-    :name "Mozilla Public License v2.0"
-    :url "http://www.mozilla.org/MPL/2.0/"
+    :name "GNU Affero General Public License Version 3"
+    :url "https://www.gnu.org/licenses/agpl-3.0.en.html"
   }
 
   :min-lein-version "2.7.1"
@@ -14,7 +14,7 @@
   ;; All profile dependencies
   :dependencies [
     ;; Lisp on the JVM http://clojure.org/documentation
-    [org.clojure/clojure "1.10.0-alpha7"]
+    [org.clojure/clojure "1.10.0-alpha8"]
     ;; String manipulation library https://github.com/funcool/cuerdas
     [funcool/cuerdas "2.0.6"] 
     ;; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph

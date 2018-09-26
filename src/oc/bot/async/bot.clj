@@ -109,6 +109,25 @@
 
 ;; ----- Bot Request handling -----
 
+(defn- text-for-notification [{:keys [org notification] :as msg}]
+  (let [org-slug (:slug org)
+        secure-uuid (:secure-uuid notification)
+        entry-url (s/join "/" [c/web-url org-slug "post" secure-uuid])
+        first-name (:first-name notification)
+        mention? (:mention notification)
+        comment? (:interaction-id notification)
+        greeting (if first-name (str "Hello " first-name ", ") (str "Hey there! "))
+        from (-> notification :author :name)
+        attribution (if from
+                      (if mention? 
+                        (str " by *" from "*")
+                        (str " from *" from "*"))
+                      " ")
+        intro (if mention?
+                (str "You were mentioned in a " (if comment? "comment" "post") attribution ":")
+                (str "You have a new comment" attribution " on your post:"))]
+    (str intro " <" entry-url "|" (if comment? "Comment" "Post") ">")))
+
 (defn- send-private-board-notification [msg]
   (let [notifications (-> msg :content :notifications)
         board (-> msg :content :new)
@@ -229,6 +248,13 @@
   (timbre/info "Sending welcome message to Slack channel:" receiver)
   (slack/post-message token (:id receiver) c/welcome-message))
 
+(defn- notify [token receiver msg]
+  {:pre [(string? token)
+         (map? receiver)
+         (map? msg)]}
+  (timbre/info "Sending notification to Slack channel:" receiver)
+  (slack/post-message token (:id receiver) (text-for-notification msg)))
+
 (defn- bot-handler [msg]
   {:pre [(or (string? (:type msg)) (keyword? (:type msg)))
          (map? (:receiver msg))
@@ -243,6 +269,7 @@
       :digest (digest/send-digest token receiver msg)
       :usage (usage token receiver)
       :welcome (welcome token receiver)
+      :notify (notify token receiver msg)
       (timbre/warn "Ignoring message with script type:" script-type))))
 
 ;; ----- Event loop -----
