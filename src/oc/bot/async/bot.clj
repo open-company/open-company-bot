@@ -181,8 +181,9 @@
         clean-note (when-not (s/blank? note) (str (clean-text note)))
         clean-headline (when-not (s/blank? headline)
                          (clean-text (.text (soup/parse headline))))
-        clean-body (when-not (s/blank? body)
-                     (clean-text (.text (soup/parse body))))
+        clean-body (if-not (s/blank? body)
+                     (clean-text (.text (soup/parse body)))
+                     "")
         reduced-body (clojure.string/join " "
                        (filter not-empty
                          (take 20 ;; 20 words is the average long sentence
