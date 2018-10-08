@@ -14,11 +14,11 @@
   ;; All profile dependencies
   :dependencies [
     ;; Lisp on the JVM http://clojure.org/documentation
-    [org.clojure/clojure "1.10.0-alpha8"]
+    [org.clojure/clojure "1.10.0-beta1"]
     ;; String manipulation library https://github.com/funcool/cuerdas
     [funcool/cuerdas "2.0.6"] 
     ;; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
-    [aleph "0.4.7-alpha1"]
+    [aleph "0.4.7-alpha2"]
     ;; Async programming tools https://github.com/ztellman/manifold
     [manifold "0.1.8"]
     ;; Namespace management https://github.com/clojure/tools.namespace
@@ -26,9 +26,11 @@
     [org.clojure/tools.namespace "0.3.0-alpha4" :exclusions [org.clojure/tools.reader]] 
     ;; Clojure wrapper for jsoup HTML parser https://github.com/mfornos/clojure-soup
     [clj-soup/clojure-soup "0.1.3"]
+    ;; Clojure HTTP client https://github.com/dakrone/clj-http
+    [clj-http "3.9.1"]
 
     ;; Library for OC projects https://github.com/open-company/open-company-lib
-    [open-company/lib "0.16.14"]
+    [open-company/lib "0.16.15"]
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; core.async - Async programming and communication https://github.com/clojure/core.async
     ;; Component - Component Lifecycle https://github.com/stuartsierra/component
@@ -57,7 +59,7 @@
       }
       :plugins [
         ;; Linter https://github.com/jonase/eastwood
-        [jonase/eastwood "0.2.9"]
+        [jonase/eastwood "0.3.1"]
         ;; Static code search for non-idiomatic code https://github.com/jonase/kibit        
         [lein-kibit "0.1.6" :exclusions [org.clojure/clojure]]
       ]

@@ -4,6 +4,7 @@
               [oc.lib.db.pool :as pool]
               [oc.lib.sqs :as sqs]
               [oc.bot.async.bot :as bot]
+              [oc.bot.async.slack-action :as slack-action]
               [oc.bot.config :as c]))
 
 (defrecord RethinkPool [size regenerate-interval]
@@ -43,6 +44,18 @@
         (dissoc component :bot))
       component)))
 
+(defrecord SlackAction [slack-action]
+  component/Lifecycle
+  (start [component]
+    (timbre/info "[slack-action] starting...")
+    (slack-action/start)
+    (timbre/info "[slack-action] started")
+    (assoc component :slack-action true))
+  (stop [component]
+    (timbre/info "[slack-action] stopped")
+    (slack-action/stop)
+    (dissoc component :slack-action)))
+
 (defrecord Handler [handler-fn]
   component/Lifecycle
 
@@ -55,7 +68,7 @@
     (dissoc component :handler)))
 
 (defn bot-system
-  "Define our system that has 2 components: the SQS listener, and the Bot channel consumer."
+  "Define our system components."
   [config-options]
   (let [{:keys [sqs-creds sqs-queue sqs-msg-handler]} config-options]
     (component/system-map
@@ -63,6 +76,9 @@
       :bot (component/using
               (map->BotChannelConsumer {})
               [:db-pool])
+      :slack-action (component/using
+                    (map->SlackAction {})
+                    [])
       :handler (component/using
                 (map->Handler {:handler-fn sqs-msg-handler})
                 [])
