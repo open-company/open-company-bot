@@ -44,17 +44,21 @@
         (dissoc component :bot))
       component)))
 
-(defrecord SlackAction [slack-action]
+(defrecord SlackAction [db-pool]
   component/Lifecycle
   (start [component]
     (timbre/info "[slack-action] starting...")
-    (slack-action/start)
+    (slack-action/start (:pool db-pool))
     (timbre/info "[slack-action] started")
     (assoc component :slack-action true))
-  (stop [component]
-    (timbre/info "[slack-action] stopped")
-    (slack-action/stop)
-    (dissoc component :slack-action)))
+  (stop [{:keys [bot] :as component}]
+    (if bot
+      (do
+        (timbre/info "[slack-action] stopped")
+        (slack-action/stop)
+        (dissoc component :slack-action))
+      component)))
+
 
 (defrecord Handler [handler-fn]
   component/Lifecycle
@@ -78,7 +82,7 @@
               [:db-pool])
       :slack-action (component/using
                     (map->SlackAction {})
-                    [])
+                    [:db-pool])
       :handler (component/using
                 (map->Handler {:handler-fn sqs-msg-handler})
                 [])
