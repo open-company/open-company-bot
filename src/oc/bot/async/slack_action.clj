@@ -85,7 +85,6 @@
 ;; ----- Event handling -----
 
 (defn- handle-slack-payload
-  [payload]
   "
   https://api.slack.com/actions
 
@@ -122,17 +121,17 @@
     }
   }
   "
+  [payload]
   (timbre/debug "Slack request of:" payload)
   (if-let* [team-id (-> payload :team :id)
             bot-token (slack-org/bot-token-for @db-pool team-id)]
     (if-let* [slack-user-id (-> payload :user :id)
               user-token (auth/user-token slack-user-id team-id)]
-      (do
-        (if-let [boards (storage/board-list-for #{"202a-4854-a71c"} user-token)]
-          (do
-            (timbre/debug "Boards:" boards)
-            (post-dialog-for bot-token payload boards))
-          (timbre/error "No board list for:" payload)))
+      (if-let [boards (storage/board-list-for #{"202a-4854-a71c"} user-token)]
+        (do
+          (timbre/debug "Boards:" boards)
+          (post-dialog-for bot-token payload boards))
+        (timbre/error "No board list for:" payload))
       (timbre/error "No JWT possible for:" payload))
     (timbre/error "No bot-token for:" payload)))
   
