@@ -68,6 +68,7 @@
     ;; Dev environment and dependencies
     :dev [:qa {
       :env ^:replace {
+        :open-company-auth-passphrase "this_is_a_dev_secret" ; JWT secret
         :db-name "open_company_auth_dev"
         :aws-access-key-id "CHANGE-ME"
         :aws-secret-access-key "CHANGE-ME"

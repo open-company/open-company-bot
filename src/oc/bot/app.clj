@@ -31,6 +31,8 @@
     "Database pool: " c/db-pool-size "\n"
     "AWS SQS queue: " c/aws-sqs-bot-queue "\n"
     "Web URL: " c/web-url "\n"
+    "Auth Service: " c/auth-server-url "\n"
+    "Storage Service: " c/storage-server-url "\n"
     "Log level: " (name c/log-level) "\n"
     "Sentry: " (or c/dsn "false") "\n\n"
     (when c/intro? "Ready to serve...\n"))))

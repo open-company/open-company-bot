@@ -8,6 +8,8 @@
             [taoensso.timbre :as timbre]
             [clj-http.client :as http]
             [cheshire.core :as json]
+            [oc.bot.auth :as auth]
+            [oc.bot.storage :as storage]
             [oc.bot.resources.slack-org :as slack-org]))
 
 (def db-pool (atom false)) ; atom holding DB pool so it can be used for each SQS message
@@ -118,7 +120,7 @@
     'trigger_id' '450676967892.6895731204.3b1d077d82901bb21e3d18e62d20d594',
     'message_ts' '1538877805.000100',
     'user' {
-      'idea' 'U06SBTXJR',
+      'id' 'U06SBTXJR',
       'name' 'sean'
     },
     'action_ts' '1538878700.800208',
@@ -138,7 +140,15 @@
   (timbre/debug "Slack request of:" payload)
   (if-let* [team-id (-> payload :team :id)
             bot-token (slack-org/bot-token-for @db-pool team-id)]
-    (post-dialog-for bot-token payload)
+    (if-let* [slack-user-id (-> payload :user :id)
+              user-token (auth/user-token slack-user-id team-id)]
+      (do
+        (if-let [boards (storage/board-list-for #{"202a-4854-a71c"} user-token)]
+          (do
+            (timbre/debug "Boards:" @boards)
+            (post-dialog-for bot-token payload))
+          (timbre/error "No board list for:" payload)))
+      (timbre/error "No JWT possible for:" payload))
     (timbre/error "No bot-token for:" payload)))
   
 ;; ----- Event loop -----
