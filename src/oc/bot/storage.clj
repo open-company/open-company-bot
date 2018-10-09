@@ -1,10 +1,12 @@
 (ns oc.bot.storage
   "Get list of sections from the storage service."
   (:require [clojure.walk :refer (keywordize-keys)]
-            [org.httpkit.client :as http]
+            [clj-http.client :as http]
             [cheshire.core :as json]
             [taoensso.timbre :as timbre]
             [oc.bot.config :as config]))
+
+(def default-on-error ["General" "general"])
 
 (defn- get-post-options
   [token]
@@ -13,26 +15,27 @@
 (defn- storage-request-org-url
   [org]
   ;; /orgs/:org-slug
-  (str config/storage-server-url
-       "/orgs/"
-       org))
+  (str config/storage-server-url "/orgs/" org))
 
 (defn- get-data
-  [request-url token cb]
-  (http/get request-url (get-post-options token)
-    (fn [{:keys [status headers body error]}]
-      (if error
-        (timbre/error "Failed, exception is " error)
-        (let [parsed-body (json/parse-string body)]
-          (cb (keywordize-keys parsed-body)))))))
+  [request-url token]
+  (let [response (http/get request-url (get-post-options token))
+        status (:status response)
+        success? (= status 200)]
+    (timbre/trace "HTTP GET Response:\n" response)
+    (if success?
+      (-> (:body response) json/parse-string keywordize-keys)
+      (timbre/error "HTTP GET failed (" status "):" response))))
 
 (defn- link-for [rel links]
   (:href (some #(when (= (:rel %) rel) %) links)))
 
 (defn- board-list [data]
   (timbre/debug "Storage org data:" (:boards data))
-  (let [boards (:boards data)]
-    (map #([(:name %) (:slug %)] boards))))
+  (->> (:boards data)
+    (map #(select-keys % [:name :slug]))
+    (remove #(= (:slug %) "drafts"))
+    vec))
 
 (defn board-list-for
   "
@@ -40,14 +43,17 @@
   org that corresponds to the team-id.
   "
   [team-ids jwtoken]
-  (get-data config/storage-server-url jwtoken
-    (fn [data]
-      (timbre/debug "Storage slash data:" (-> data :collection :items))
-      (let [orgs (-> data :collection :items)
+  (if-let [body (get-data config/storage-server-url jwtoken)]
+    (do
+      (timbre/debug "Storage slash data:" (-> body :collection :items))
+      (let [orgs (-> body :collection :items)
             org (first (filter #(team-ids (:team-id %)) orgs))
             org-url (link-for "item" (:links org))]
-          (if org-url
-            (get-data (str config/storage-server-url org-url) jwtoken board-list)
-            (do
-              (timbre/warn "Unable to retrieve board data for:" data) 
-              ["General" "general"]))))))
+        (if org-url
+          (board-list (get-data (str config/storage-server-url org-url) jwtoken))
+          (do
+            (timbre/warn "Unable to retrieve board data for:" body) 
+            default-on-error))))
+    (do
+      (timbre/warn "Unable to retrieve org data.") 
+      default-on-error)))

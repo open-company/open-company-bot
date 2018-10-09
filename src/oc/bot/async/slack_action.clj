@@ -20,9 +20,9 @@
 
 (defonce slack-go (atom true))
 
-;; ----- Event handling -----
+;; ----- Slack API calls -----
 
-(defn- post-dialog-for [bot-token payload]
+(defn- post-dialog-for [bot-token payload boards]
   (let [response-url (:response_url payload)
         trigger (:trigger_id payload)
         team (:team payload)
@@ -57,24 +57,7 @@
                 :label "Choose a section..."
                 :name "section"
                 :value "all-hands"
-                :options [
-                  {
-                    :label "All-hands"
-                    :value "all-hands"
-                  }
-                  {
-                    :label "Decisions"
-                    :value "decisions"
-                  }
-                  {
-                    :label "General"
-                    :value "general"
-                  }
-                  {
-                    :label "Week in Review"
-                    :value "week-in-review"
-                  }
-                ]
+                :options (map #(clojure.set/rename-keys % {:name :label :slug :value}) boards)
               }
               {
                 :type "text"
@@ -98,6 +81,8 @@
                             "Authorization" (str "Bearer " bot-token)}
                   :body (json/encode body)})]
     (timbre/info "Result with" bot-token ":" result)))
+
+;; ----- Event handling -----
 
 (defn- handle-slack-payload
   [payload]
@@ -145,8 +130,8 @@
       (do
         (if-let [boards (storage/board-list-for #{"202a-4854-a71c"} user-token)]
           (do
-            (timbre/debug "Boards:" @boards)
-            (post-dialog-for bot-token payload))
+            (timbre/debug "Boards:" boards)
+            (post-dialog-for bot-token payload boards))
           (timbre/error "No board list for:" payload)))
       (timbre/error "No JWT possible for:" payload))
     (timbre/error "No bot-token for:" payload)))
