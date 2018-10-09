@@ -52,7 +52,7 @@
         (if org-url
           (board-list (get-data (str config/storage-server-url org-url) jwtoken))
           (do
-            (timbre/warn "Unable to retrieve board data for:" body) 
+            (timbre/warn "Unable to retrieve board data for:" team-ids "in:" body) 
             default-on-error))))
     (do
       (timbre/warn "Unable to retrieve org data.") 
