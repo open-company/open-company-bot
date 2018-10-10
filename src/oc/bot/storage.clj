@@ -6,7 +6,7 @@
             [taoensso.timbre :as timbre]
             [oc.bot.config :as config]))
 
-(def default-on-error ["General" "general"])
+(def default-on-error [{:name "General" :slug "general"}])
 
 (defn- get-post-options
   [token]

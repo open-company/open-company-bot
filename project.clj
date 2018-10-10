@@ -108,7 +108,10 @@
                  '[cheshire.core :as json]
                  '[clj-time.core :as t]
                  '[clj-time.coerce :as coerce]
-                 '[clj-time.format :as f])
+                 '[clj-time.format :as f]
+                 '[oc.lib.db.common :as db-common]
+                 '[oc.bot.resources.slack-org :as slack-org]
+                 '[oc.bot.resources.team :as team])
       ]
     }]
 

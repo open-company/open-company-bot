@@ -10,7 +10,8 @@
             [cheshire.core :as json]
             [oc.bot.auth :as auth]
             [oc.bot.storage :as storage]
-            [oc.bot.resources.slack-org :as slack-org]))
+            [oc.bot.resources.slack-org :as slack-org]
+            [oc.bot.resources.team :as team]))
 
 (def db-pool (atom false)) ; atom holding DB pool so it can be used for each SQS message
 
@@ -123,17 +124,22 @@
   "
   [payload]
   (timbre/debug "Slack request of:" payload)
-  (if-let* [team-id (-> payload :team :id)
-            bot-token (slack-org/bot-token-for @db-pool team-id)]
+  ;; Bot token from Auth DB
+  (if-let* [slack-team-id (-> payload :team :id)
+            bot-token (slack-org/bot-token-for @db-pool slack-team-id)]
+    ;; JWT from Auth service
     (if-let* [slack-user-id (-> payload :user :id)
-              user-token (auth/user-token slack-user-id team-id)]
-      (if-let [boards (storage/board-list-for #{"202a-4854-a71c"} user-token)]
+              user-token (auth/user-token slack-user-id slack-team-id)]
+      ;; Teams for this Slack from Auth DB & board list from Storage service
+      (if-let* [teams (team/teams-for @db-pool slack-team-id)
+                boards (storage/board-list-for teams user-token)]
         (do
+          ;; Dialog request to Slack
           (timbre/debug "Boards:" boards)
           (post-dialog-for bot-token payload boards))
-        (timbre/error "No board list for:" payload))
-      (timbre/error "No JWT possible for:" payload))
-    (timbre/error "No bot-token for:" payload)))
+        (timbre/error "No board list for Slack action:" payload))
+      (timbre/error "No JWT possible for Slack action:" payload))
+    (timbre/error "No bot-token for Slack action:" payload)))
   
 ;; ----- Event loop -----
 
