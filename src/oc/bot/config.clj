@@ -46,7 +46,8 @@
 (defonce aws-access-key-id (env :aws-access-key-id))
 (defonce aws-secret-access-key (env :aws-secret-access-key))
 
-(defonce aws-sqs-bot-queue (env :aws-sqs-bot-queue))
+(defonce aws-sqs-bot-queue (env :aws-sqs-bot-queue)) ; in-bound requests / notifications to the bot
+(defonce aws-sqs-storage-queue (env :aws-sqs-storage-queue)) ; out-bound to the Storage service
 
 ;; ----- JWT -----
 

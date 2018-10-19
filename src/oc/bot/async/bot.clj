@@ -289,19 +289,23 @@
           (try
             (if (:Message msg)
 
-              (let [msg-parsed (json/parse-string (:Message msg) true)]
+              (let [msg-parsed (json/parse-string (:Message msg) true)
+                    notification-type (:notification-type msg-parsed)
+                    resource-type (:resource-type msg-parsed)
+                    callback-id (:callback_id msg-parsed)]
                 (cond 
 
-                  ;; User updated or added to a board
-                  (and (or (= (:notification-type msg-parsed) "update")
-                           (= (:notification-type msg-parsed) "add"))
-                       (= (:resource-type msg-parsed) "board"))
+                  ;; SNS originated about a user updated or added to a board
+                  (and (or (= notification-type "update")
+                           (= notification-type "add"))
+                       (= resource-type "board"))
                   (do 
                     (timbre/debug "Received private board notification:" msg-parsed)
                     (send-private-board-notification msg-parsed))
                   
-                  ;; Post to Carrot action
-                  (= (:callback_id msg-parsed) "post")
+                  ;; SNS originated about the Post to Carrot action
+                  (or (= callback-id "post")
+                      (= callback-id "add_post"))
                   (do
                     (timbre/debug "Received post action notification:" msg-parsed)
                     (slack-action/send-payload! msg-parsed))
@@ -309,7 +313,7 @@
                   :else
                   (timbre/debug "Unknown SQS request:" msg-parsed)))
               
-              ; else
+              ; else it's a direct SQS request to send information out using the bot
               (let [bot-token  (or (-> msg :bot :token) (slack-org/bot-token-for @db-pool (-> msg :receiver :slack-org-id)))
                     _missing_token (if bot-token false (throw (ex-info "Missing bot token for:" {:msg-body msg})))]
                 (doseq [m (adjust-receiver msg)]

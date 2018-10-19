@@ -4,6 +4,7 @@
   "
   (:require [clojure.core.async :as async :refer (<! >!!)]
             [clojure.walk :refer (keywordize-keys)]
+            [defun.core :refer (defun-)]
             [if-let.core :refer (if-let*)]
             [taoensso.timbre :as timbre]
             [clj-http.client :as http]
@@ -35,8 +36,8 @@
           :dialog {
             :title "Save message to Carrot"
             :submit_label "Add"
-            :callback_id "foo"
-            :state "bar"
+            :callback_id "add_post"
+            :state (:text message)
             :elements [
               {
                 :type "select"
@@ -55,23 +56,23 @@
                 ]
               }                {
                 :type "select"
-                :label "Choose a section..."
+                :label "Choose a section"
                 :name "section"
                 :value "all-hands"
                 :options (map #(clojure.set/rename-keys % {:name :label :slug :value}) boards)
               }
               {
                 :type "text"
-                :label "Title"
+                :label "Post title"
                 :name "title"
-                :placeholder "A title for your Carrot post..."
+                :placeholder "Add a title for your Carrot post..."
                 :optional false
               }
               {
                 :type "textarea"
                 :label "Note"
                 :name "note"
-                :placeholder "Provide some context for why this is important..."
+                :placeholder "Provide context for why this is important..."
                 :optional true
               }
             ]
@@ -85,44 +86,74 @@
 
 ;; ----- Event handling -----
 
-(defn- handle-slack-payload
+(defun- handle-post-callback
   "
   https://api.slack.com/actions
 
   We have 3s max to respond to the action with a dialog request.
 
-  Message events look like:
+  Initial action invocation event ('post') looks like:
   
   { 
-    'message' {
-      'type' 'message',
-      'user' 'U06SBTXJR',
-      'text' 'test it',
-      'client_msg_id' 'f027da72-2800-47ac-93b5-b0208652540e',
-      'ts' '1538877805.000100'
+    :action_ts '1538878700.800208'
+    :callback_id 'post'
+    :type 'message_action'
+    :trigger_id '450676967892.6895731204.3b1d077d82901bb21e3d18e62d20d594'
+    :response_url 'https://hooks.slack.com/app/T06SBMH60/452213600886/6BquVZR07zzRqblaB35yYxgC'
+    :token 'aLbD1VFXN31DEgpFIvxu32JV'
+    :message_ts '1538877805.000100'
+    :message {
+      :type 'message'
+      :user 'U06SBTXJR'
+      :text 'test it'
+      :client_msg_id 'f027da72-2800-47ac-93b5-b0208652540e'
+      :ts '1538877805.000100'
+    }
+    :user {
+      :id 'U06SBTXJR'
+      :name 'sean'
+    }
+    :channel {
+      :id 'C10A1P4H2'
+      :name 'bot-testing'
+    }
+    :team {
+      :id 'T06SBMH60'
+      :domain 'opencompanyhq'
+    }
+  }
+
+  Dialog submission event ('add_post') looks like:
+
+  {
+    :action_ts '1539172586.746607'
+    :callback_id 'add_post'
+    :type 'dialog_submission'
+    :response_url 'https://hooks.slack.com/app/T06SBMH60/453288716437/NrgG1Vo4h3Urcoqy1W13aIdo'
+    :token 'aLbD1VFXN31DEgpFIvxu32JV'
+    :state '<text of the original message>'
+    :submission {
+      :status 'draft'
+      :section 'all-hands'
+      :title 'My Title',
+      :note 'My note'
     },
-    'token' 'aLbD1VFXN31DEgpFIvxu32JV',
-    'trigger_id' '450676967892.6895731204.3b1d077d82901bb21e3d18e62d20d594',
-    'message_ts' '1538877805.000100',
-    'user' {
-      'id' 'U06SBTXJR',
-      'name' 'sean'
-    },
-    'action_ts' '1538878700.800208',
-    'callback_id' 'post',
-    'type' 'message_action',
-    'response_url' 'https://hooks.slack.com/app/T06SBMH60/452213600886/6BquVZR07zzRqblaB35yYxgC',
-    'channel' {
-      'id' 'C10A1P4H2',
-      'name' 'bot-testing'
-    },
-    'team' {
-      'id' 'T06SBMH60',
-      'domain' 'opencompanyhq'
+    :user {
+      :id 'U06SBTXJR'
+      :name 'sean'
+    }
+    :channel {
+      :id 'C0FGNSA2V'
+      :name 'development'
+    }
+    :team {
+      :id 'T06SBMH60'
+      :domain 'opencompanyhq'
     }
   }
   "
-  [payload]
+  ;; Initial action callback, respond w/ a dialog request
+  ([payload :guard #(= "post" (:callback_id %))]
   (timbre/debug "Slack request of:" payload)
   ;; Bot token from Auth DB
   (if-let* [slack-team-id (-> payload :team :id)
@@ -140,7 +171,18 @@
         (timbre/error "No board list for Slack action:" payload))
       (timbre/error "No JWT possible for Slack action:" payload))
     (timbre/error "No bot-token for Slack action:" payload)))
-  
+
+  ;; User submission of the dialog
+  ([payload :guard #(= "add_post" (:callback_id %))]
+  (timbre/debug "Slack request of:" payload)
+  ;; Get the author by their slack user ID
+  ;; Initiate a request to the storage queue
+  )
+
+  ([payload]
+  (timbre/debug "Slack request of:" payload)
+  (timbre/warn "Unknown Slack action callback-id:" (:callback_id payload))))
+
 ;; ----- Event loop -----
 
 (defn- slack-action-loop []
@@ -154,7 +196,7 @@
         (do (reset! slack-go false) (timbre/info "Slack action stopped."))
         (async/thread
           (try
-            (handle-slack-payload message)
+            (handle-post-callback message)
           (catch Exception e
             (timbre/error e)))))))))
 
