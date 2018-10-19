@@ -320,9 +320,7 @@
                   (bot-handler (assoc-in m [:bot :token] bot-token)))))
             (timbre/trace "Processing complete.")
             (catch Exception e
-              (timbre/error e))))
-        (timbre/trace "Delaying...")
-        (Thread/sleep 1000))))) ; 1 second delay, can't hit Slack too aggressively due to rate limits
+              (timbre/error e))))))))
 
 ;; ----- Component start/stop -----
 
