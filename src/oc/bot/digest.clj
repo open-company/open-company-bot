@@ -15,9 +15,9 @@
       (and must-see video-id)
       (str "[Must see video] " clean-headline)
       must-see
-      (str "[Must see post] " clean-headline)
+      (str "[Must see] " clean-headline)
       video-id
-      (str "[Video post] " clean-headline)
+      (str "[Video] " clean-headline)
       :else
       clean-headline)))
 
