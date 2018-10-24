@@ -171,7 +171,9 @@
                                            published-at
                                            secure-uuid
                                            sharer
-                                           auto-share] :as msg}]
+                                           auto-share
+                                           must-see
+                                           video-id] :as msg}]
   {:pre [(string? token)
          (map? receiver)
          (map? msg)]}
@@ -179,8 +181,7 @@
   (let [channel (:id receiver)
         update-url (s/join "/" [c/web-url org-slug "post" secure-uuid])
         clean-note (when-not (s/blank? note) (str (clean-text note)))
-        clean-headline (when-not (s/blank? headline)
-                         (clean-text (.text (soup/parse headline))))
+        clean-headline (digest/post-headline headline must-see video-id)
         clean-body (if-not (s/blank? body)
                      (clean-text (.text (soup/parse body)))
                      "")
@@ -213,6 +214,8 @@
                     :text (if (< (count reduced-body) (count clean-body))
                             (str reduced-body " ...")
                             reduced-body)
+                    :author_name (:name publisher)
+                    :author_icon (:avatar-url publisher)
                     :footer footer
                     :color "#FA6452"}
         attachments (if clean-note
