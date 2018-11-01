@@ -170,6 +170,7 @@
                                            publisher
                                            published-at
                                            secure-uuid
+                                           uuid
                                            sharer
                                            auto-share
                                            must-see
@@ -209,7 +210,7 @@
                       " comment "
                       " comments ")
                     )
-        attachment {:title clean-headline
+        contentatt {:title clean-headline
                     :title_link update-url
                     :text (if (< (count reduced-body) (count clean-body))
                             (str reduced-body " ...")
@@ -218,9 +219,18 @@
                     :author_icon (:avatar-url publisher)
                     :footer footer
                     :color "#FA6452"}
+        show-more {:fallback "Show entire post"
+                   :title "Show entire post"
+                   :callback_id uuid ;; need actual uuid
+                   :color "#FA6452"
+                   :attachment_type "default"
+                   :actions [{:name "show more"
+                              :text "Show More"
+                              :type "button"
+                              :value "show_more"}]}
         attachments (if clean-note
-                        [{:pretext text :text clean-note} attachment]
-                        [(assoc attachment :pretext text)])] ; no optional note provided 
+                        [{:pretext text :text clean-note} contentatt show-more]
+                        [(assoc contentatt :pretext text) show-more])] ; no optional note provided 
     (slack/post-attachments token channel attachments)))
 
 (defn- invite [token receiver {:keys [org-name from from-id first-name url note] :as msg}]
