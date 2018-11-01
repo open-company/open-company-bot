@@ -16,6 +16,7 @@
             [oc.lib.sqs :as sqs]
             [oc.lib.slack :as slack]
             [oc.bot.digest :as digest]
+            [oc.bot.async.slack-action :as slack-action]
             [oc.bot.resources.slack-org :as slack-org]
             [oc.bot.config :as c]))
 
@@ -285,20 +286,38 @@
   (async/go (while @bot-go
       (timbre/trace "Waiting for message on bot channel...")
       (let [msg (<!! bot-chan)]
-        (timbre/trace "Processing message on bot channel...")
+        (timbre/debug "Processing message on bot channel...")
         (if (:stop msg)
           (do (reset! bot-go false) (timbre/info "Bot stopped."))
           (try
-            (if (:Message msg) ;; data change SNS message
-              (let [msg-parsed (json/parse-string (:Message msg) true)]
-                (when (and ; update or add on a board
-                        (or
-                          (= (:notification-type msg-parsed) "update")
-                          (= (:notification-type msg-parsed) "add"))
-                        (= (:resource-type msg-parsed) "board"))
-                  (timbre/debug "Received private board notification:")
-                  (timbre/debug msg-parsed)
-                  (send-private-board-notification msg-parsed)))
+            (if (:Message msg)
+
+              (let [msg-parsed (json/parse-string (:Message msg) true)
+                    notification-type (:notification-type msg-parsed)
+                    resource-type (:resource-type msg-parsed)
+                    callback-id (:callback_id msg-parsed)]
+                (cond
+
+                  ;; SNS originated about a user updated or added to a board
+                  (and (or (= notification-type "update")
+                           (= notification-type "add"))
+                       (= resource-type "board"))
+                  (do
+                    (timbre/debug "Received private board notification:" msg-parsed)
+                    (send-private-board-notification msg-parsed))
+
+                  ;; SNS originated about the Post to Carrot action
+                  (or (= (:type msg-parsed) "interactive_message")
+                      (= callback-id "post")
+                      (= callback-id "add_post"))
+                  (do
+                    (timbre/debug "Received post action notification:" msg-parsed)
+                    (slack-action/send-payload! msg-parsed))
+
+                  :else
+                  (timbre/debug "Unknown SQS request:" msg-parsed)))
+
+              ; else it's a direct SQS request to send information out using the bot
               (let [bot-token  (or (-> msg :bot :token) (slack-org/bot-token-for @db-pool (-> msg :receiver :slack-org-id)))
                     _missing_token (if bot-token false (throw (ex-info "Missing bot token for:" {:msg-body msg})))]
                 (doseq [m (adjust-receiver msg)]

@@ -33,16 +33,25 @@
 
 (defonce dsn (or (env :sentry-dsn) false))
 
-;; ------ OC Web -----
+;; ------ URLs -----
 
 (defonce web-url (or (env :oc-web-url) "http://localhost:3559"))
+(defonce auth-server-port (Integer/parseInt (or (env :auth-server-port) "3003")))
+(defonce auth-server-url (or (env :auth-server-url) (str "http://localhost:" auth-server-port)))
+(defonce storage-server-port (Integer/parseInt (or (env :storage-server-port) "3001")))
+(defonce storage-server-url (or (env :storage-server-url) (str "http://localhost:" storage-server-port)))
 
 ;; ----- AWS SQS -----
 
 (defonce aws-access-key-id (env :aws-access-key-id))
 (defonce aws-secret-access-key (env :aws-secret-access-key))
 
-(defonce aws-sqs-bot-queue (env :aws-sqs-bot-queue))
+(defonce aws-sqs-bot-queue (env :aws-sqs-bot-queue)) ; in-bound requests / notifications to the bot
+(defonce aws-sqs-storage-queue (env :aws-sqs-storage-queue)) ; out-bound to the Storage service
+
+;; ----- JWT -----
+
+(defonce passphrase (env :open-company-auth-passphrase))
 
 ;; ----- Bot -----
 

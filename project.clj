@@ -14,11 +14,11 @@
   ;; All profile dependencies
   :dependencies [
     ;; Lisp on the JVM http://clojure.org/documentation
-    [org.clojure/clojure "1.10.0-alpha8"]
+    [org.clojure/clojure "1.10.0-beta2"]
     ;; String manipulation library https://github.com/funcool/cuerdas
     [funcool/cuerdas "2.0.6"] 
     ;; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
-    [aleph "0.4.7-alpha1"]
+    [aleph "0.4.7-alpha2"]
     ;; Async programming tools https://github.com/ztellman/manifold
     [manifold "0.1.8"]
     ;; Namespace management https://github.com/clojure/tools.namespace
@@ -26,10 +26,13 @@
     [org.clojure/tools.namespace "0.3.0-alpha4" :exclusions [org.clojure/tools.reader]] 
     ;; Clojure wrapper for jsoup HTML parser https://github.com/mfornos/clojure-soup
     [clj-soup/clojure-soup "0.1.3"]
+    ;; Clojure HTTP client https://github.com/dakrone/clj-http
+    [clj-http "3.9.1"]
 
     ;; Library for OC projects https://github.com/open-company/open-company-lib
     [open-company/lib "0.16.19"]
     ;; In addition to common functions, brings in the following common dependencies used by this project:
+    ;; defun - Erlang-esque pattern matching for Clojure functions https://github.com/killme2008/defun
     ;; core.async - Async programming and communication https://github.com/clojure/core.async
     ;; Component - Component Lifecycle https://github.com/stuartsierra/component
     ;; RethinkDB - RethinkDB client for Clojure https://github.com/apa512/clj-rethinkdb
@@ -38,6 +41,7 @@
     ;; Amazonica - A comprehensive Clojure client for the AWS API. https://github.com/mcohen01/amazonica
     ;; Raven - Interface to Sentry error reporting https://github.com/sethtrain/raven-clj
     ;; Cheshire - JSON encoding / decoding https://github.com/dakrone/cheshire
+    ;; clj-jwt - A Clojure library for JSON Web Token(JWT) https://github.com/liquidz/clj-jwt
     ;; clj-time - Date and time lib https://github.com/clj-time/clj-time
     ;; environ - Environment settings from different sources https://github.com/weavejester/environ  ]
   ]
@@ -57,7 +61,7 @@
       }
       :plugins [
         ;; Linter https://github.com/jonase/eastwood
-        [jonase/eastwood "0.2.9"]
+        [jonase/eastwood "0.3.1"]
         ;; Static code search for non-idiomatic code https://github.com/jonase/kibit        
         [lein-kibit "0.1.6" :exclusions [org.clojure/clojure]]
       ]
@@ -66,10 +70,12 @@
     ;; Dev environment and dependencies
     :dev [:qa {
       :env ^:replace {
+        :open-company-auth-passphrase "this_is_a_dev_secret" ; JWT secret
         :db-name "open_company_auth_dev"
         :aws-access-key-id "CHANGE-ME"
         :aws-secret-access-key "CHANGE-ME"
-        :aws-sqs-bot-queue "https://sqs.REGION.amazonaws.com/CHANGE/ME"
+        :aws-sqs-bot-queue "CHANGE-ME" ; SQS queue to read inbound notifications/requests
+        :aws-sqs-storage-queue "CHANGE-ME" ; SQS queue to send requests to the Storage service
       }
       :plugins [
         ;; Check for code smells https://github.com/dakrone/lein-bikeshed
@@ -105,7 +111,10 @@
                  '[cheshire.core :as json]
                  '[clj-time.core :as t]
                  '[clj-time.coerce :as coerce]
-                 '[clj-time.format :as f])
+                 '[clj-time.format :as f]
+                 '[oc.lib.db.common :as db-common]
+                 '[oc.bot.resources.slack-org :as slack-org]
+                 '[oc.bot.resources.team :as team])
       ]
     }]
 
