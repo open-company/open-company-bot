@@ -67,15 +67,16 @@ lein deps
 
 An [AWS SQS queue](https://aws.amazon.com/sqs/) is used to pass messages to the Bot. Setup an SQS Queue and key/secret access to the queue using the AWS Web Console or API.
 
-The Bot needs access to the OpenCompany API endpoint to make updates to open company content and data based on Bot conversations. 
-
 Before running anything make sure you copy `config.edn.template` to `config.edn` and adjust the values in the contained map.
 
 ```clojure
 {
-  :aws-access-key-id "CHANGE-ME"
-  :aws-secret-access-key "CHANGE-ME"
-  :aws-sqs-bot-queue "https://sqs.REGION.amazonaws.com/CHANGE/ME"
+    :open-company-auth-passphrase "this_is_a_dev_secret" ; JWT secret
+    :db-name "open_company_auth_dev"
+    :aws-access-key-id "CHANGE-ME"
+    :aws-secret-access-key "CHANGE-ME"
+    :aws-sqs-bot-queue "CHANGE-ME" ; SQS queue to read inbound notifications/requests
+    :aws-sqs-storage-queue "CHANGE-ME" ; SQS queue to send requests to the Storage service
 }
 ```
 
@@ -85,6 +86,9 @@ You will also need to subscribe the SQS queue to the storage SNS topic. To do th
 
 Go to the AWS SQS Console and select the bot queue configured above. From the 'Queue Actions' dropdown, select 'Subscribe Queue to SNS Topic'. Select the SNS topic you've configured your Storage Service instance to publish to, and click the 'Subscribe' button.
 
+##### Shared Secrets
+
+A secret, `open-company-auth-passphrase`, is shared between the OpenCompany services for creating and validating [JSON Web Tokens](https://jwt.io/).
 
 ## Usage
 
