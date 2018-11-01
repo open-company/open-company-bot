@@ -84,6 +84,20 @@
                   :body (json/encode body)})]
     (timbre/info "Result with" bot-token ":" result)))
 
+(defn- post-ephemeral-show-more
+  [bot-token payload post]
+  (let [response-url (:response_url payload)
+        trigger (:trigger_id payload)
+        team (:team payload)
+        channel (:channel payload)
+        user (:user payload)
+        message (:message payload)]
+    (http/post response-url
+               {:headers {"Content-type" "application/json"
+                          "Authorization" (str "Bearer " bot-token)}
+                :body (json/encode {:response_type "ephemeral"
+                                    :replace_original false
+                                    :text (:body post)})})))
 ;; ----- Event handling -----
 
 (defn- show-more
@@ -101,7 +115,7 @@
         ;; Teams for this Slack from Auth DB & post data from the Storage Service
         (if-let* [teams (team/teams-for db-pool slack-team-id)
                   post (storage/post-data-for user-token teams board-slug post-id)]
-                 (timbre/debug post)
+                 (post-ephemeral-show-more bot-token payload post)
                  (timbre/error "No post for Slack action:" payload))
         (timbre/error "No JWT possible for Slack action:" payload))
       (timbre/error "No bot-token for Slack action:" payload))))
