@@ -163,6 +163,7 @@
 (defn- share-entry [token receiver {:keys [org-slug
                                            org-logo-url
                                            org-name
+                                           board-slug
                                            board-name
                                            headline
                                            note
@@ -222,7 +223,7 @@
                     :color "#FA6452"}
         show-more {:fallback "Show entire post"
                    :title "Show entire post"
-                   :callback_id uuid ;; need actual uuid
+                   :callback_id (str board-slug ":" uuid) ;; need post uuid and board slug
                    :color "#FA6452"
                    :attachment_type "default"
                    :actions [{:name "show more"
