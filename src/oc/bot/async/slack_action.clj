@@ -34,7 +34,7 @@
         body {
           :trigger_id trigger
           :dialog {
-            :title "Save Slack message to Carrot"
+            :title "Save message to Carrot" ; max 24 chars
             :submit_label "Save"
             :callback_id "add_post"
             :state (:text message)
