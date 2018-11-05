@@ -217,8 +217,8 @@
                     :footer footer
                     :color "#FA6452"}
 
-        show-more {:fallback "Show entire post"
-                   :title "Show entire post"
+        show-more {:fallback "Show full post"
+                   :title "Show full post"
                    :callback_id (str board-slug ":" uuid) ;; need post uuid and board slug
                    :color "#FA6452"
                    :attachment_type "default"

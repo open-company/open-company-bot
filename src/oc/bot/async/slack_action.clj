@@ -91,15 +91,20 @@
         trigger (:trigger_id payload)
         team (:team payload)
         channel (:channel payload)
+        ogmessage (:original_message payload)
         user (:user payload)
-        message (:message payload)
         content (:body post)
         parsed-body (.text (soup/parse content))]
+    (timbre/debug ogmessage)
+    (timbre/debug (:ts ogmessage))
     (http/post response-url
                {:headers {"Content-type" "application/json"
                           "Authorization" (str "Bearer " bot-token)}
                 :body (json/encode {:response_type "ephemeral"
                                     :replace_original false
+                                    ;;:thread_ts (str (:ts ogmessage))
+                                    :as_user true
+                                    :link_names true
                                     :text parsed-body})})))
 ;; ----- Event handling -----
 
