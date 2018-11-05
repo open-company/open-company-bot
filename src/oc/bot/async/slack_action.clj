@@ -34,8 +34,8 @@
         body {
           :trigger_id trigger
           :dialog {
-            :title "Save message to Carrot"
-            :submit_label "Add"
+            :title "Save Slack message to Carrot"
+            :submit_label "Save"
             :callback_id "add_post"
             :state (:text message)
             :elements [
