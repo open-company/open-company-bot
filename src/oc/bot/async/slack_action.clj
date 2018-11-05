@@ -9,6 +9,7 @@
             [taoensso.timbre :as timbre]
             [clj-http.client :as http]
             [cheshire.core :as json]
+            [jsoup.soup :as soup]
             [oc.bot.auth :as auth]
             [oc.bot.storage :as storage]
             [oc.bot.resources.slack-org :as slack-org]
@@ -91,13 +92,15 @@
         team (:team payload)
         channel (:channel payload)
         user (:user payload)
-        message (:message payload)]
+        message (:message payload)
+        content (:body post)
+        parsed-body (.text (soup/parse content))]
     (http/post response-url
                {:headers {"Content-type" "application/json"
                           "Authorization" (str "Bearer " bot-token)}
                 :body (json/encode {:response_type "ephemeral"
                                     :replace_original false
-                                    :text (:body post)})})))
+                                    :text parsed-body})})))
 ;; ----- Event handling -----
 
 (defn- show-more
