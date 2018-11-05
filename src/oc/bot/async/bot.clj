@@ -200,18 +200,13 @@
               (str "A new post from *" (:name publisher) "* in *" board-name "*")
               ;; Manual share
               (str share-attribution))
-        footer (str org-name " | Posted in "
-                    board-name
-                    " by "
-                    (:name publisher)
-                    "  |  "
-                    (post-date published-at)
-                    "  |  "
-                    comment-count
-                    (if (= "1" comment-count)
-                      " comment "
-                      " comments ")
-                    )
+        footer (when-not auto-share
+                 (str (post-date published-at)
+                  "  |  "
+                  comment-count
+                  (if (= "1" comment-count)
+                    " comment "
+                    " comments ")))
         contentatt {:title clean-headline
                     :title_link update-url
                     :text (if (< (count reduced-body) (count clean-body))
@@ -221,6 +216,7 @@
                     :author_icon (:avatar-url publisher)
                     :footer footer
                     :color "#FA6452"}
+
         show-more {:fallback "Show entire post"
                    :title "Show entire post"
                    :callback_id (str board-slug ":" uuid) ;; need post uuid and board slug
