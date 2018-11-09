@@ -63,26 +63,25 @@
   Given a token, team id, and a post id retreive the post information from the storage service.
   "
   [jwtoken team-ids board-slug post-id]
-  (if-let [body (get-data config/storage-server-url jwtoken)]
+  (if-let [body (get-data (str config/storage-server-url) jwtoken)]
     (do
       (timbre/debug "Storage slash data:" (-> body :collection :items))
       (let [orgs (-> body :collection :items)
             org (first (filter #(team-ids (:team-id %)) orgs))]
-        (timbre/debug (str config/storage-server-url
-                           "/orgs/"
-                           (:slug org)
-                           "/boards/"
-                           board-slug
-                           "/entries/"
-                           post-id))
         (if org
-          (get-data (str config/storage-server-url
-                         "/orgs/"
-                         (:slug org)
-                         "/boards/"
-                         board-slug
-                         "/entries/"
-                         post-id) jwtoken)
+          (let [org-data (get-data (str config/storage-server-url
+                                        "/orgs/"
+                                        (:slug org)) jwtoken)
+                data (get-data (str config/storage-server-url
+                                    "/orgs/"
+                                    (:slug org)
+                                    "/boards/"
+                                    board-slug
+                                    "/entries/"
+                                    post-id) jwtoken)]
+            (-> data
+                (assoc :org-uuid (:uuid org-data))
+                (assoc :org-slug (:slug org-data))))
           (do
             (timbre/warn "Unable to retrieve board data for:" team-ids "in:" body) 
             default-on-error))))

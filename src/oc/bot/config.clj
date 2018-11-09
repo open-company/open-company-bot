@@ -48,6 +48,7 @@
 
 (defonce aws-sqs-bot-queue (env :aws-sqs-bot-queue)) ; in-bound requests / notifications to the bot
 (defonce aws-sqs-storage-queue (env :aws-sqs-storage-queue)) ; out-bound to the Storage service
+(defonce aws-sqs-change-queue (env :aws-sqs-change-queue)) ; out-bound to the Change service
 
 ;; ----- JWT -----
 

@@ -10,10 +10,12 @@
             [clj-http.client :as http]
             [cheshire.core :as json]
             [jsoup.soup :as soup]
+            [oc.lib.jwt :as jwt]
             [oc.bot.auth :as auth]
             [oc.bot.storage :as storage]
             [oc.bot.resources.slack-org :as slack-org]
-            [oc.bot.resources.team :as team]))
+            [oc.bot.resources.team :as team]
+            [oc.bot.async.sqs-change :as change]))
 
 (def db-pool (atom false)) ; atom holding DB pool so it can be used for each SQS message
 
@@ -95,8 +97,6 @@
         user (:user payload)
         content (:body post)
         parsed-body (.text (soup/parse content))]
-    (timbre/debug ogmessage)
-    (timbre/debug (:ts ogmessage))
     (http/post response-url
                {:headers {"Content-type" "application/json"
                           "Authorization" (str "Bearer " bot-token)}
@@ -113,7 +113,6 @@
   (let [callbackid (:callback_id payload)
         post-id (second (clojure.string/split callbackid #":"))
         board-slug (first (clojure.string/split callbackid #":"))]
-    (timbre/debug "SHOW MORE:" payload board-slug post-id)
     ;; Bot token from Auth DB
     (if-let* [slack-team-id (-> payload :team :id)
               bot-token (slack-org/bot-token-for db-pool slack-team-id)]
@@ -123,7 +122,11 @@
         ;; Teams for this Slack from Auth DB & post data from the Storage Service
         (if-let* [teams (team/teams-for db-pool slack-team-id)
                   post (storage/post-data-for user-token teams board-slug post-id)]
-                 (post-ephemeral-show-more bot-token payload post)
+                 (do
+                   (post-ephemeral-show-more bot-token payload post)
+                   (change/send-change-trigger!
+                    (change/->change-entry-trigger post
+                                                   (:claims (jwt/decode user-token)))))
                  (timbre/error "No post for Slack action:" payload))
         (timbre/error "No JWT possible for Slack action:" payload))
       (timbre/error "No bot-token for Slack action:" payload))))
