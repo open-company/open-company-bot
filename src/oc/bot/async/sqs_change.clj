@@ -24,7 +24,7 @@
                                  :uuid lib-schema/UniqueID
                                  schema/Keyword schema/Any}
    }
-   :user (schema/maybe lib-schema/User) ; occassionaly we have a non-user updating an entry, such as the Ziggeo callback
+   :user (schema/maybe lib-schema/User)
    :notification-at lib-schema/ISO8601})
 
 (schema/defn ^:always-validate ->change-entry-trigger :- ChangeTrigger
