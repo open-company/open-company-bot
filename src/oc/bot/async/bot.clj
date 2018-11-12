@@ -216,20 +216,16 @@
                     :author_name (:name publisher)
                     :author_icon (:avatar-url publisher)
                     :footer footer
-                    :color "#FA6452"}
-
-        show-more {:fallback "Show full post"
-                   :title "Show full post"
-                   :callback_id (str board-slug ":" uuid) ;; need post uuid and board slug
-                   :color "#FA6452"
-                   :attachment_type "default"
-                   :actions [{:name "show more"
-                              :text "Show More"
-                              :type "button"
-                              :value "show_more"}]}
+                    :color "#FA6452"
+                    ;; need post uuid and board slug
+                    :callback_id (str board-slug ":" uuid)
+                    :actions [{:name "show more"
+                               :text "Show More"
+                               :type "button"
+                               :value "show_more"}]}
         attachments (if clean-note
-                        [{:pretext text :text clean-note} contentatt show-more]
-                        [(assoc contentatt :pretext text) show-more])] ; no optional note provided 
+                        [{:pretext text :text clean-note} contentatt]
+                        [(assoc contentatt :pretext text)])] ;; no optional note provided
     (slack/post-attachments token channel attachments)))
 
 (defn- invite [token receiver {:keys [org-name from from-id first-name url note] :as msg}]
