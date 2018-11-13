@@ -147,6 +147,21 @@
     "bikeshed!" ["bikeshed" "-v" "-m" "120"] ; code check with max line length warning of 120 characters
     "ancient" ["ancient" ":all" ":allow-qualified"] ; check for out of date dependencies
   }
+  ;; ----- Code check configuration -----
+
+  :eastwood {
+    ;; Disable some linters that are enabled by default
+    ;; contant-test - just seems mostly ill-advised, logical constants are useful in something like a `->cond`
+    ;; wrong-arity - unfortunate, but it's failing on 3/arity of sqs/send-message
+    ;; Enable some linters that are disabled by default
+    ;;:add-linters [:unused-namespaces :unused-private-vars] ; :unused-locals]
+
+    :config-files ["third-party-macros.clj"]
+
+    ;; Exclude testing namespaces
+    :tests-paths ["test"]
+    :exclude-namespaces [:test-paths]
+  }
 
   :main oc.bot.app
 )
