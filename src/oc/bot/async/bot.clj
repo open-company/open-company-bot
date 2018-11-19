@@ -15,7 +15,9 @@
             [oc.lib.sentry-appender :as sa]
             [oc.lib.sqs :as sqs]
             [oc.lib.slack :as slack]
+            [oc.bot.auth :as auth]
             [oc.bot.digest :as digest]
+            [oc.bot.storage :as storage]
             [oc.bot.async.slack-action :as slack-action]
             [oc.bot.resources.slack-org :as slack-org]
             [oc.bot.config :as c]))
@@ -56,6 +58,19 @@
 
 (def carrot-explainer "Carrot is the company digest that keeps everyone aligned around what matters most.")
 
+(defn get-post-data [payload]
+
+  (let [board-uuid (:board-id payload)
+        notification (:notification payload)
+        team (:team-id (:org payload))
+        slack-bot (:bot payload)
+        token (:token slack-bot)
+        user-token (auth/user-token (:slack-user-id (:receiver payload)) (:slack-org-id slack-bot))
+        teams (set [team])
+        board-list (storage/board-list-for teams user-token)
+        board (first (filter #(= board-uuid (:board-uuid %)) board-list))]
+    (storage/post-data-for user-token teams (:slug board) (:entry-id notification))))
+
 ;; ----- SQS handling -----
 
 (defn- adjust-receiver
@@ -69,6 +84,7 @@
       ;; Directly to a specific user
       (and (= :user type) (s/starts-with? (-> msg :receiver :id) "U"))
       [(assoc msg :receiver {:id (slack/get-dm-channel token (-> msg :receiver :id))
+                             :slack-user-id (-> msg :receiver :id)
                              :type :channel
                              :dm true})]
       
@@ -117,6 +133,9 @@
         first-name (:first-name notification)
         mention? (:mention notification)
         comment? (:interaction-id notification)
+        title (if comment?
+                (:headline (get-post-data msg))
+                (:entry-title notification))
         greeting (if first-name (str "Hello " first-name ", ") (str "Hey there! "))
         from (-> notification :author :name)
         attribution (if from
@@ -127,7 +146,7 @@
         intro (if mention?
                 (str "You were mentioned in a " (if comment? "comment" "post") attribution ":")
                 (str "You have a new comment" attribution " on your post:"))]
-    (str intro " <" entry-url "|" (if comment? "Comment" "Post") ">")))
+    (str intro " <" entry-url "|" (if comment? "Comment on: " "Post: ") title ">")))
 
 (defn- send-private-board-notification [msg]
   (let [notifications (-> msg :content :notifications)
