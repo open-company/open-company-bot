@@ -144,9 +144,9 @@
                         (str " from *" from "*"))
                       " ")
         intro (if mention?
-                (str "You were mentioned in a " (if comment? "comment" "post") attribution ":")
-                (str "You have a new comment" attribution " on your post: "))]
-    (str intro " <" entry-url "|" (if comment? "on the post: " " ") title ">")))
+                (str "You were mentioned in a " (if comment? "comment" "post") attribution (when comment? "on the post ") ":")
+                (str "You have a new comment " attribution " on your post: "))]
+    (str intro " <" entry-url "|" title ">")))
 
 (defn- send-private-board-notification [msg]
   (let [notifications (-> msg :content :notifications)
