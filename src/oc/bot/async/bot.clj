@@ -272,7 +272,9 @@
          (map? receiver)
          (map? msg)]}
   (timbre/info "Sending notification to Slack channel:" receiver)
-  (slack/post-message token (:id receiver) (text-for-notification msg)))
+  (let [content (.text (soup/parse (:content (:notification msg))))]
+    (slack/post-attachments token (:id receiver) [{:text content
+                                                   :pretext (text-for-notification msg)}])))
 
 (defn- bot-handler [msg]
   {:pre [(or (string? (:type msg)) (keyword? (:type msg)))
