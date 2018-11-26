@@ -207,7 +207,7 @@
                      "")
         reduced-body (clojure.string/join " "
                        (filter not-empty
-                         (take 20 ;; 20 words is the average long sentence
+                         (take 150 ;; 150 words is the average paragraph
                            (clojure.string/split clean-body #" "))))
         share-attribution (if (= (:name publisher) (:name sharer))
                             (str "*" (:name sharer) "* shared a post in *" board-name "*")
