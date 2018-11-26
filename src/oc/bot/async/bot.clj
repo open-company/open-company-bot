@@ -276,10 +276,8 @@
         text-for-notification (text-for-notification msg)]
     (slack/post-attachments token
                             (:id receiver)
-                            [{:fallback (str text-for-notification
-                                             " \n" content)
-                              :text content
-                              :pretext text-for-notification}])))
+                            [{:text content}]
+                            text-for-notification)))
 
 (defn- bot-handler [msg]
   {:pre [(or (string? (:type msg)) (keyword? (:type msg)))
