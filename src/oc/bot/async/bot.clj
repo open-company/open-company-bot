@@ -144,7 +144,7 @@
                         (str " from *" from "*"))
                       " ")
         intro (if mention?
-                (str "You were mentioned in a " (if comment? "comment" "post") attribution (when comment? "on the post ") ":")
+                (str "You were mentioned in a " (if comment? "comment" "post") attribution (when comment? " on the post") ":")
                 (str "You have a new comment " attribution " on your post: "))]
     (str intro " <" entry-url "|" title ">")))
 
@@ -272,7 +272,12 @@
          (map? receiver)
          (map? msg)]}
   (timbre/info "Sending notification to Slack channel:" receiver)
-  (slack/post-message token (:id receiver) (text-for-notification msg)))
+  (let [content (.text (soup/parse (:content (:notification msg))))
+        text-for-notification (text-for-notification msg)]
+    (slack/post-attachments token
+                            (:id receiver)
+                            [{:text content}]
+                            text-for-notification)))
 
 (defn- bot-handler [msg]
   {:pre [(or (string? (:type msg)) (keyword? (:type msg)))
