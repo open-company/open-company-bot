@@ -49,8 +49,10 @@
   {:pre [(string? token)
          (map? receiver)
          (map? msg)]}
-    (let [frequency (if (= (keyword digest-frequency) :daily) "daily" "weekly")
-          intro (str "Your " org-name " " frequency " digest")
+    (let [frequency (if (= (keyword digest-frequency) :daily) "Yesterday" "Last week")
+          intro (if (seq org-name)
+                  (str frequency " at " org-name)
+                  (str frequency " on Carrot"))
           attachments (flatten (map posts-for-board boards))]
       (timbre/info "Sending digest to:" channel " with:" token)
       (slack/post-message token channel intro)
