@@ -24,6 +24,66 @@
 
 ;; ----- Slack API calls -----
 
+(defn- new-post-dialog-for [bot-token payload boards]
+  (let [response-url (:response_url payload)
+        trigger (:trigger_id payload)
+        team (:team payload)
+        channel (:channel payload)
+        user (:user payload)
+        message (:message payload)
+        body {
+          :trigger_id trigger
+          :dialog {
+            :title "Create Post in Carrot" ; max 24 chars
+            :submit_label "Create"
+            :callback_id "create_post"
+            :state ""
+            :elements [
+              {
+                :type "select"
+                :label "Create as draft or post?"
+                :name "status"
+                :value "draft"
+                :options [
+                  {
+                    :label "Draft"
+                    :value "draft"
+                  }
+                  {
+                    :label "Post"
+                    :value "post"
+                  }
+                ]
+              }                {
+                :type "select"
+                :label "Choose a section"
+                :name "section"
+                :value "all-hands"
+                :options (map #(clojure.set/rename-keys % {:name :label :slug :value}) boards)
+              }
+              {
+                :type "text"
+                :label "Post title"
+                :name "title"
+                :placeholder "Add a title for your Carrot post..."
+                :optional false
+              }
+              {
+                :type "textarea"
+                :label "Post body"
+                :name "body"
+                :placeholder "What would you like to say?"
+                :optional true
+              }
+            ]
+          }
+        }
+        result (http/post "https://slack.com/api/dialog.open" {
+                  :headers {"Content-type" "application/json"
+                            "Authorization" (str "Bearer " bot-token)}
+                  :body (json/encode body)})]
+    (timbre/info "Result with" bot-token ":" result)))
+
 (defn- post-dialog-for [bot-token payload boards]
   (let [response-url (:response_url payload)
         trigger (:trigger_id payload)
@@ -178,6 +238,27 @@
   ;; Get the author by their slack user ID
   ;; Initiate a request to the storage queue
   )
+
+  ;; Initial action callback, respond w/ a dialog request
+  ([payload :guard #(= "new_post" (:callback_id %))]
+  (timbre/debug "Slack request of:" payload)
+  ;; TODO dupe of above
+  ;; Bot token from Auth DB
+  (if-let* [slack-team-id (-> payload :team :id)
+            bot-token (slack-org/bot-token-for @db-pool slack-team-id)]
+    ;; JWT from Auth service
+    (if-let* [slack-user-id (-> payload :user :id)
+              user-token (auth/user-token slack-user-id slack-team-id)]
+      ;; Teams for this Slack from Auth DB & board list from Storage service
+      (if-let* [teams (team/teams-for @db-pool slack-team-id)
+                boards (storage/board-list-for teams user-token)]
+        (do
+          ;; Dialog request to Slack
+          (timbre/debug "Boards:" boards)
+          (new-post-dialog-for bot-token payload boards))
+        (timbre/error "No board list for Slack action:" payload))
+      (timbre/error "No JWT possible for Slack action:" payload))
+    (timbre/error "No bot-token for Slack action:" payload)))  
 
   ([payload]
   (timbre/debug "Slack request of:" payload)

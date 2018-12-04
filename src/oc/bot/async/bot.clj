@@ -328,6 +328,7 @@
                   ;; SNS originated about the Post to Carrot action
                   (or (= (:type msg-parsed) "interactive_message")
                       (= callback-id "post")
+                      (= callback-id "new_post")
                       (= callback-id "add_post"))
                   (do
                     (timbre/debug "Received post action notification:" msg-parsed)
