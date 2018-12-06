@@ -33,7 +33,7 @@
 (defn- board-list [data]
   (timbre/debug "Storage org data:" (:boards data))
   (->> (:boards data)
-    (map #(select-keys % [:name :slug]))
+    (map #(select-keys % [:name :slug :uuid]))
     (remove #(= (:slug %) "drafts"))
     vec))
 

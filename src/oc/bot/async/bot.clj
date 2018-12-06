@@ -60,15 +60,15 @@
 
 (defn get-post-data [payload]
 
-  (let [board-uuid (:board-id payload)
-        notification (:notification payload)
+  (let [notification (:notification payload)
+        board-uuid (:board-id notification)
         team (:team-id (:org payload))
         slack-bot (:bot payload)
         token (:token slack-bot)
         user-token (auth/user-token (:slack-user-id (:receiver payload)) (:slack-org-id slack-bot))
         teams (set [team])
         board-list (storage/board-list-for teams user-token)
-        board (first (filter #(= board-uuid (:board-uuid %)) board-list))]
+        board (first (filter #(= board-uuid (:uuid %)) board-list))]
     (storage/post-data-for user-token teams (:slug board) (:entry-id notification))))
 
 ;; ----- SQS handling -----
