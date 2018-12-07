@@ -17,7 +17,7 @@
             [oc.lib.slack :as slack]
             [oc.lib.auth :as auth]
             [oc.bot.digest :as digest]
-            [oc.bot.storage :as storage]
+            [oc.lib.storage :as storage]
             [oc.bot.async.slack-action :as slack-action]
             [oc.bot.resources.slack-org :as slack-org]
             [oc.bot.config :as c]))
@@ -60,17 +60,17 @@
 
 (defn get-post-data [payload]
   (let [notification (:notification payload)
-        board-uuid (:board-id notification)
         team (:team-id (:org payload))
         slack-bot (:bot payload)
         token (:token slack-bot)
         slack-user-map {:slack-user-id (:slack-user-id (:receiver payload))
                         :slack-team-id (:slack-org-id slack-bot)}
-        user-token (auth/user-token slack-user-map c/auth-server-url c/passphrase "Bot")
         teams (set [team])
-        board-list (storage/board-list-for teams user-token)
-        board (first (filter #(= board-uuid (:uuid %)) board-list))]
-    (storage/post-data-for user-token teams (:slug board) (:entry-id notification))))
+        config {:stoarge-server-url c/storage-server-url
+                :auth-server-url c/auth-server-url
+                :passphrase c/passphrase
+                :service-name "Bot"}]
+    (storage/post-data-for config slack-user-map teams (:board-id notification) (:entry-id notification))))
 
 ;; ----- SQS handling -----
 
