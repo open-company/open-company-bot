@@ -65,12 +65,11 @@
         token (:token slack-bot)
         slack-user-map {:slack-user-id (:slack-user-id (:receiver payload))
                         :slack-team-id (:slack-org-id slack-bot)}
-        teams (set [team])
         config {:stoarge-server-url c/storage-server-url
                 :auth-server-url c/auth-server-url
                 :passphrase c/passphrase
                 :service-name "Bot"}]
-    (storage/post-data-for config slack-user-map teams (:board-id notification) (:entry-id notification))))
+    (storage/post-data-for config slack-user-map (:slug (:org payload)) (:board-id notification) (:entry-id notification))))
 
 ;; ----- SQS handling -----
 
