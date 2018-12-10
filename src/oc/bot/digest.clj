@@ -21,39 +21,43 @@
       :else
       clean-headline)))
 
-(defn- post-as-attachment [board-name {:keys [publisher url headline published-at comment-count comment-authors must-see video-id]}]
+(defn- post-as-attachment [daily board-name {:keys [publisher url headline published-at comment-count comment-authors must-see video-id]}]
   (let [author-name (:name publisher)
         clean-headline (post-headline headline must-see video-id)
         ts (-> published-at ; since Unix epoch timestamp for Slack
               (coerce/to-long)
               (/ 1000)
               (int))
-        message {
+        timestamp-map (if daily
+                        {}
+                        {:ts ts})
+        message (merge {
           :fallback (str "A post in " board-name " by " author-name ", '" clean-headline "'.")
           :color "#FA6452"
           :author_name author-name
           :author_icon (:avatar-url publisher)
           :title clean-headline
-          :title_link url
-          :ts ts}]
+          :title_link url}
+          timestamp-map)]
     (if (pos? comment-count)
       (assoc message :text (text/attribution 3 comment-count "comment" comment-authors))
       message)))
 
-(defn- posts-for-board [board]
+(defn- posts-for-board [daily board]
   (let [pretext (:name board)
-        attachments (map #(post-as-attachment (:name board) %) (:posts board))]
+        attachments (map #(post-as-attachment daily (:name board) %) (:posts board))]
     (concat [(assoc (first attachments) :pretext pretext)] (rest attachments))))
 
 (defn send-digest [token {channel :id :as receiver} {:keys [digest-frequency org-name boards] :as msg}]
   {:pre [(string? token)
          (map? receiver)
          (map? msg)]}
-    (let [frequency (if (= (keyword digest-frequency) :daily) "Yesterday" "Last week")
+    (let [daily? (= (keyword digest-frequency) :daily)
+          frequency (if daily? "Yesterday" "Last week")
           intro (if (seq org-name)
                   (str frequency " at " org-name)
                   (str frequency " on Carrot"))
-          attachments (flatten (map posts-for-board boards))]
+          attachments (flatten (map (partial posts-for-board daily?) boards))]
       (timbre/info "Sending digest to:" channel " with:" token)
       (slack/post-message token channel intro)
       (slack/post-attachments token channel attachments)))
