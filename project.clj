@@ -30,7 +30,7 @@
     [clj-http "3.9.1"]
 
     ;; Library for OC projects https://github.com/open-company/open-company-lib
-    [open-company/lib "0.16.27alpha"]
+    [open-company/lib "0.16.27"]
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; defun - Erlang-esque pattern matching for Clojure functions https://github.com/killme2008/defun
     ;; core.async - Async programming and communication https://github.com/clojure/core.async
