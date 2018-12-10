@@ -9,10 +9,11 @@
             [taoensso.timbre :as timbre]
             [clj-http.client :as http]
             [cheshire.core :as json]
-            [oc.bot.auth :as auth]
+            [oc.lib.auth :as auth]
             [oc.bot.storage :as storage]
             [oc.bot.resources.slack-org :as slack-org]
-            [oc.bot.resources.team :as team]))
+            [oc.bot.resources.team :as team]
+            [oc.bot.config :as c]))
 
 (def db-pool (atom false)) ; atom holding DB pool so it can be used for each SQS message
 
@@ -160,7 +161,11 @@
             bot-token (slack-org/bot-token-for @db-pool slack-team-id)]
     ;; JWT from Auth service
     (if-let* [slack-user-id (-> payload :user :id)
-              user-token (auth/user-token slack-user-id slack-team-id)]
+              user-token (auth/user-token {:slack-user-id slack-user-id
+                                           :slack-team-id slack-team-id}
+                                          c/auth-server-url
+                                          c/passphrase
+                                          "Bot")]
       ;; Teams for this Slack from Auth DB & board list from Storage service
       (if-let* [teams (team/teams-for @db-pool slack-team-id)
                 boards (storage/board-list-for teams user-token)]

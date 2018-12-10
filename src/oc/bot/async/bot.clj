@@ -15,7 +15,7 @@
             [oc.lib.sentry-appender :as sa]
             [oc.lib.sqs :as sqs]
             [oc.lib.slack :as slack]
-            [oc.bot.auth :as auth]
+            [oc.lib.auth :as auth]
             [oc.bot.digest :as digest]
             [oc.bot.storage :as storage]
             [oc.bot.async.slack-action :as slack-action]
@@ -59,13 +59,14 @@
 (def carrot-explainer "Carrot is the company digest that keeps everyone aligned around what matters most.")
 
 (defn get-post-data [payload]
-
   (let [notification (:notification payload)
         board-uuid (:board-id notification)
         team (:team-id (:org payload))
         slack-bot (:bot payload)
         token (:token slack-bot)
-        user-token (auth/user-token (:slack-user-id (:receiver payload)) (:slack-org-id slack-bot))
+        slack-user-map {:slack-user-id (:slack-user-id (:receiver payload))
+                        :slack-team-id (:slack-org-id slack-bot)}
+        user-token (auth/user-token slack-user-map c/auth-server-url c/passphrase "Bot")
         teams (set [team])
         board-list (storage/board-list-for teams user-token)
         board (first (filter #(= board-uuid (:uuid %)) board-list))]
