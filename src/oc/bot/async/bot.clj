@@ -65,7 +65,7 @@
         token (:token slack-bot)
         slack-user-map {:slack-user-id (:slack-user-id (:receiver payload))
                         :slack-team-id (:slack-org-id slack-bot)}
-        config {:stoarge-server-url c/storage-server-url
+        config {:storage-server-url c/storage-server-url
                 :auth-server-url c/auth-server-url
                 :passphrase c/passphrase
                 :service-name "Bot"}]
