@@ -24,13 +24,9 @@
     ;; Namespace management https://github.com/clojure/tools.namespace
     ;; NB: org.clojure/tools.reader pulled in by oc.lib
     [org.clojure/tools.namespace "0.3.0-alpha4" :exclusions [org.clojure/tools.reader]] 
-    ;; Clojure wrapper for jsoup HTML parser https://github.com/mfornos/clojure-soup
-    [clj-soup/clojure-soup "0.1.3"]
-    ;; Clojure HTTP client https://github.com/dakrone/clj-http
-    [clj-http "3.9.1"]
 
     ;; Library for OC projects https://github.com/open-company/open-company-lib
-    [open-company/lib "0.16.27"]
+    [open-company/lib "0.16.28"]
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; defun - Erlang-esque pattern matching for Clojure functions https://github.com/killme2008/defun
     ;; core.async - Async programming and communication https://github.com/clojure/core.async
@@ -44,6 +40,8 @@
     ;; clj-jwt - A Clojure library for JSON Web Token(JWT) https://github.com/liquidz/clj-jwt
     ;; clj-time - Date and time lib https://github.com/clj-time/clj-time
     ;; environ - Environment settings from different sources https://github.com/weavejester/environ  ]
+    ;; Clojure HTTP client https://github.com/dakrone/clj-http
+    ;; Clojure wrapper for jsoup HTML parser https://github.com/mfornos/clojure-soup
   ]
 
   ;; All profile plugins

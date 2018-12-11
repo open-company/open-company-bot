@@ -10,7 +10,7 @@
             [clj-http.client :as http]
             [cheshire.core :as json]
             [oc.lib.auth :as auth]
-            [oc.bot.storage :as storage]
+            [oc.lib.storage :as storage]
             [oc.bot.resources.slack-org :as slack-org]
             [oc.bot.resources.team :as team]
             [oc.bot.config :as c]))
@@ -168,7 +168,7 @@
                                           "Bot")]
       ;; Teams for this Slack from Auth DB & board list from Storage service
       (if-let* [teams (team/teams-for @db-pool slack-team-id)
-                boards (storage/board-list-for teams user-token)]
+                boards (storage/board-list-for c/storage-server-url teams user-token)]
         (do
           ;; Dialog request to Slack
           (timbre/debug "Boards:" boards)
