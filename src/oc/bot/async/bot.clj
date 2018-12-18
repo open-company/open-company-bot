@@ -16,6 +16,7 @@
             [oc.lib.sqs :as sqs]
             [oc.lib.slack :as slack]
             [oc.lib.auth :as auth]
+            [oc.lib.jwt :as jwt]
             [oc.bot.digest :as digest]
             [oc.lib.storage :as storage]
             [oc.bot.async.slack-action :as slack-action]
@@ -129,7 +130,21 @@
 (defn- text-for-notification [{:keys [org notification] :as msg}]
   (let [org-slug (:slug org)
         secure-uuid (:secure-uuid notification)
-        entry-url (s/join "/" [c/web-url org-slug "post" secure-uuid])
+        first-name (:first-name msg)
+        token-claims {:org-id (:org-id msg)
+                      :secure-uuid secure-uuid
+                      :name (str first-name " " (:last-name msg))
+                      :first-name first-name
+                      :last-name (:last-name msg)
+                      :user-id (:user-id msg)
+                      :avatar-url (:avatar-url msg)
+                      :team-id (first (:teams msg))}
+        id-token (jwt/generate-id-token token-claims c/passphrase)
+        entry-url (s/join "/" [c/web-url
+                               org-slug
+                               "post"
+                               secure-uuid
+                               (str "?id=" id-token)])
         first-name (:first-name notification)
         mention? (:mention notification)
         comment? (:interaction-id notification)
