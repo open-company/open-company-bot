@@ -15,9 +15,10 @@
             [oc.lib.sentry-appender :as sa]
             [oc.lib.sqs :as sqs]
             [oc.lib.slack :as slack]
-            [oc.bot.auth :as auth]
+            [oc.lib.auth :as auth]
+            [oc.lib.jwt :as jwt]
             [oc.bot.digest :as digest]
-            [oc.bot.storage :as storage]
+            [oc.lib.storage :as storage]
             [oc.bot.async.slack-action :as slack-action]
             [oc.bot.resources.slack-org :as slack-org]
             [oc.bot.config :as c]))
@@ -59,17 +60,17 @@
 (def carrot-explainer "Carrot is the company digest that keeps everyone aligned around what matters most.")
 
 (defn get-post-data [payload]
-
-  (let [board-uuid (:board-id payload)
-        notification (:notification payload)
+  (let [notification (:notification payload)
         team (:team-id (:org payload))
         slack-bot (:bot payload)
         token (:token slack-bot)
-        user-token (auth/user-token (:slack-user-id (:receiver payload)) (:slack-org-id slack-bot))
-        teams (set [team])
-        board-list (storage/board-list-for teams user-token)
-        board (first (filter #(= board-uuid (:board-uuid %)) board-list))]
-    (storage/post-data-for user-token teams (:slug board) (:entry-id notification))))
+        slack-user-map {:slack-user-id (:slack-user-id (:receiver payload))
+                        :slack-team-id (:slack-org-id slack-bot)}
+        config {:storage-server-url c/storage-server-url
+                :auth-server-url c/auth-server-url
+                :passphrase c/passphrase
+                :service-name "Bot"}]
+    (storage/post-data-for config slack-user-map (:slug (:org payload)) (:board-id notification) (:entry-id notification))))
 
 ;; ----- SQS handling -----
 
@@ -129,7 +130,21 @@
 (defn- text-for-notification [{:keys [org notification] :as msg}]
   (let [org-slug (:slug org)
         secure-uuid (:secure-uuid notification)
-        entry-url (s/join "/" [c/web-url org-slug "post" secure-uuid])
+        first-name (:first-name msg)
+        token-claims {:org-id (:org-id msg)
+                      :secure-uuid secure-uuid
+                      :name (str first-name " " (:last-name msg))
+                      :first-name first-name
+                      :last-name (:last-name msg)
+                      :user-id (:user-id msg)
+                      :avatar-url (:avatar-url msg)
+                      :teams [(:team-id org)]} ;; Let's read the team-id from the org to avoid problems on multiple org users}
+        id-token (jwt/generate-id-token token-claims c/passphrase)
+        entry-url (s/join "/" [c/web-url
+                               org-slug
+                               "post"
+                               secure-uuid
+                               (str "?id=" id-token)])
         first-name (:first-name notification)
         mention? (:mention notification)
         comment? (:interaction-id notification)

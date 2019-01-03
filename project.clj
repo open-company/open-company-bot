@@ -14,23 +14,19 @@
   ;; All profile dependencies
   :dependencies [
     ;; Lisp on the JVM http://clojure.org/documentation
-    [org.clojure/clojure "1.10.0-RC2"]
+    [org.clojure/clojure "1.10.0"]
     ;; String manipulation library https://github.com/funcool/cuerdas
     [funcool/cuerdas "2.0.6"] 
     ;; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
-    [aleph "0.4.7-alpha3"]
+    [aleph "0.4.7-alpha4"]
     ;; Async programming tools https://github.com/ztellman/manifold
-    [manifold "0.1.9-alpha2"]
+    [manifold "0.1.9-alpha3"]
     ;; Namespace management https://github.com/clojure/tools.namespace
     ;; NB: org.clojure/tools.reader pulled in by oc.lib
     [org.clojure/tools.namespace "0.3.0-alpha4" :exclusions [org.clojure/tools.reader]] 
-    ;; Clojure wrapper for jsoup HTML parser https://github.com/mfornos/clojure-soup
-    [clj-soup/clojure-soup "0.1.3"]
-    ;; Clojure HTTP client https://github.com/dakrone/clj-http
-    [clj-http "3.9.1"]
 
     ;; Library for OC projects https://github.com/open-company/open-company-lib
-    [open-company/lib "0.16.25.1"]
+    [open-company/lib "0.16.32"]
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; defun - Erlang-esque pattern matching for Clojure functions https://github.com/killme2008/defun
     ;; core.async - Async programming and communication https://github.com/clojure/core.async
@@ -44,6 +40,8 @@
     ;; clj-jwt - A Clojure library for JSON Web Token(JWT) https://github.com/liquidz/clj-jwt
     ;; clj-time - Date and time lib https://github.com/clj-time/clj-time
     ;; environ - Environment settings from different sources https://github.com/weavejester/environ  ]
+    ;; Clojure HTTP client https://github.com/dakrone/clj-http
+    ;; Clojure wrapper for jsoup HTML parser https://github.com/mfornos/clojure-soup
   ]
 
   ;; All profile plugins
@@ -61,7 +59,7 @@
       }
       :plugins [
         ;; Linter https://github.com/jonase/eastwood
-        [jonase/eastwood "0.3.3"]
+        [jonase/eastwood "0.3.4"]
         ;; Static code search for non-idiomatic code https://github.com/jonase/kibit        
         [lein-kibit "0.1.6" :exclusions [org.clojure/clojure]]
       ]
@@ -90,7 +88,7 @@
         ;; Catch spelling mistakes in docs and docstrings https://github.com/cldwalker/lein-spell
         [lein-spell "0.1.0"]
         ;; Dead code finder https://github.com/venantius/yagni
-        [venantius/yagni "0.1.6" :exclusions [org.clojure/clojure]]
+        [venantius/yagni "0.1.7" :exclusions [org.clojure/clojure]]
         ;; Autotest https://github.com/jakemcc/lein-test-refresh
         [com.jakemccrary/lein-test-refresh "0.23.0"]
       ]  
@@ -147,6 +145,22 @@
     "bikeshed!" ["bikeshed" "-v" "-m" "120"] ; code check with max line length warning of 120 characters
     "ancient" ["ancient" ":all" ":allow-qualified"] ; check for out of date dependencies
   }
+
+  ;; ----- Code check configuration -----
+
+  :eastwood {
+    ;; Disable some linters that are enabled by default
+    ;; implicit-dependencies - uhh, just seems dumb
+    :exclude-linters [:implicit-dependencies]
+    ;; Enable some linters that are disabled by default
+    :add-linters [:unused-namespaces :unused-private-vars] ; :unused-locals
+
+    ;; Exclude testing namespaces
+    :tests-paths ["test"]
+    :exclude-namespaces [:test-paths]
+  }
+
+  ;; ----- Application -----
 
   :main oc.bot.app
 )
