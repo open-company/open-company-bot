@@ -3,19 +3,12 @@
   (:require [clojure.string :as s]
             [clojure.core.async :as async :refer (<!! >!!)]
             [cuerdas.core :as str]
-            [manifold.stream :as stream]
-            [com.stuartsierra.component :as component]
-            [amazonica.aws.sqs :as aws-sqs]
             [taoensso.timbre :as timbre]
             [cheshire.core :as json]
             [jsoup.soup :as soup]
             [clj-time.format :as time-format]
-            [raven-clj.core :as sentry]
-            [raven-clj.interfaces :as sentry-interfaces]
-            [oc.lib.sentry-appender :as sa]
             [oc.lib.sqs :as sqs]
             [oc.lib.slack :as slack]
-            [oc.lib.auth :as auth]
             [oc.lib.jwt :as jwt]
             [oc.bot.digest :as digest]
             [oc.lib.storage :as storage]
@@ -32,8 +25,6 @@
 (defonce bot-go (atom nil))
 
 ;; ----- Utility functions -----
-
-(defn- slack-handler [conn msg-idx msg] (prn msg))
 
 (defn- real-user? [user]
   (and (not (:deleted user))
@@ -61,9 +52,7 @@
 
 (defn get-post-data [payload]
   (let [notification (:notification payload)
-        team (:team-id (:org payload))
         slack-bot (:bot payload)
-        token (:token slack-bot)
         slack-user-map {:slack-user-id (:slack-user-id (:receiver payload))
                         :slack-team-id (:slack-org-id slack-bot)}
         config {:storage-server-url c/storage-server-url
@@ -120,7 +109,7 @@
   "Handle an incoming SQS message to the bot."
   [msg done-channel]
   (let [msg-body (read-message-body (:body msg))
-        error (if (:test-error msg-body) (/ 1 0) false)] ; a message testing Sentry error reporting
+        _error (if (:test-error msg-body) (/ 1 0) false)] ; a message testing Sentry error reporting
     (timbre/infof "Received message from SQS: %s\n" msg-body)
     (>!! bot-chan msg-body)) ; send the message to the bot's channel
   (sqs/ack done-channel msg))
@@ -145,13 +134,11 @@
                                "post"
                                secure-uuid
                                (str "?id=" id-token)])
-        first-name (:first-name notification)
         mention? (:mention notification)
         comment? (:interaction-id notification)
         title (if comment?
                 (:headline (get-post-data msg))
                 (:entry-title notification))
-        greeting (if first-name (str "Hello " first-name ", ") (str "Hey there! "))
         from (-> notification :author :name)
         attribution (if from
                       (if mention? 
@@ -195,8 +182,6 @@
                                         [{:pretext message :text expnote}])))))))))
 
 (defn- share-entry [token receiver {:keys [org-slug
-                                           org-logo-url
-                                           org-name
                                            board-name
                                            headline
                                            note

@@ -3,7 +3,6 @@
   Async Slack action handling.
   "
   (:require [clojure.core.async :as async :refer (<! >!!)]
-            [clojure.walk :refer (keywordize-keys)]
             [defun.core :refer (defun-)]
             [if-let.core :refer (if-let*)]
             [taoensso.timbre :as timbre]
@@ -26,12 +25,7 @@
 ;; ----- Slack API calls -----
 
 (defn- new-post-dialog-for [bot-token payload boards]
-  (let [response-url (:response_url payload)
-        trigger (:trigger_id payload)
-        team (:team payload)
-        channel (:channel payload)
-        user (:user payload)
-        message (:message payload)
+  (let [trigger (:trigger_id payload)
         body {
           :trigger_id trigger
           :dialog {
@@ -86,11 +80,7 @@
     (timbre/info "Result with" bot-token ":" result)))
 
 (defn- post-dialog-for [bot-token payload boards]
-  (let [response-url (:response_url payload)
-        trigger (:trigger_id payload)
-        team (:team payload)
-        channel (:channel payload)
-        user (:user payload)
+  (let [trigger (:trigger_id payload)
         message (:message payload)
         body {
           :trigger_id trigger
