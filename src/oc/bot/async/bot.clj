@@ -134,14 +134,14 @@
         board-slug (:board-slug post-data)
         secure-uuid (:secure-uuid notification)
         first-name (:first-name msg)
-        token-claims {:org-id (:org-id msg)
+        token-claims {:org-uuid (:org-id msg)
                       :secure-uuid secure-uuid
                       :name (str first-name " " (:last-name msg))
                       :first-name first-name
                       :last-name (:last-name msg)
                       :user-id (:user-id msg)
                       :avatar-url (:avatar-url msg)
-                      :teams [(:team-id org)]} ;; Let's read the team-id from the org to avoid problems on multiple org users}
+                      :team-id (:team-id org)} ;; Let's read the team-id from the org to avoid problems on multiple org users}
         id-token (jwt/generate-id-token token-claims c/passphrase)
         entry-url (s/join "/" [c/web-url
                                org-slug
