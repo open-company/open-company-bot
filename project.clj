@@ -14,19 +14,19 @@
   ;; All profile dependencies
   :dependencies [
     ;; Lisp on the JVM http://clojure.org/documentation
-    [org.clojure/clojure "1.10.0-beta2"]
+    [org.clojure/clojure "1.10.0"]
     ;; String manipulation library https://github.com/funcool/cuerdas
-    [funcool/cuerdas "2.0.6"] 
+    [funcool/cuerdas "2.1.0"] 
     ;; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
-    [aleph "0.4.7-alpha2"]
+    [aleph "0.4.7-alpha4"]
     ;; Async programming tools https://github.com/ztellman/manifold
-    [manifold "0.1.8"]
+    [manifold "0.1.9-alpha3"]
     ;; Namespace management https://github.com/clojure/tools.namespace
     ;; NB: org.clojure/tools.reader pulled in by oc.lib
     [org.clojure/tools.namespace "0.3.0-alpha4" :exclusions [org.clojure/tools.reader]] 
 
     ;; Library for OC projects https://github.com/open-company/open-company-lib
-    [open-company/lib "0.16.30"]
+    [open-company/lib "0.16.32"]
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; defun - Erlang-esque pattern matching for Clojure functions https://github.com/killme2008/defun
     ;; core.async - Async programming and communication https://github.com/clojure/core.async
@@ -88,7 +88,7 @@
         ;; Catch spelling mistakes in docs and docstrings https://github.com/cldwalker/lein-spell
         [lein-spell "0.1.0"]
         ;; Dead code finder https://github.com/venantius/yagni
-        [venantius/yagni "0.1.6" :exclusions [org.clojure/clojure]]
+        [venantius/yagni "0.1.7" :exclusions [org.clojure/clojure]]
         ;; Autotest https://github.com/jakemcc/lein-test-refresh
         [com.jakemccrary/lein-test-refresh "0.23.0"]
       ]  
