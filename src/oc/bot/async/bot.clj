@@ -119,6 +119,9 @@
 
 (defn- text-for-notification [{:keys [org notification] :as msg}]
   (let [org-slug (:slug org)
+        post-data (get-post-data msg)
+        uuid (:uuid post-data)
+        board-slug (:board-slug post-data)
         secure-uuid (:secure-uuid notification)
         first-name (:first-name msg)
         token-claims {:org-uuid (:org-id msg)
@@ -132,14 +135,15 @@
         id-token (jwt/generate-id-token token-claims c/passphrase)
         entry-url (s/join "/" [c/web-url
                                org-slug
+                               board-slug
                                "post"
-                               secure-uuid
+                               uuid
                                (str "?id=" id-token)])
         first-name (:first-name notification)
         mention? (:mention notification)
         comment? (:interaction-id notification)
         title (if comment?
-                (:headline (get-post-data msg))
+                (:headline post-data)
                 (:entry-title notification))
         greeting (if first-name (str "Hello " first-name ", ") (str "Hey there! "))
         from (-> notification :author :name)
