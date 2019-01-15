@@ -33,11 +33,14 @@
                         {:ts ts})
         message (merge {
           :fallback (str "A post in " board-name " by " author-name ", '" clean-headline "'.")
-          :color "#FA6452"
-          :author_name author-name
+          :color "#2BA767"
+          :author_name (str author-name " in " board-name)
           :author_icon (:avatar-url publisher)
           :title clean-headline
-          :title_link url}
+          :title_link url
+          :actions [{:type "button"
+                     :text "View post"
+                     :url url}]}
           timestamp-map)]
     (if (pos? comment-count)
       (assoc message :text (text/attribution 3 comment-count "comment" comment-authors))
@@ -48,15 +51,14 @@
         attachments (map #(post-as-attachment daily (:name board) %) (:posts board))]
     (concat [(assoc (first attachments) :pretext pretext)] (rest attachments))))
 
-(defn send-digest [token {channel :id :as receiver} {:keys [digest-frequency org-name boards] :as msg}]
+(defn send-digest [token {channel :id :as receiver} {:keys [digest-frequency org boards] :as msg}]
   {:pre [(string? token)
          (map? receiver)
          (map? msg)]}
     (let [daily? (= (keyword digest-frequency) :daily)
-          frequency (if daily? "Yesterday" "Last week")
-          intro (if (seq org-name)
-                  (str frequency " at " org-name)
-                  (str frequency " on Carrot"))
+          frequency (if daily? "morning" "weekly")
+          org-name (or org "Carrot")
+          intro (str ":coffee: Your " org-name " " frequency " digest.")
           attachments (flatten (map (partial posts-for-board daily?) boards))]
       (timbre/info "Sending digest to:" channel " with:" token)
       (slack/post-message token channel intro)
