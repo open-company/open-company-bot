@@ -59,7 +59,10 @@
           frequency (if daily? "morning" "weekly")
           org-name (or org "Carrot")
           intro (str ":coffee: Your " org-name " " frequency " digest.")
-          attachments (flatten (map (partial posts-for-board daily?) boards))]
+          intro-attachment {:image_url "https://d1wc0stj82keig.cloudfront.net/1547485416/img/ML/homepage_screenshots_second_row.png"
+                            :text org-name
+                            :color "#ffffff"}
+          attachments (conj (flatten (map (partial posts-for-board daily?) boards)) intro-attachment)]
       (timbre/info "Sending digest to:" channel " with:" token)
-      (slack/post-message token channel intro)
-      (slack/post-attachments token channel attachments)))
+      ;;(slack/post-message token channel intro)
+      (slack/post-attachments token channel attachments intro)))
