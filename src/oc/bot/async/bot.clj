@@ -106,23 +106,13 @@
       :else
       (throw (ex-info "Failed to adjust receiver" {:msg msg})))))
 
-(defn- read-message-body
-  "
-  Try to parse as json, otherwise use read-string.
-  "
-  [msg]
-  (try
-    (json/parse-string msg true)
-    (catch Exception e
-      (read-string msg))))
-
 (defn sqs-handler
   "Handle an incoming SQS message to the bot."
   [msg done-channel]
-  (let [msg-body (read-message-body (:body msg))
-        error (if (:test-error msg-body) (/ 1 0) false)] ; a message testing Sentry error reporting
-    (timbre/infof "Received message from SQS: %s\n" msg-body)
-    (>!! bot-chan msg-body)) ; send the message to the bot's channel
+  (doseq [msg-body (sqs/read-message-body (:body msg))]
+    (let [error (if (:test-error msg-body) (/ 1 0) false)] ; a message testing Sentry error reporting
+      (timbre/infof "Received message from SQS: %s\n" msg-body)
+      (>!! bot-chan msg-body))) ; send the message to the bot's channel
   (sqs/ack done-channel msg))
 
 ;; ----- Bot Request handling -----
@@ -226,7 +216,7 @@
                      "")
         reduced-body (clojure.string/join " "
                        (filter not-empty
-                         (take 150 ;; 150 words is the average paragraph
+                         (take 20 ;; 20 words is the average sentence
                            (clojure.string/split clean-body #" "))))
         share-attribution (if (= (:name publisher) (:name sharer))
                             (str "*" (:name sharer) "* shared a post in *" board-name "*")
@@ -329,7 +319,6 @@
           (do (reset! bot-go false) (timbre/info "Bot stopped."))
           (try
             (if (:Message msg)
-
               (let [msg-parsed (json/parse-string (:Message msg) true)
                     notification-type (:notification-type msg-parsed)
                     resource-type (:resource-type msg-parsed)
