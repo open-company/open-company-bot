@@ -5,9 +5,10 @@
   "
   (:require [taoensso.timbre :as timbre]
             [clj-time.coerce :as coerce]
+            [jsoup.soup :as soup]
             [oc.lib.text :as text]
             [oc.lib.slack :as slack]
-            [jsoup.soup :as soup]))
+            [oc.bot.image :as image]))
 
 (defn post-headline [headline must-see video-id]
   (let [clean-headline (.text (soup/parse headline))] ; Strip out any HTML tags
@@ -51,18 +52,15 @@
         attachments (map #(post-as-attachment daily (:name board) %) (:posts board))]
     (concat [(assoc (first attachments) :pretext pretext)] (rest attachments))))
 
-(defn send-digest [token {channel :id :as receiver} {:keys [digest-frequency org boards] :as msg}]
+(defn send-digest [token {channel :id :as receiver} {:keys [org-name org-slug logo-url boards] :as msg}]
   {:pre [(string? token)
          (map? receiver)
          (map? msg)]}
-    (let [daily? (= (keyword digest-frequency) :daily)
-          frequency (if daily? "morning" "weekly")
-          org-name (or org "Carrot")
-          intro (str ":coffee: Your " org-name " " frequency " digest.")
-          intro-attachment {:image_url "https://d1wc0stj82keig.cloudfront.net/1547485416/img/ML/homepage_screenshots_second_row.png"
-                            :text org-name
-                            :color "#ffffff"}
-          attachments (conj (flatten (map (partial posts-for-board daily?) boards)) intro-attachment)]
-      (timbre/info "Sending digest to:" channel " with:" token)
-      ;;(slack/post-message token channel intro)
-      (slack/post-attachments token channel attachments intro)))
+  (let [intro (str ":coffee: Your " (or org-name "Carrot") " daily digest.")
+        intro-attachment {:image_url (image/slack-banner-url org-slug logo-url)
+                          :text org-name
+                          :color "#ffffff"}
+        attachments (conj (flatten (map (partial posts-for-board true) boards)) intro-attachment)]
+    (timbre/info "Sending digest to:" channel " with:" token)
+    ;;(slack/post-message token channel intro)
+    (slack/post-attachments token channel attachments intro)))
