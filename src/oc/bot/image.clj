@@ -1,7 +1,6 @@
 (ns oc.bot.image
   (:require [clj-http.client :as http]
             [clojure.java.io :as io]
-            [taoensso.timbre :as timbre]
             [amazonica.aws.s3transfer :as s3]
             [oc.bot.config :as c])
   (:import  [java.io File]
@@ -23,7 +22,6 @@
   (try
     (let [response (http/get (s3-url org-slug) {})
           status (:status response)]
-      (timbre/debug response)
       (= status 200))
     (catch Exception e
       false)))
@@ -49,8 +47,8 @@
         ;; y = (sourceh/2) - (logoh/2
         x (- (/ (.getWidth source) 2) 28)
         y (- (/ (.getHeight source) 2) 28)
-        banner (.drawImage g logo x (- y 17) 56 56 nil)]
-    (ImageIO/write (cast BufferedImage source) "png" (File. (tmp-file org-slug)))
+        banner (.drawImage g logo x (- y 17) 56 56 nil)
+        _ (ImageIO/write (cast BufferedImage source) "png" (File. (tmp-file org-slug)))]
     ;; upload image to s3
     (write-to-s3 org-slug)))
 
