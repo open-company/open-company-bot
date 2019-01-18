@@ -296,9 +296,9 @@
          (map? msg)]}
   (let [author (:author reminder)
         first-name (or (:first-name author) (first-name (:name author)))
-        content (str "Hey " first-name
-                  ", created a new reminder for you: "
-                  (:frequency reminder) " starting "
+        content (str "Hey, " first-name
+                  " created a new reminder for you in Carrot. "
+                  "It's for a " (:frequency reminder) " update, starting "
                   (post-date (:next-send reminder)) ".")
         reminders-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?reminders")
         attachment {:text (str "*" (:headline reminder) "*")
@@ -317,14 +317,14 @@
          (map? msg)]}
   (let [assignee (:assignee reminder)
         first-name (or (:first-name assignee) (first-name (:name assignee)))
-        content (str "Hey " first-name
-                  ", just a friendly reminder to *share your post*. "
+        content (str "Hi " first-name
+                  ", a quick reminder - it's time to share the latest with your team in Carrot. 🙌"
                   "Head over to Carrot to create it.")
         new-post-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?new")
         attachment {:text (str "*" (:headline reminder) "*")
                     :color "#6187F8"
                     :actions [{:type "button"
-                               :text "Ok, let's do it"
+                               :text "OK, let's do it"
                                :url new-post-url}]}]
     (slack/post-attachments token
                             (:id receiver)
@@ -423,8 +423,8 @@
   (def msg
     {:org {:slug "carrot"
            :name "Carrot"}
-     :reminder {:frequency "monthly"
-                :headline "Test headline"
+     :reminder {:frequency "weekly"
+                :headline "Weekly design"
                 :next-send "2019-02-01T12:12:12.123Z"
                 :assignee {:user-id "1234-1234-1234"
                            :name "Iacopo Carraro"
