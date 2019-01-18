@@ -35,12 +35,17 @@
     (File. (tmp-file org-slug)))
   (Thread/sleep 5000))
 
+(defn- org-logo [logo]
+  (if logo
+    (io/input-stream (URL. logo))
+    (File. "src/oc/assets/img/carrot_logo.png")))
+
 (defn generate-slack-banner
   ""
   [org-slug logo]
   (let [source (ImageIO/read
                 (File. "src/oc/assets/img/slack-digest-background.png"))
-        logo (ImageIO/read (io/input-stream (URL. logo)))
+        logo (ImageIO/read (org-logo logo))
         g (.getGraphics source)
         ;; given the source dimension and logo dimensions find where to
         ;; put the upper left logo corner
