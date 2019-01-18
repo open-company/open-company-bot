@@ -32,7 +32,8 @@
   (s3/upload
     c/slack-digest-s3-bucket
     (str org-slug ".png")
-    (File. (tmp-file org-slug))))
+    (File. (tmp-file org-slug)))
+  (Thread/sleep 5000))
 
 (defn generate-slack-banner
   ""
