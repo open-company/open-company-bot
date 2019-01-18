@@ -56,7 +56,7 @@
   {:pre [(string? token)
          (map? receiver)
          (map? msg)]}
-  (let [intro (str ":coffee: Your " (or org-name "Carrot") " daily digest.")
+  (let [intro (str ":coffee: Your " (or org-name "Carrot") " morning digest.")
         intro-attachment {:image_url (image/slack-banner-url org-slug logo-url)
                           :text org-name
                           :color "#ffffff"}
