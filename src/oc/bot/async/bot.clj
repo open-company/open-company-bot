@@ -288,6 +288,51 @@
                             [{:text content}]
                             text-for-notification)))
 
+;; Reminders
+
+(defn reminder-notification [token receiver {:keys [org reminder] :as msg}]
+  {:pre [(string? token)
+         (map? receiver)
+         (map? msg)]}
+  (let [author (:author reminder)
+        first-name (or (:first-name author) (first-name (:name author)))
+        content (str "Hey " first-name
+                  ", created a new reminder for you: "
+                  (:frequency reminder) " starting "
+                  (post-date (:next-send reminder)) ".")
+        reminders-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?reminders")
+        attachment {:text (str "*" (:headline reminder) "*")
+                    :color "#6187F8"
+                    :actions [{:type "button"
+                               :text "View reminder"
+                               :url reminders-url}]}]
+    (slack/post-attachments token
+                            (:id receiver)
+                            [attachment]
+                            content)))
+
+(defn reminder-alert [token receiver {:keys [org reminder] :as msg}]
+  {:pre [(string? token)
+         (map? receiver)
+         (map? msg)]}
+  (let [assignee (:assignee reminder)
+        first-name (or (:first-name assignee) (first-name (:name assignee)))
+        content (str "Hey " first-name
+                  ", just a friendly reminder to *share your post*. "
+                  "Head over to Carrot to create it.")
+        new-post-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?new")
+        attachment {:text (str "*" (:headline reminder) "*")
+                    :color "#6187F8"
+                    :actions [{:type "button"
+                               :text "Ok, let's do it"
+                               :url new-post-url}]}]
+    (slack/post-attachments token
+                            (:id receiver)
+                            [attachment]
+                            content)))
+
+;; Messages type handler
+
 (defn- bot-handler [msg]
   {:pre [(or (string? (:type msg)) (keyword? (:type msg)))
          (map? (:receiver msg))
@@ -303,6 +348,8 @@
       :usage (usage token receiver)
       :welcome (welcome token receiver)
       :notify (notify token receiver msg)
+      :reminder-notification (reminder-notification token receiver msg)
+      :reminder-alert (reminder-alert token receiver msg)
       (timbre/warn "Ignoring message with script type:" script-type))))
 
 ;; ----- Event loop -----
@@ -371,3 +418,17 @@
     (timbre/info "Stopping bot...")
     (>!! bot-chan {:stop true}))
   (reset! db-pool false))
+
+(comment
+  (def msg
+    {:org {:slug "carrot"
+           :name "Carrot"}
+     :reminder {:frequency "monthly"
+                :headline "Test headline"
+                :next-send "2019-02-01T12:12:12.123Z"
+                :assignee {:user-id "1234-1234-1234"
+                           :name "Iacopo Carraro"
+                           :avatar-url "https://avatars.slack-edge.com/2017-02-02/136114833346_3758034af26a3b4998f4_512.jpg"}
+                :author {:user-id "1234-1234-1234"
+                         :name "Iacopo Carraro"
+                         :avatar-url "https://avatars.slack-edge.com/2017-02-02/136114833346_3758034af26a3b4998f4_512.jpg"}}}))
