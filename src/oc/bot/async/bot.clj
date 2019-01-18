@@ -318,8 +318,7 @@
   (let [assignee (:assignee reminder)
         first-name (or (:first-name assignee) (first-name (:name assignee)))
         content (str "Hi " first-name
-                  ", a quick reminder - it's time to share the latest with your team in Carrot. 🙌"
-                  "Head over to Carrot to create it.")
+                  ", a quick reminder - it's time to share the latest with your team in Carrot. 🙌")
         new-post-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?new")
         attachment {:text (str "*" (:headline reminder) "*")
                     :color "#6187F8"
@@ -418,17 +417,3 @@
     (timbre/info "Stopping bot...")
     (>!! bot-chan {:stop true}))
   (reset! db-pool false))
-
-(comment
-  (def msg
-    {:org {:slug "carrot"
-           :name "Carrot"}
-     :reminder {:frequency "weekly"
-                :headline "Weekly design"
-                :next-send "2019-02-01T12:12:12.123Z"
-                :assignee {:user-id "1234-1234-1234"
-                           :name "Iacopo Carraro"
-                           :avatar-url "https://avatars.slack-edge.com/2017-02-02/136114833346_3758034af26a3b4998f4_512.jpg"}
-                :author {:user-id "1234-1234-1234"
-                         :name "Iacopo Carraro"
-                         :avatar-url "https://avatars.slack-edge.com/2017-02-02/136114833346_3758034af26a3b4998f4_512.jpg"}}}))
