@@ -1,7 +1,7 @@
 (ns oc.bot.image
   (:require [clj-http.client :as http]
             [clojure.java.io :as io]
-            [amazonica.aws.s3transfer :as s3]
+            [amazonica.aws.s3 :as s3]
             [oc.bot.config :as c])
   (:import  [java.io File]
             [java.net URL]
@@ -29,11 +29,16 @@
 (defn write-to-s3
   [org-slug]
   ;; put object with client side encryption
-  (s3/upload
-    c/slack-digest-s3-bucket
-    (str org-slug ".png")
-    (File. (tmp-file org-slug)))
-  (Thread/sleep 5000))
+  (s3/put-object
+    {:access-key c/aws-access-key-id
+     :secret-key c/aws-secret-access-key}
+    :bucket-name c/slack-digest-s3-bucket
+    :key (str org-slug ".png")
+    :file (File. (tmp-file org-slug))
+    :access-control-list {
+     :grant-all [
+      ["AllUsers" "Read"]
+      ["AuthenticatedUsers" "Write"]]}))
 
 (defn- org-logo [logo]
   (if logo
