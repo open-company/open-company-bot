@@ -290,11 +290,12 @@
 
 ;; Reminders
 
-(defn reminder-notification [token receiver {:keys [org reminder] :as msg}]
+(defn reminder-notification [token receiver {:keys [org notification] :as msg}]
   {:pre [(string? token)
          (map? receiver)
          (map? msg)]}
-  (let [author (:author reminder)
+  (let [reminder (:reminder notification)
+        author (:author reminder)
         first-name (or (:first-name author) (first-name (:name author)))
         content (str "Hey, " first-name
                   " created a new reminder for you in Carrot. "
@@ -311,11 +312,12 @@
                             [attachment]
                             content)))
 
-(defn reminder-alert [token receiver {:keys [org reminder] :as msg}]
+(defn reminder-alert [token receiver {:keys [org notification] :as msg}]
   {:pre [(string? token)
          (map? receiver)
          (map? msg)]}
-  (let [assignee (:assignee reminder)
+  (let [reminder (:reminder notification)
+        assignee (:assignee reminder)
         first-name (or (:first-name assignee) (first-name (:name assignee)))
         content (str "Hi " first-name
                   ", a quick reminder - it's time to share the latest with your team in Carrot. 🙌")
