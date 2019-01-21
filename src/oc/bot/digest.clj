@@ -59,6 +59,7 @@
   (let [intro (str ":coffee: Your " (or org-name "Carrot") " morning digest.")
         intro-attachment {:image_url (image/slack-banner-url org-slug logo-url)
                           :text org-name
+                          :fallback "Your morning digest"
                           :color "#ffffff"}
         attachments (conj (flatten (map (partial posts-for-board true) boards)) intro-attachment)]
     (timbre/info "Sending digest to:" channel " with:" token)
