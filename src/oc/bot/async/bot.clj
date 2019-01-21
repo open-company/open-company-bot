@@ -3,19 +3,12 @@
   (:require [clojure.string :as s]
             [clojure.core.async :as async :refer (<!! >!!)]
             [cuerdas.core :as str]
-            [manifold.stream :as stream]
-            [com.stuartsierra.component :as component]
-            [amazonica.aws.sqs :as aws-sqs]
             [taoensso.timbre :as timbre]
             [cheshire.core :as json]
             [jsoup.soup :as soup]
             [clj-time.format :as time-format]
-            [raven-clj.core :as sentry]
-            [raven-clj.interfaces :as sentry-interfaces]
-            [oc.lib.sentry-appender :as sa]
             [oc.lib.sqs :as sqs]
             [oc.lib.slack :as slack]
-            [oc.lib.auth :as auth]
             [oc.lib.jwt :as jwt]
             [oc.bot.digest :as digest]
             [oc.lib.storage :as storage]
@@ -32,8 +25,6 @@
 (defonce bot-go (atom nil))
 
 ;; ----- Utility functions -----
-
-(defn- slack-handler [conn msg-idx msg] (prn msg))
 
 (defn- real-user? [user]
   (and (not (:deleted user))

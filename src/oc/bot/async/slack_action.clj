@@ -3,7 +3,6 @@
   Async Slack action handling.
   "
   (:require [clojure.core.async :as async :refer (<! >!!)]
-            [clojure.walk :refer (keywordize-keys)]
             [defun.core :refer (defun-)]
             [if-let.core :refer (if-let*)]
             [taoensso.timbre :as timbre]

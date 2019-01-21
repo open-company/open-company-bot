@@ -2,11 +2,6 @@
   "Namespace for the configuration parameters."
   (:require [environ.core :refer (env)]))
 
-(defn- bool
-  "Handle the fact that we may have true/false strings, when we want booleans."
-  [val]
-  (boolean (Boolean/valueOf val)))
-
 ;; ----- System -----
 
 (defonce processors (.availableProcessors (Runtime/getRuntime)))
