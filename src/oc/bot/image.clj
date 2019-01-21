@@ -53,13 +53,9 @@
                 (File. "src/oc/assets/img/slack-digest-background.png"))
         logo (ImageIO/read (org-logo logo))
         g (.getGraphics source)
-        ;; given the source dimension and logo dimensions find where to
-        ;; put the upper left logo corner
-        ;; x = (sourcew/2) - (logow/2)
-        ;; y = (sourceh/2) - (logoh/2
-        x (- (/ (.getWidth source) 2) 28)
-        y (- (/ (.getHeight source) 2) 28)
-        banner (.drawImage g logo x (- y 17) 56 56 nil)
+        ;; x and y are gathered from the background image.
+        ;; scale logo to 53x53
+        banner (.drawImage g logo 224 41 53 53 nil)
         _ (ImageIO/write (cast BufferedImage source) "png" (File. (tmp-file org-slug)))]
     ;; upload image to s3
     (write-to-s3 org-slug)))
