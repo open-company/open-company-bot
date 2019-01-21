@@ -38,7 +38,8 @@
     :access-control-list {
      :grant-all [
       ["AllUsers" "Read"]
-      ["AuthenticatedUsers" "Write"]]}))
+      ["AuthenticatedUsers" "Write"]]})
+  (Thread/sleep 5000))
 
 (defn- org-logo [logo]
   (if logo
