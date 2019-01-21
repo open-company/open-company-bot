@@ -60,7 +60,7 @@
       }
       :plugins [
         ;; Linter https://github.com/jonase/eastwood
-        [jonase/eastwood "0.3.1"]
+        [jonase/eastwood "0.3.4"]
         ;; Static code search for non-idiomatic code https://github.com/jonase/kibit        
         [lein-kibit "0.1.6" :exclusions [org.clojure/clojure]]
       ]
@@ -145,6 +145,21 @@
     "spell!" ["spell" "-n"] ; check spelling in docs and docstrings
     "bikeshed!" ["bikeshed" "-v" "-m" "120"] ; code check with max line length warning of 120 characters
     "ancient" ["ancient" ":all" ":allow-qualified"] ; check for out of date dependencies
+  }
+
+  ;; ----- Code check configuration -----
+
+  :eastwood {
+    ;; Disable some linters that are enabled by default
+    ;; contant-test - just seems mostly ill-advised, logical constants are useful in something like a `->cond` 
+    ;; wrong-arity - unfortunate, but it's failing on 3/arity of sqs/send-message
+    ;; implicit-dependencies - uhh, just seems dumb
+    :exclude-linters [:constant-test :wrong-arity :implicit-dependencies]
+    ;; Enable some linters that are disabled by default
+    :add-linters [:unused-namespaces :unused-private-vars] ; :unused-locals]
+    ;; Exclude testing namespaces
+    :tests-paths ["test"]
+    :exclude-namespaces [:test-paths]
   }
 
   :main oc.bot.app
