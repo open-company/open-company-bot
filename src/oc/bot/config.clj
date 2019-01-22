@@ -2,11 +2,6 @@
   "Namespace for the configuration parameters."
   (:require [environ.core :refer (env)]))
 
-(defn- bool
-  "Handle the fact that we may have true/false strings, when we want booleans."
-  [val]
-  (boolean (Boolean/valueOf val)))
-
 ;; ----- System -----
 
 (defonce processors (.availableProcessors (Runtime/getRuntime)))
@@ -69,3 +64,5 @@
 (defonce welcome-message (str "Hey there! Your Slack account has been successfully connected to Carrot.\n\n"
                               "I'm the Carrot Bot; I work in the background to help out. Here's what I do:\n\n"
                               usage-bullets))
+
+(defonce slack-digest-s3-bucket (env :aws-s3-digest-banner-bucket))
