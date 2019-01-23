@@ -48,7 +48,7 @@
   (let [d (time-format/parse iso-format timestamp)]
     (time-format/unparse date-format d)))
 
-(def carrot-explainer "Carrot is the company digest that keeps everyone aligned around what matters most.")
+(def carrot-explainer "Carrot is the company digest that keeps fast-growing and remote teams up to date with the information that matters.")
 
 (defn get-post-data [payload]
   (let [notification (:notification payload)
