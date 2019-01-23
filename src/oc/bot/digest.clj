@@ -6,9 +6,16 @@
   (:require [taoensso.timbre :as timbre]
             [clj-time.coerce :as coerce]
             [jsoup.soup :as soup]
+            [clj-time.format :as time-format]
+            [clj-time.core :as t]
             [oc.lib.text :as text]
             [oc.lib.slack :as slack]
             [oc.bot.image :as image]))
+
+(def day-month-date-year (time-format/formatter "EEEE, MMM. dd, YYYY"))
+
+(defn- digest-content-date []
+  (time-format/unparse day-month-date-year (t/now)))
 
 (defn post-headline [headline must-see video-id]
   (let [clean-headline (.text (soup/parse headline))] ; Strip out any HTML tags
@@ -56,9 +63,15 @@
   {:pre [(string? token)
          (map? receiver)
          (map? msg)]}
-  (let [intro (str ":coffee: Your " (or org-name "Carrot") " morning digest.")
-        intro-attachment {:image_url (image/slack-banner-url org-slug logo-url)
-                          :text org-name
+  (let [org (or org-name "Carrot")
+        intro (str ":coffee: Your " org " morning digest.")
+        banner-text (clojure.string/upper-case
+                     (str org " • " (digest-content-date)))
+        intro-attachment {:image_url (image/slack-banner-url
+                                       org-slug
+                                       logo-url
+                                       banner-text)
+                          :text org
                           :fallback "Your morning digest"
                           :color "#ffffff"}
         attachments (conj (flatten (map (partial posts-for-board true) boards)) intro-attachment)]
