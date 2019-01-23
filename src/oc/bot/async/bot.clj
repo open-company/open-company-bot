@@ -48,7 +48,7 @@
   (let [d (time-format/parse iso-format timestamp)]
     (time-format/unparse date-format d)))
 
-(def carrot-explainer "Carrot is the company digest that keeps everyone aligned around what matters most.")
+(def carrot-explainer "Carrot is the company digest that keeps fast-growing and remote teams up to date with the information that matters.")
 
 (defn get-post-data [payload]
   (let [notification (:notification payload)
@@ -279,6 +279,52 @@
                             [{:text content}]
                             text-for-notification)))
 
+;; Reminders
+
+(defn reminder-notification [token receiver {:keys [org notification] :as msg}]
+  {:pre [(string? token)
+         (map? receiver)
+         (map? msg)]}
+  (let [reminder (:reminder notification)
+        author (:author reminder)
+        first-name (or (:first-name author) (first-name (:name author)))
+        content (str "Hey, " first-name
+                  " created a new reminder for you in Carrot. "
+                  "It's for a " (:frequency reminder) " update, starting "
+                  (post-date (:next-send reminder)) ".")
+        reminders-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?reminders")
+        attachment {:text (str "*" (:headline reminder) "*")
+                    :color "#6187F8"
+                    :actions [{:type "button"
+                               :text "View reminder"
+                               :url reminders-url}]}]
+    (slack/post-attachments token
+                            (:id receiver)
+                            [attachment]
+                            content)))
+
+(defn reminder-alert [token receiver {:keys [org notification] :as msg}]
+  {:pre [(string? token)
+         (map? receiver)
+         (map? msg)]}
+  (let [reminder (:reminder notification)
+        assignee (:assignee reminder)
+        first-name (or (:first-name assignee) (first-name (:name assignee)))
+        content (str "Hi " first-name
+                  ", a quick reminder - it's time to share the latest with your team in Carrot. 🙌")
+        new-post-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?new")
+        attachment {:text (str "*" (:headline reminder) "*")
+                    :color "#6187F8"
+                    :actions [{:type "button"
+                               :text "OK, let's do it"
+                               :url new-post-url}]}]
+    (slack/post-attachments token
+                            (:id receiver)
+                            [attachment]
+                            content)))
+
+;; Messages type handler
+
 (defn- bot-handler [msg]
   {:pre [(or (string? (:type msg)) (keyword? (:type msg)))
          (map? (:receiver msg))
@@ -294,6 +340,8 @@
       :usage (usage token receiver)
       :welcome (welcome token receiver)
       :notify (notify token receiver msg)
+      :reminder-notification (reminder-notification token receiver msg)
+      :reminder-alert (reminder-alert token receiver msg)
       (timbre/warn "Ignoring message with script type:" script-type))))
 
 ;; ----- Event loop -----
