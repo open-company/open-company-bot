@@ -6,6 +6,7 @@
             [taoensso.timbre :as timbre]
             [cheshire.core :as json]
             [jsoup.soup :as soup]
+            [clj-time.core :as time]
             [clj-time.format :as time-format]
             [oc.lib.sqs :as sqs]
             [oc.lib.slack :as slack]
@@ -43,10 +44,17 @@
 
 (def iso-format (time-format/formatters :date-time))
 (def date-format (time-format/formatter "MMMM d"))
+(def date-format-year (time-format/formatter "MMMM d YYYY"))
+
+(def reminders-date-format (time-format/formatter "EEEE, MMMM d"))
+(def reminders-date-format-year (time-format/formatter "EEEE, MMMM d YYYY"))
 
 (defn- post-date [timestamp]
-  (let [d (time-format/parse iso-format timestamp)]
-    (time-format/unparse date-format d)))
+  (let [d (time-format/parse iso-format timestamp)
+        n (time/now)
+        same-year? (= (time/year n) (time/year d))
+        output-format (if same-year? date-format date-format-year)]
+    (time-format/unparse output-format d)))
 
 (def carrot-explainer "Carrot is the company digest that keeps fast-growing and remote teams up to date with the information that matters.")
 
@@ -281,6 +289,20 @@
 
 ;; Reminders
 
+(defn- reminder-date [timestamp]
+  (let [d (time-format/parse iso-format timestamp)
+        n (time/now)
+        same-year? (= (time/year n) (time/year d))
+        output-format (if same-year? reminders-date-format reminders-date-format-year)]
+    (time-format/unparse output-format d)))
+
+(defn- frequency-string [f]
+  (case (s/lower-case f)
+    "weekly" "weekly"
+    "biweekly" "every other week"
+    "monthly" "monthly"
+    "Quarterly"))
+
 (defn reminder-notification [token receiver {:keys [org notification] :as msg}]
   {:pre [(string? token)
          (map? receiver)
@@ -290,8 +312,8 @@
         first-name (or (:first-name author) (first-name (:name author)))
         content (str "Hey, " first-name
                   " created a new reminder for you in Carrot. "
-                  "It's for a " (:frequency reminder) " update, starting "
-                  (post-date (:next-send reminder)) ".")
+                  "It's for a " (frequency-string (:frequency reminder)) " update, starting "
+                  (reminder-date (:next-send reminder)) ".")
         reminders-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?reminders")
         attachment {:text (str "*" (:headline reminder) "*")
                     :color "#6187F8"
