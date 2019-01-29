@@ -2,7 +2,6 @@
   (:require [clj-http.client :as http]
             [clojure.java.io :as io]
             [amazonica.aws.s3 :as s3]
-            [taoensso.timbre :as timbre]
             [oc.bot.config :as c])
   (:import  [java.io File]
             [java.net URL]
@@ -74,9 +73,9 @@
                      banner-text))
                   2)]
       (.drawString g banner-text fontx 625))
-    (ImageIO/write (cast BufferedImage source) "png" (File. (tmp-file org-slug)))
-    ;; upload image to s3
-    (write-to-s3 org-slug banner-text)))
+    (let [_ (ImageIO/write (cast BufferedImage source) "png" (File. (tmp-file org-slug)))]
+      ;; upload image to s3
+      (write-to-s3 org-slug banner-text))))
 
 (defn slack-banner-url
   [org-slug logo banner-text]
