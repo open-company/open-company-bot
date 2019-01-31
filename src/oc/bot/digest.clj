@@ -48,7 +48,7 @@
                         {:ts ts})
         message (merge {
           :fallback (str "A post in " board-name " by " author-name ", '" clean-headline "'.")
-          :color "#2BA767"
+          :color "#FA6452"
           :author_name author-name
           :author_icon (:avatar-url publisher)
           :title clean-headline
@@ -73,11 +73,11 @@
   {:pre [(string? token)
          (map? receiver)
          (map? msg)]}
-  (let [intro ":coffee: Good morning "
+  (let [intro (str ":coffee: Good morning " (or org-name "Carrot"))
         intro-attachment {:image_url (image/slack-banner-url org-slug logo-url)
                           :text org-name
                           :fallback "Your morning digest"
-                          :color "#ffffff"}
+                          :color "#FA6452"}
         attachments (conj (flatten (map (partial posts-for-board true) boards)) intro-attachment)]
     (timbre/info "Sending digest to:" channel " with:" token)
     ;;(slack/post-message token channel intro)
