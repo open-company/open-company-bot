@@ -6,7 +6,6 @@
   (:require [taoensso.timbre :as timbre]
             [clj-time.coerce :as coerce]
             [jsoup.soup :as soup]
-            [cuerdas.core :as str]
             [oc.lib.text :as text]
             [oc.lib.slack :as slack]
             [oc.bot.image :as image]))
