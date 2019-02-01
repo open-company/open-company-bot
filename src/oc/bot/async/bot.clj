@@ -6,6 +6,7 @@
             [taoensso.timbre :as timbre]
             [cheshire.core :as json]
             [jsoup.soup :as soup]
+            [clj-time.core :as time]
             [clj-time.format :as time-format]
             [oc.lib.sqs :as sqs]
             [oc.lib.slack :as slack]
@@ -43,12 +44,19 @@
 
 (def iso-format (time-format/formatters :date-time))
 (def date-format (time-format/formatter "MMMM d"))
+(def date-format-year (time-format/formatter "MMMM d YYYY"))
+
+(def reminders-date-format (time-format/formatter "EEEE, MMMM d"))
+(def reminders-date-format-year (time-format/formatter "EEEE, MMMM d YYYY"))
 
 (defn- post-date [timestamp]
-  (let [d (time-format/parse iso-format timestamp)]
-    (time-format/unparse date-format d)))
+  (let [d (time-format/parse iso-format timestamp)
+        n (time/now)
+        same-year? (= (time/year n) (time/year d))
+        output-format (if same-year? date-format date-format-year)]
+    (time-format/unparse output-format d)))
 
-(def carrot-explainer "Carrot is the company digest that keeps everyone aligned around what matters most.")
+(def carrot-explainer "Carrot is the company digest that keeps fast-growing and remote teams up to date with the information that matters.")
 
 (defn get-post-data [payload]
   (let [notification (:notification payload)
@@ -95,49 +103,43 @@
       :else
       (throw (ex-info "Failed to adjust receiver" {:msg msg})))))
 
-(defn- read-message-body
-  "
-  Try to parse as json, otherwise use read-string.
-  "
-  [msg]
-  (try
-    (json/parse-string msg true)
-    (catch Exception e
-      (read-string msg))))
-
 (defn sqs-handler
   "Handle an incoming SQS message to the bot."
   [msg done-channel]
-  (let [msg-body (read-message-body (:body msg))
-        _error (if (:test-error msg-body) (/ 1 0) false)] ; a message testing Sentry error reporting
-    (timbre/infof "Received message from SQS: %s\n" msg-body)
-    (>!! bot-chan msg-body)) ; send the message to the bot's channel
+  (doseq [msg-body (sqs/read-message-body (:body msg))]
+    (let [_error (if (:test-error msg-body) (/ 1 0) false)] ; a message testing Sentry error reporting
+      (timbre/infof "Received message from SQS: %s\n" msg-body)
+      (>!! bot-chan msg-body))) ; send the message to the bot's channel
   (sqs/ack done-channel msg))
 
 ;; ----- Bot Request handling -----
 
 (defn- text-for-notification [{:keys [org notification] :as msg}]
   (let [org-slug (:slug org)
+        post-data (get-post-data msg)
+        uuid (:uuid post-data)
+        board-slug (:board-slug post-data)
         secure-uuid (:secure-uuid notification)
         first-name (:first-name msg)
-        token-claims {:org-id (:org-id msg)
+        token-claims {:org-uuid (:org-id msg)
                       :secure-uuid secure-uuid
                       :name (str first-name " " (:last-name msg))
                       :first-name first-name
                       :last-name (:last-name msg)
                       :user-id (:user-id msg)
                       :avatar-url (:avatar-url msg)
-                      :teams [(:team-id org)]} ;; Let's read the team-id from the org to avoid problems on multiple org users}
+                      :team-id (:team-id org)} ;; Let's read the team-id from the org to avoid problems on multiple org users}
         id-token (jwt/generate-id-token token-claims c/passphrase)
         entry-url (s/join "/" [c/web-url
                                org-slug
+                               board-slug
                                "post"
-                               secure-uuid
+                               uuid
                                (str "?id=" id-token)])
         mention? (:mention notification)
         comment? (:interaction-id notification)
         title (if comment?
-                (:headline (get-post-data msg))
+                (:headline post-data)
                 (:entry-title notification))
         from (-> notification :author :name)
         attribution (if from
@@ -207,7 +209,7 @@
                      "")
         reduced-body (clojure.string/join " "
                        (filter not-empty
-                         (take 150 ;; 150 words is the average paragraph
+                         (take 20 ;; 20 words is the average sentence
                            (clojure.string/split clean-body #" "))))
         share-attribution (if (= (:name publisher) (:name sharer))
                             (str "*" (:name sharer) "* shared a post in *" board-name "*")
@@ -279,6 +281,66 @@
                             [{:text content}]
                             text-for-notification)))
 
+;; Reminders
+
+(defn- reminder-date [timestamp]
+  (let [d (time-format/parse iso-format timestamp)
+        n (time/now)
+        same-year? (= (time/year n) (time/year d))
+        output-format (if same-year? reminders-date-format reminders-date-format-year)]
+    (time-format/unparse output-format d)))
+
+(defn- frequency-string [f]
+  (case (s/lower-case f)
+    "weekly" "weekly"
+    "biweekly" "every other week"
+    "monthly" "monthly"
+    "Quarterly"))
+
+(defn reminder-notification [token receiver {:keys [org notification] :as msg}]
+  {:pre [(string? token)
+         (map? receiver)
+         (map? msg)]}
+  (let [reminder (:reminder notification)
+        author (:author reminder)
+        first-name (or (:first-name author) (first-name (:name author)))
+        content (str "Hey, " first-name
+                  " created a new reminder for you in Carrot. "
+                  "It's for a " (frequency-string (:frequency reminder)) " update, starting "
+                  (reminder-date (:next-send reminder)) ".")
+        reminders-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?reminders")
+        attachment {:text (str "*" (:headline reminder) "*")
+                    :color "#6187F8"
+                    :actions [{:type "button"
+                               :text "View reminder"
+                               :url reminders-url}]}]
+    (slack/post-attachments token
+                            (:id receiver)
+                            [attachment]
+                            content)))
+
+(defn reminder-alert [token receiver {:keys [org notification] :as msg}]
+  {:pre [(string? token)
+         (map? receiver)
+         (map? msg)]}
+  (let [reminder (:reminder notification)
+        assignee (:assignee reminder)
+        first-name (or (:first-name assignee) (first-name (:name assignee)))
+        content (str "Hi " first-name
+                  ", a quick reminder - it's time to share the latest with your team in Carrot. 🙌")
+        new-post-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?new")
+        attachment {:text (str "*" (:headline reminder) "*")
+                    :color "#6187F8"
+                    :actions [{:type "button"
+                               :text "OK, let's do it"
+                               :url new-post-url}]}]
+    (slack/post-attachments token
+                            (:id receiver)
+                            [attachment]
+                            content)))
+
+;; Messages type handler
+
 (defn- bot-handler [msg]
   {:pre [(or (string? (:type msg)) (keyword? (:type msg)))
          (map? (:receiver msg))
@@ -294,6 +356,8 @@
       :usage (usage token receiver)
       :welcome (welcome token receiver)
       :notify (notify token receiver msg)
+      :reminder-notification (reminder-notification token receiver msg)
+      :reminder-alert (reminder-alert token receiver msg)
       (timbre/warn "Ignoring message with script type:" script-type))))
 
 ;; ----- Event loop -----
@@ -310,7 +374,6 @@
           (do (reset! bot-go false) (timbre/info "Bot stopped."))
           (try
             (if (:Message msg)
-
               (let [msg-parsed (json/parse-string (:Message msg) true)
                     notification-type (:notification-type msg-parsed)
                     resource-type (:resource-type msg-parsed)

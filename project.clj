@@ -16,7 +16,7 @@
     ;; Lisp on the JVM http://clojure.org/documentation
     [org.clojure/clojure "1.10.0"]
     ;; String manipulation library https://github.com/funcool/cuerdas
-    [funcool/cuerdas "2.0.6"] 
+    [funcool/cuerdas "2.1.0"] 
     ;; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
     [aleph "0.4.7-alpha4"]
     ;; Async programming tools https://github.com/ztellman/manifold
@@ -26,7 +26,7 @@
     [org.clojure/tools.namespace "0.3.0-alpha4" :exclusions [org.clojure/tools.reader]] 
 
     ;; Library for OC projects https://github.com/open-company/open-company-lib
-    [open-company/lib "0.16.32"]
+    [open-company/lib "0.16.35"]
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; defun - Erlang-esque pattern matching for Clojure functions https://github.com/killme2008/defun
     ;; core.async - Async programming and communication https://github.com/clojure/core.async
@@ -149,12 +149,12 @@
   ;; ----- Code check configuration -----
 
   :eastwood {
-    ;; Disable some linters that are enabled by default
+    ;; contant-test - just seems mostly ill-advised, logical constants are useful in something like a `->cond` 
+    ;; wrong-arity - unfortunate, but it's failing on 3/arity of sqs/send-message
     ;; implicit-dependencies - uhh, just seems dumb
-    :exclude-linters [:implicit-dependencies]
+    :exclude-linters [:constant-test :wrong-arity :implicit-dependencies]
     ;; Enable some linters that are disabled by default
-    :add-linters [:unused-namespaces :unused-private-vars] ; :unused-locals
-
+    :add-linters [:unused-namespaces :unused-private-vars] ; :unused-locals]
     ;; Exclude testing namespaces
     :tests-paths ["test"]
     :exclude-namespaces [:test-paths]
