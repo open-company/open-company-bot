@@ -6,16 +6,9 @@
   (:require [taoensso.timbre :as timbre]
             [clj-time.coerce :as coerce]
             [jsoup.soup :as soup]
-            [cuerdas.core :as str]
             [oc.lib.text :as text]
             [oc.lib.slack :as slack]
             [oc.bot.image :as image]))
-
-(defn- clean-text [text]
-  (-> text
-    (clojure.string/replace #"&nbsp;" " ")
-    (str/strip-tags)
-    (str/strip-newlines)))
 
 (defn post-headline [headline must-see video-id]
   (let [clean-headline (.text (soup/parse headline))] ; Strip out any HTML tags
@@ -32,13 +25,7 @@
 (defn- post-as-attachment [daily board-name {:keys [publisher url headline published-at comment-count comment-authors must-see video-id body]}]
   (let [author-name (:name publisher)
         clean-headline (post-headline headline must-see video-id)
-        clean-body (if-not (clojure.string/blank? body)
-                     (clean-text (.text (soup/parse body)))
-                     "")
-        reduced-body (clojure.string/join " "
-                       (filter not-empty
-                         (take 20 ;; 20 words is the average sentence
-                         (clojure.string/split clean-body #" "))))
+        reduced-body (text/truncated-body body)
         ts (-> published-at ; since Unix epoch timestamp for Slack
               (coerce/to-long)
               (/ 1000)
@@ -53,9 +40,7 @@
           :author_icon (:avatar-url publisher)
           :title clean-headline
           :title_link url
-          :text (if (< (count reduced-body) (count clean-body))
-                  (str reduced-body " ...")
-                  reduced-body)
+          :text reduced-body
           :actions [{:type "button"
                      :text "View post"
                      :url url}]}
