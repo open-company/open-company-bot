@@ -21,9 +21,6 @@
                 :auth-server-url c/auth-server-url
                 :passphrase c/passphrase
                 :service-name "Bot"}]
-    (timbre/debug payload)
-    (timbre/debug receiver)
-    (timbre/debug slack-user-map)
     (change/seen-data-for config slack-user-map entry-id)))
 
 (defn post-headline [headline must-see video-id]
@@ -38,9 +35,11 @@
       :else
       clean-headline)))
 
+(def seen-text ":white_check_mark: You have seen this post.")
+
 (defn- post-as-attachment [daily board-name {:keys [publisher url headline published-at comment-count comment-authors must-see video-id body uuid]} msg]
-  (timbre/debug (get-seen-data msg uuid))
-  (let [author-name (:name publisher)
+  (let [seen-data (get-seen-data msg uuid)
+        author-name (:name publisher)
         clean-headline (post-headline headline must-see video-id)
         reduced-body (text/truncated-body body)
         ts (-> published-at ; since Unix epoch timestamp for Slack
@@ -50,6 +49,14 @@
         timestamp-map (if daily
                         {}
                         {:ts ts})
+        ;; if read/seen use seen attachment, else use button
+        seen-this (some #(= (:user-id msg) (:user-id %))
+                        (get-in seen-data [:post :read]))
+        seen-attach (if-not seen-this
+                      [{:type "button"
+                        :text "View post"
+                        :url url}]
+                      [])
         message (merge {
           :fallback (str "A post in " board-name " by " author-name ", '" clean-headline "'.")
           :color "#FA6452"
@@ -58,10 +65,10 @@
           :title clean-headline
           :title_link url
           :text reduced-body
-          :actions [{:type "button"
-                     :text "View post"
-                     :url url}]}
+          :footer (when seen-this seen-text)
+          :actions seen-attach}
           timestamp-map)]
+    (timbre/debug seen-attach)
     (if (pos? (or comment-count 0))
       (assoc message :text (str reduced-body "\n" (text/attribution 3 comment-count "comment" comment-authors)))
       message)))
