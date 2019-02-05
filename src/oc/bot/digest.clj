@@ -1,14 +1,30 @@
 (ns oc.bot.digest
   "
-  Namespace to convert an OC digest request into a Slack message with an attachment per post,
-  and to send it via Slack.
+  Namespace to convert an OC digest request into a Slack message with an attachment per post, and to send it via Slack.
   "
   (:require [taoensso.timbre :as timbre]
             [clj-time.coerce :as coerce]
             [jsoup.soup :as soup]
             [oc.lib.text :as text]
             [oc.lib.slack :as slack]
-            [oc.bot.image :as image]))
+            [oc.lib.change :as change]
+            [oc.bot.image :as image]
+            [oc.bot.config :as c]))
+
+(defn get-seen-data [payload entry-id]
+  (let [team (:team-id payload)
+        slack-bot (:bot payload)
+        receiver (:receiver payload)
+        slack-user-map {:slack-user-id (:slack-user-id receiver)
+                        :slack-team-id (:slack-org-id receiver)}
+        config {:change-server-url c/change-server-url
+                :auth-server-url c/auth-server-url
+                :passphrase c/passphrase
+                :service-name "Bot"}]
+    (timbre/debug payload)
+    (timbre/debug receiver)
+    (timbre/debug slack-user-map)
+    (change/seen-data-for config slack-user-map entry-id)))
 
 (defn post-headline [headline must-see video-id]
   (let [clean-headline (.text (soup/parse headline))] ; Strip out any HTML tags
@@ -22,7 +38,8 @@
       :else
       clean-headline)))
 
-(defn- post-as-attachment [daily board-name {:keys [publisher url headline published-at comment-count comment-authors must-see video-id body]}]
+(defn- post-as-attachment [daily board-name {:keys [publisher url headline published-at comment-count comment-authors must-see video-id body uuid]} msg]
+  (timbre/debug (get-seen-data msg uuid))
   (let [author-name (:name publisher)
         clean-headline (post-headline headline must-see video-id)
         reduced-body (text/truncated-body body)
@@ -49,9 +66,9 @@
       (assoc message :text (str reduced-body "\n" (text/attribution 3 comment-count "comment" comment-authors)))
       message)))
 
-(defn- posts-for-board [daily board]
+(defn- posts-for-board [daily board msg]
   (let [pretext (clojure.string/trim (:name board))
-        attachments (map #(post-as-attachment daily (:name board) %) (:posts board))]
+        attachments (map #(post-as-attachment daily (:name board) % msg) (:posts board))]
     (concat [(assoc (first attachments) :pretext (str "*" pretext "*"))] (rest attachments))))
 
 (defn send-digest [token {channel :id :as receiver} {:keys [org-name org-slug logo-url boards] :as msg}]
@@ -63,7 +80,7 @@
                           :text org-name
                           :fallback "Your morning digest"
                           :color "#FA6452"}
-        attachments (conj (flatten (map (partial posts-for-board true) boards)) intro-attachment)]
+        attachments (conj (flatten (map #(posts-for-board true % msg) boards)) intro-attachment)]
     (timbre/info "Sending digest to:" channel " with:" token)
     ;;(slack/post-message token channel intro)
     (slack/post-attachments token channel attachments intro)))
