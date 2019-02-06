@@ -12,7 +12,7 @@
 
 ;; ----- Logging -----
 
-(defonce log-level (or (env :log-level) :trace))
+(defonce log-level (or (env :log-level) :info))
 
 ;; ----- RethinkDB -----
 
