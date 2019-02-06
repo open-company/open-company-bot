@@ -5,6 +5,7 @@
   (:require [taoensso.timbre :as timbre]
             [clj-time.coerce :as coerce]
             [jsoup.soup :as soup]
+            [cheshire.core :as json]
             [oc.lib.text :as text]
             [oc.lib.slack :as slack]
             [oc.lib.change :as change]
@@ -65,7 +66,7 @@
           :title clean-headline
           :title_link url
           :text reduced-body
-          :footer (when seen-this seen-text)
+          :footer (when seen-this (json/encode seen-text))
           :actions seen-attach}
           timestamp-map)]
     (timbre/debug seen-attach)
