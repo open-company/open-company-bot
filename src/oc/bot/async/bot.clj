@@ -209,9 +209,7 @@
          (map? msg)]}
   (timbre/info "Sending entry share to Slack channel:" receiver)
   (let [channel (:id receiver)
-        update-url (if auto-share
-                     (s/join "/" [c/web-url org-slug board-slug "post" entry-uuid])
-                     (s/join "/" [c/web-url org-slug "post" secure-uuid]))
+        update-url (s/join "/" [c/web-url org-slug board-slug "post" entry-uuid])
         clean-note (when-not (s/blank? note) (str (clean-text note)))
         clean-headline (digest/post-headline headline must-see video-id)
         clean-body (if-not (s/blank? body)
