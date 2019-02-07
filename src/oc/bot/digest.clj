@@ -61,7 +61,7 @@
   [attachments]
   (let [bytes (.getBytes (json/generate-string attachments) "UTF-8")
         byte-count (count bytes)
-        byte-limit 10000] ;; 16k is the limit but need to account for HTTP
+        byte-limit 6000] ;; 16k is the limit but need to account for HTTP
     (timbre/info "Slack limit?: " byte-count byte-limit)
     (if (> byte-count byte-limit)
       (let [parts-num (quot (count attachments)
