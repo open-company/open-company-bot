@@ -5,6 +5,7 @@
   "
   (:require [taoensso.timbre :as timbre]
             [clj-time.coerce :as coerce]
+            [cheshire.core :as json]
             [jsoup.soup :as soup]
             [oc.lib.text :as text]
             [oc.lib.slack :as slack]
@@ -54,6 +55,20 @@
         attachments (map #(post-as-attachment daily (:name board) %) (:posts board))]
     (concat [(assoc (first attachments) :pretext (str "*" pretext "*"))] (rest attachments))))
 
+(defn- split-attachments
+  "Split message attachments into multiple message if over 16kb
+   https://api.slack.com/docs/rate-limits"
+  [attachments]
+  (let [bytes (.getBytes (json/generate-string attachments) "UTF-8")
+        byte-count (count bytes)
+        byte-limit 10000] ;; 16k is the limit but need to account for HTTP
+    (if (> byte-count byte-limit)
+      (let [parts-num (quot (count attachments)
+                            (inc (quot byte-count byte-limit)))
+            parts (partition parts-num parts-num nil attachments)]
+        {:intro (first parts) :rest (rest parts)})
+      {:intro nil :rest attachments})))
+
 (defn send-digest [token {channel :id :as receiver} {:keys [org-name org-slug logo-url boards] :as msg}]
   {:pre [(string? token)
          (map? receiver)
@@ -63,7 +78,14 @@
                           :text org-name
                           :fallback "Your morning digest"
                           :color "#FA6452"}
-        attachments (conj (flatten (map (partial posts-for-board true) boards)) intro-attachment)]
+        attachments (conj (flatten (map (partial posts-for-board true) boards)) intro-attachment)
+        split-attachments (split-attachments attachments)]
     (timbre/info "Sending digest to:" channel " with:" token)
-    ;;(slack/post-message token channel intro)
-    (slack/post-attachments token channel attachments intro)))
+    (if (:intro split-attachments)
+      (do
+        (slack/post-attachments token
+                                channel
+                                (:intro split-attachments) intro)
+        (doseq [part (:rest split-attachments)]
+          (slack/post-attachments token channel part)))
+      (slack/post-attachments token channel (:rest split-attachments) intro))))
