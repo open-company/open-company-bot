@@ -35,7 +35,7 @@
       :else
       clean-headline)))
 
-(def seen-text "✓ Seen")
+(def seen-text "✓ You've viewed this post")
 
 (defn- post-as-attachment [daily board-name {:keys [publisher url headline published-at comment-count comment-authors must-see video-id body uuid]} msg]
   (let [seen-data (get-seen-data msg uuid)
@@ -60,7 +60,7 @@
         message (merge {
           :fallback (str "A post in " board-name " by " author-name ", '" clean-headline "'.")
           :color "#FA6452"
-          :author_name author-name
+          :author_name (str author-name " in " board-name)
           :author_icon (:avatar-url publisher)
           :title clean-headline
           :title_link url
@@ -69,13 +69,14 @@
           :actions seen-attach}
           timestamp-map)]
     (if (pos? (or comment-count 0))
-      (assoc message :text (str reduced-body "\n" (text/attribution 3 comment-count "comment" comment-authors)))
+      (assoc message :footer (str (text/attribution 3 comment-count "comment" comment-authors) "\n" (:footer message)))
       message)))
 
 (defn- posts-for-board [daily board msg]
   (let [pretext (clojure.string/trim (:name board))
         attachments (map #(post-as-attachment daily (:name board) % msg) (:posts board))]
-    (concat [(assoc (first attachments) :pretext (str "*" pretext "*"))] (rest attachments))))
+    attachments))
+    ;;(concat [(assoc (first attachments) :pretext (str "*" pretext "*"))] (rest attachments))))
 
 (defn send-digest [token {channel :id :as receiver} {:keys [org-name org-slug logo-url boards] :as msg}]
   {:pre [(string? token)
