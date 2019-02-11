@@ -35,7 +35,7 @@
       :else
       clean-headline)))
 
-(def seen-text "✓ You've viewed this post")
+(def seen-text "✓ You've viewed this post.")
 
 (defn- post-as-attachment [daily board-name {:keys [publisher url headline published-at comment-count comment-authors must-see video-id body uuid]} msg]
   (let [seen-data (get-seen-data msg uuid)
