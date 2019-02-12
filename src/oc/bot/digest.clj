@@ -45,7 +45,7 @@
                      :text "View post"
                      :url url}]}
           timestamp-map)]
-    (if (pos? comment-count)
+    (if (pos? (or comment-count 0))
       (assoc message :text (str reduced-body "\n" (text/attribution 3 comment-count "comment" comment-authors)))
       message)))
 
