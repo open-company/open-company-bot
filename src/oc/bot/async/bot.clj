@@ -120,7 +120,7 @@
         uuid (:uuid post-data)
         board-slug (:board-slug post-data)
         secure-uuid (:secure-uuid notification)
-        first-name (:first-name msg)
+        first-name (:first-name notification)
         token-claims {:org-uuid (:org-id msg)
                       :secure-uuid secure-uuid
                       :name (str first-name " " (:last-name msg))
@@ -136,7 +136,7 @@
                                "post"
                                uuid
                                (str "?id=" id-token)])
-        mention? (:mention notification)
+        mention? (:mention? notification)
         comment? (:interaction-id notification)
         title (if comment?
                 (:headline post-data)
