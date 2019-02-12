@@ -26,7 +26,7 @@
     [org.clojure/tools.namespace "0.3.0-alpha4" :exclusions [org.clojure/tools.reader]] 
 
     ;; Library for OC projects https://github.com/open-company/open-company-lib
-    [open-company/lib "0.16.35"]
+    [open-company/lib "0.16.36"]
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; defun - Erlang-esque pattern matching for Clojure functions https://github.com/killme2008/defun
     ;; core.async - Async programming and communication https://github.com/clojure/core.async
@@ -59,7 +59,7 @@
       }
       :plugins [
         ;; Linter https://github.com/jonase/eastwood
-        [jonase/eastwood "0.3.4"]
+        [jonase/eastwood "0.3.5"]
         ;; Static code search for non-idiomatic code https://github.com/jonase/kibit        
         [lein-kibit "0.1.6" :exclusions [org.clojure/clojure]]
       ]
