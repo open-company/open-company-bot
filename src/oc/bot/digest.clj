@@ -8,26 +8,7 @@
             [jsoup.soup :as soup]
             [oc.lib.text :as text]
             [oc.lib.slack :as slack]
-            [oc.lib.interaction :as interaction]
-            [oc.bot.config :as c]
             [oc.bot.image :as image]))
-
-
-(defn get-interaction-data [payload entry-id]
-  (timbre/debug payload)
-  (let [team (:team-id payload)
-        slack-bot (:bot payload)
-        receiver (:receiver payload)
-        slack-user-map {:slack-user-id (:slack-user-id receiver)
-                        :slack-team-id (:slack-org-id receiver)}
-        url (str c/interaction-server-url "/" )
-        config {:interaction-server-url url
-                :auth-server-url c/auth-server-url
-                :passphrase c/passphrase
-                :service-name "Bot"}]
-    (interaction/interaction-data-for config slack-user-map entry-id)))
-
-
 
 (defn post-headline [headline must-see video-id]
   (let [clean-headline (.text (soup/parse headline))] ; Strip out any HTML tags
@@ -41,8 +22,33 @@
       :else
       clean-headline)))
 
-(defn- post-as-attachment [daily board-name {:keys [publisher url headline published-at comment-count comment-authors must-see video-id body uuid]} msg]
-  (timbre/debug (get-interaction-data msg uuid))
+(defn- attribution [comment-authors comment-count reaction-data]
+  (let [comments (text/attribution 3 comment-count "comment" comment-authors)
+        reaction-authors (map #(hash-map :name %)
+                              (flatten (map :authors reaction-data)))
+        comment-authors-name (map #(hash-map :name (:name %)) comment-authors)
+        total-authors (vec (set
+                            (concat reaction-authors comment-authors-name)))
+        reactions (text/attribution 3
+                                    (count reaction-data)
+                                    "reaction"
+                                    reaction-authors)
+        total-attribution (text/attribution 3
+                                            (+ (count reaction-data)
+                                               comment-count)
+                                            "comments/reactions"
+                                            total-authors)
+        comment-text (clojure.string/join " "
+                      (take 2 (clojure.string/split comments #" ")))
+        reaction-text (clojure.string/join " "
+                       (take 2 (clojure.string/split reactions #" ")))
+        author-text (clojure.string/join " "
+                      (subvec
+                        (clojure.string/split total-attribution #" ") 2))]
+    (str comment-text " and " reaction-text " " author-text)))
+
+
+(defn- post-as-attachment [daily board-name {:keys [publisher url headline published-at comment-count comment-authors must-see video-id body uuid reactions]}]
   (let [author-name (:name publisher)
         clean-headline (post-headline headline must-see video-id)
         reduced-body (text/truncated-body body)
@@ -66,12 +72,15 @@
                      :url url}]}
           timestamp-map)]
     (if (pos? (or comment-count 0))
-      (assoc message :text (str reduced-body "\n" (text/attribution 3 comment-count "comment" comment-authors)))
+      (assoc message :footer (attribution
+                               comment-authors
+                               comment-count
+                               reactions))
       message)))
 
-(defn- posts-for-board [daily board msg]
+(defn- posts-for-board [daily board]
   (let [pretext (clojure.string/trim (:name board))
-        attachments (map #(post-as-attachment daily (:name board) % msg) (:posts board))]
+        attachments (map #(post-as-attachment daily (:name board) %) (:posts board))]
     (concat [(assoc (first attachments) :pretext (str "*" pretext "*"))] (rest attachments))))
 
 (defn send-digest [token {channel :id :as receiver} {:keys [org-name org-slug logo-url boards] :as msg}]
@@ -83,7 +92,7 @@
                           :text org-name
                           :fallback "Your morning digest"
                           :color "#FA6452"}
-        attachments (conj (flatten (map #(posts-for-board true % msg) boards)) intro-attachment)]
+        attachments (conj (flatten (map #(posts-for-board true %) boards)) intro-attachment)]
     (timbre/info "Sending digest to:" channel " with:" token)
     ;;(slack/post-message token channel intro)
     (slack/post-attachments token channel attachments intro)))
