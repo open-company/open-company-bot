@@ -22,13 +22,25 @@
       :else
       clean-headline)))
 
-(defn- attribution [comment-authors comment-count reaction-data]
+(defn- attribution [comment-authors comment-count reaction-data receiver]
   (let [comments (text/attribution 3 comment-count "comment" comment-authors)
         reaction-authors (map #(hash-map :name %)
                               (flatten (map :authors reaction-data)))
-        comment-authors-name (map #(hash-map :name (:name %)) comment-authors)
+        reaction-author-ids (or (flatten (map :author-ids reaction-data)) [])
+        reaction-authors-you (if (some #(= % (:user-id receiver))
+                                       reaction-author-ids)
+                               (map #(when (= (:name receiver) (:name %))
+                                       (assoc % :name "You"))
+                                    reaction-authors)
+                               reaction-authors)
+        comment-authors-you (map #(when (= (:user-id receiver) (:user-id %))
+                                    (assoc % :name "You"))
+                                 comment-authors)
+        comment-authors-name (map #(hash-map :name (:name %))
+                                  comment-authors-you)
         total-authors (vec (set
-                            (concat reaction-authors comment-authors-name)))
+                            (concat reaction-authors-you
+                                    comment-authors-name)))
         reactions (text/attribution 3
                                     (count reaction-data)
                                     "reaction"
@@ -44,11 +56,11 @@
                        (take 2 (clojure.string/split reactions #" ")))
         author-text (clojure.string/join " "
                       (subvec
-                        (clojure.string/split total-attribution #" ") 2))]
+                       (clojure.string/split total-attribution #" ") 2))]
     (str comment-text " and " reaction-text " " author-text)))
 
 
-(defn- post-as-attachment [daily board-name {:keys [publisher url headline published-at comment-count comment-authors must-see video-id body uuid reactions]}]
+(defn- post-as-attachment [daily board-name {:keys [publisher url headline published-at comment-count comment-authors must-see video-id body uuid reactions]} msg]
   (let [author-name (:name publisher)
         clean-headline (post-headline headline must-see video-id)
         reduced-body (text/truncated-body body)
@@ -75,12 +87,16 @@
       (assoc message :footer (attribution
                                comment-authors
                                comment-count
-                               reactions))
+                               reactions
+                               {:user-id (:user-id msg)
+                                :name (str (:first-name msg)
+                                           " "
+                                           (:last-name msg))}))
       message)))
 
-(defn- posts-for-board [daily board]
+(defn- posts-for-board [daily board msg]
   (let [pretext (clojure.string/trim (:name board))
-        attachments (map #(post-as-attachment daily (:name board) %) (:posts board))]
+        attachments (map #(post-as-attachment daily (:name board) % msg) (:posts board))]
     (concat [(assoc (first attachments) :pretext (str "*" pretext "*"))] (rest attachments))))
 
 (defn send-digest [token {channel :id :as receiver} {:keys [org-name org-slug logo-url boards] :as msg}]
@@ -92,7 +108,7 @@
                           :text org-name
                           :fallback "Your morning digest"
                           :color "#FA6452"}
-        attachments (conj (flatten (map #(posts-for-board true %) boards)) intro-attachment)]
+        attachments (conj (flatten (map #(posts-for-board true % msg) boards)) intro-attachment)]
     (timbre/info "Sending digest to:" channel " with:" token)
     ;;(slack/post-message token channel intro)
     (slack/post-attachments token channel attachments intro)))
