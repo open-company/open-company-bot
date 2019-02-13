@@ -10,6 +10,7 @@
             [cheshire.core :as json]
             [oc.lib.auth :as auth]
             [oc.lib.storage :as storage]
+            [oc.bot.async.storage :as storage-async]
             [oc.bot.resources.slack-org :as slack-org-res]
             [oc.bot.resources.team :as team-res]
             [oc.bot.resources.user :as user-res]
@@ -23,6 +24,23 @@
 
 (defonce slack-go (atom true))
 
+;; ----- Utility functions -----
+
+(defun- new-post-for
+
+  ([payload]
+  ;; Get the author by their slack user ID
+  (let [team-id (-> payload :team :id)
+        slack-id (-> payload :user :id)
+        posting-user (user-res/user-for @db-pool team-id slack-id)]
+    (new-post-for payload team-id slack-id posting-user)))
+  
+  ([payload team-id slack-id user :guard nil?]
+  (timbre/warn "No Carrot user for Slack user:" slack-id "found for Slack team:" team-id))
+
+  ([payload _team-id _slack-id user]
+  (storage-async/send-trigger! (storage-async/->trigger payload user))))
+      
 ;; ----- Slack API calls -----
 
 (defn- new-post-dialog-for [bot-token payload boards]
@@ -32,36 +50,36 @@
           :dialog {
             :title "Create Post in Carrot" ; max 24 chars
             :submit_label "Create"
-            :callback_id "post"
+            :callback_id "add_post"
             :state ""
             :elements [
-              ; {
-              ;   :type "select"
-              ;   :label "Create as draft or post?"
-              ;   :name "status"
-              ;   :value "draft"
-              ;   :options [
-              ;     {
-              ;       :label "Draft"
-              ;       :value "draft"
-              ;     }
-              ;     {
-              ;       :label "Post"
-              ;       :value "post"
-              ;     }
-              ;   ]
-              ; }               
+              {
+                :type "select"
+                :label "Create as draft or post?"
+                :name "status"
+                :value "draft"
+                :options [
+                  {
+                    :label "Draft"
+                    :value "draft"
+                  }
+                  {
+                    :label "Post"
+                    :value "post"
+                  }
+                ]
+              }               
               {
                 :type "select"
                 :label "Choose a section"
-                :name "section"
+                :name "board-slug"
                 :value "all-hands"
                 :options (map #(clojure.set/rename-keys % {:name :label :slug :value}) boards)
               }
               {
                 :type "text"
                 :label "Post title"
-                :name "title"
+                :name "headline"
                 :placeholder "Add a title for your Carrot post..."
                 :optional false
               }
@@ -89,35 +107,35 @@
           :dialog {
             :title "Save message to Carrot" ; max 24 chars
             :submit_label "Save"
-            :callback_id "post"
+            :callback_id "save_message_a"
             :state (:text message)
             :elements [
-              ; {
-              ;   :type "select"
-              ;   :label "Save as draft or post?"
-              ;   :name "status"
-              ;   :value "post"
-              ;   :options [
-              ;     {
-              ;       :label "Draft"
-              ;       :value "draft"
-              ;     }
-              ;     {
-              ;       :label "Post"
-              ;       :value "post"
-              ;     }
-              ;   ]
-              ; }                
+              {
+                :type "select"
+                :label "Save as draft or post?"
+                :name "status"
+                :value "post"
+                :options [
+                  {
+                    :label "Draft"
+                    :value "draft"
+                  }
+                  {
+                    :label "Post"
+                    :value "post"
+                  }
+                ]
+              }                
               {
                 :type "select"
                 :label "Choose a section"
-                :name "section"
+                :name "board-slug"
                 :options (map #(clojure.set/rename-keys % {:name :label :slug :value}) boards)
               }
               {
                 :type "text"
                 :label "Post title"
-                :name "title"
+                :name "headline"
                 :placeholder "Add a title for this Carrot post..."
                 :optional false
               }
@@ -137,7 +155,7 @@
               {
                 :type "textarea"
                 :label "Additional context"
-                :name "note"
+                :name "body"
                 :placeholder "Why it matters, -or- The big picture, etc. ..."
                 :optional false
               }
@@ -158,7 +176,7 @@
           :dialog {
             :title "Save message to Carrot" ; max 24 chars
             :submit_label "Save"
-            :callback_id "post"
+            :callback_id "save_message_b"
             :state (:text message)
             :elements [
               ; {
@@ -180,20 +198,20 @@
               {
                 :type "select"
                 :label "Choose a section"
-                :name "section"
+                :name "board-slug"
                 :options (map #(clojure.set/rename-keys % {:name :label :slug :value}) boards)
               }
               {
                 :type "text"
                 :label "Post title"
-                :name "title"
+                :name "headline"
                 :placeholder "Add a title for this Carrot post..."
                 :optional false
               }
               {
                 :type "textarea"
                 :label "Why it matters"
-                :name "note"
+                :name "body"
                 :placeholder "Additional context on why this Slack message matters..."
                 :optional false
               }
@@ -306,11 +324,12 @@
   }
   "
   ;; Initial action callback, respond w/ a dialog request
-  ([payload :guard #(or (= "save_message_a" (:callback_id %))
-                        (= "save_message_b" (:callback_id %))
-                        (= "add_post" (:callback_id %)))]
+  ([payload :guard #(and (= "message_action" (:type %))
+                      (or (= "save_message_a" (:callback_id %))
+                          (= "save_message_b" (:callback_id %))
+                          (= "add_post" (:callback_id %))))]
   (let [type (:callback_id payload)]
-    (timbre/debug "Slack '" type "' request of:" payload)
+    (timbre/debug (str "Slack '" type "' request of:" payload))
     ;; Bot token from Auth DB
     (if-let* [slack-team-id (-> payload :team :id)
               bot-token (slack-org-res/bot-token-for @db-pool slack-team-id)]
@@ -336,16 +355,11 @@
       (timbre/error "No bot-token for Slack action:" payload))))
 
   ;; User submission of the dialog
-  ([payload :guard #(= "post" (:callback_id %))]
+  ([payload :guard #(= "dialog_submission" (:type %))]
   (timbre/debug "Slack 'post' request of:" payload)
-  ;; Get the author by their slack user ID
-  (let [team-id (-> payload :team :id)
-        slack-id (-> payload :user :id)]
-    (if-let [posting-user (user-res/user-for @db-pool team-id slack-id)]
-      ;; Initiate a request to the storage queue
-      (timbre/debug "USER:" posting-user)
-      (timbre/warn "No Carrot user:" slack-id "found for Slack team:" team-id))))
+  (new-post-for payload))
 
+  ;; What message is this?
   ([payload]
   (timbre/debug "Slack request of:" payload)
   (timbre/warn "Unknown Slack action callback-id:" (:callback_id payload))))
