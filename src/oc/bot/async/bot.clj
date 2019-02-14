@@ -140,7 +140,7 @@
                                uuid
                                (str "?id=" id-token)])
         first-name (:first-name notification)
-        mention? (:mention notification)
+        mention? (:mention? notification)
         comment? (:interaction-id notification)
         title (if comment?
                 (:headline post-data)
