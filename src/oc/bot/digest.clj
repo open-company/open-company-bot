@@ -29,8 +29,9 @@
         reaction-author-ids (or (flatten (map :author-ids reaction-data)) [])
         reaction-authors-you (if (some #(= % (:user-id receiver))
                                        reaction-author-ids)
-                               (map #(when (= (:name receiver) (:name %))
-                                       (assoc % :name "You"))
+                               (map #(if (= (:name receiver) (:name %))
+                                       (assoc % :name "You")
+                                       %)
                                     reaction-authors)
                                reaction-authors)
         comment-authors-you (map #(when (= (:user-id receiver) (:user-id %))
@@ -41,6 +42,11 @@
         total-authors (vec (set
                             (concat reaction-authors-you
                                     comment-authors-name)))
+        total-authors-sorted (remove #(nil? (:name %))
+                               (conj (remove #(= (:name %) "You")
+                                             total-authors)
+                                     (first (filter #(= (:name %) "You")
+                                                    total-authors))))
         reactions (text/attribution 3
                                     (count reaction-data)
                                     "reaction"
@@ -49,7 +55,7 @@
                                             (+ (count reaction-data)
                                                comment-count)
                                             "comments/reactions"
-                                            total-authors)
+                                            total-authors-sorted)
         comment-text (clojure.string/join " "
                       (take 2 (clojure.string/split comments #" ")))
         reaction-text (clojure.string/join " "
