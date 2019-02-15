@@ -57,7 +57,7 @@
                 :type "select"
                 :label "Create as draft or post?"
                 :name "status"
-                :value "draft"
+                :value "post"
                 :options [
                   {
                     :label "Draft"
@@ -107,7 +107,7 @@
           :dialog {
             :title "Save message to Carrot" ; max 24 chars
             :submit_label "Save"
-            :callback_id "save_message_a"
+            :callback_id "save-message-a"
             :state (:text message)
             :elements [
               {
@@ -179,22 +179,22 @@
             :callback_id "save_message_b"
             :state (:text message)
             :elements [
-              ; {
-              ;   :type "select"
-              ;   :label "Save as draft or post?"
-              ;   :name "status"
-              ;   :value "post"
-              ;   :options [
-              ;     {
-              ;       :label "Draft"
-              ;       :value "draft"
-              ;     }
-              ;     {
-              ;       :label "Post"
-              ;       :value "post"
-              ;     }
-              ;   ]
-              ; }                
+              {
+                :type "select"
+                :label "Save as draft or post?"
+                :name "status"
+                :value "post"
+                :options [
+                  {
+                    :label "Draft"
+                    :value "draft"
+                  }
+                  {
+                    :label "Post"
+                    :value "post"
+                  }
+                ]
+              }                
               {
                 :type "select"
                 :label "Choose a section"

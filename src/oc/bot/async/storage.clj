@@ -16,7 +16,8 @@
                          :name lib-schema/NonBlankStr}
                :response_url lib-schema/NonBlankStr
                :token lib-schema/NonBlankStr}
-    :entry-parts {:board-slug lib-schema/NonBlankStr
+    :entry-parts {:status (schema/enum "draft" "post")
+                  :board-slug lib-schema/NonBlankStr
                   :headline lib-schema/NonBlankStr
                   (schema/optional-key :quote) {:body lib-schema/NonBlankStr
                                                 :message_ts lib-schema/NonBlankStr}
@@ -27,7 +28,7 @@
 
 (schema/defn ^:always-validate ->trigger :- StorageTrigger
   "
-  Given a dialog submission from Slack, a team-id and the Carrot user making the request,
+  Given a dialog submission from Slack, and the Carrot user making the request,
   create the Storage trigger.
 
   Dialog submission payload example:
@@ -37,19 +38,19 @@
    :channel {:id 'C0L2ZM551' :name 'devops'}
    :response_url 'https://hooks.slack.com/app/T06SBMH60/549887168596/koJ4pZaE58Is8jn7cqxkMANr'
    :state 'finished _master_'
-   :submission {:board-slug 'general', :body 'Bar', :headline 'Foo', :signpost 'Why it matters'}
+   :submission {:status 'post' :board-slug 'general' :body 'Bar' :headline 'Foo' :signpost 'Why it matters'}
    :team {:domain 'opencompanyhq', :id 'T06SBMH60'}
    :token 'aLbD1VFXN31DEgpFIvxu32JV'
    :type 'dialog_submission'
    :user {:id 'U06SBTXJR' :name 'sean'}}
   "
-  [payload team-id user]
+  [payload user]
   (let [state (:state payload)
         trigger {:type "new-entry"
                  :response {:channel (:channel payload)
                             :response_url (:response_url payload)
                             :token (:token payload)}
-                 :entry-parts (:submission payload)
+                 :entry-parts (update (:submission payload) :status #(or % "post"))
                  :team-id (first (:teams user)) ; TODO sort out users w/ multiple Slack teams
                  :author (lib-schema/author-for-user (assoc user :name (jwt/name-for user)))}]
     (if (clojure.string/blank? state)
@@ -58,7 +59,7 @@
         (assoc-in [:entry-parts :quote :body] state)
         (assoc-in [:entry-parts :quote :message_ts] (:action_ts payload))))))
 
-(defn send-trigger! [trigger]
+(schema/defn ^:always-validate send-trigger! [trigger :- StorageTrigger]
   (timbre/info "Sending request to:" config/aws-sqs-bot-queue)
   (timbre/debug "Storage request:" trigger)
   (sqs/send-message
