@@ -107,7 +107,7 @@
           :dialog {
             :title "Save message to Carrot" ; max 24 chars
             :submit_label "Save"
-            :callback_id "save-message-a"
+            :callback_id "save_message_a"
             :state (:text message)
             :elements [
               {

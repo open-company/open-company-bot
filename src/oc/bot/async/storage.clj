@@ -12,6 +12,7 @@
   "A Storage trigger to create a new Entry."
   {    
     :type (schema/enum "new-entry")
+    :sub-type (schema/enum "add_post" "save_message_a" "save_message_b")
     :response {:channel {:id lib-schema/NonBlankStr
                          :name lib-schema/NonBlankStr}
                :response_url lib-schema/NonBlankStr
@@ -47,10 +48,13 @@
   [payload user]
   (let [state (:state payload)
         trigger {:type "new-entry"
+                 :sub-type (:callback_id payload)
                  :response {:channel (:channel payload)
                             :response_url (:response_url payload)
                             :token (:token payload)}
-                 :entry-parts (update (:submission payload) :status #(or % "post"))
+                 :entry-parts (-> (:submission payload)
+                                (update :status #(or % "post"))
+                                (update :signpost #(or % "Why it matters")))
                  :team-id (first (:teams user)) ; TODO sort out users w/ multiple Slack teams
                  :author (lib-schema/author-for-user (assoc user :name (jwt/name-for user)))}]
     (if (clojure.string/blank? state)
@@ -60,7 +64,7 @@
         (assoc-in [:entry-parts :quote :message_ts] (:action_ts payload))))))
 
 (schema/defn ^:always-validate send-trigger! [trigger :- StorageTrigger]
-  (timbre/info "Sending request to:" config/aws-sqs-bot-queue)
+  (timbre/info "Sending request to:" config/aws-sqs-storage-queue)
   (timbre/debug "Storage request:" trigger)
   (sqs/send-message
     {:access-key config/aws-access-key-id
