@@ -140,34 +140,11 @@
                  (str "?id=" id-token)])))
 
 (defn- text-for-notification
-  [{:keys [org notification] :as msg} post-data entry-url]
-  (let [org-slug (:slug org)
-        uuid (:uuid post-data)
-        board-slug (:board-slug post-data)
-        secure-uuid (:secure-uuid notification)
-        first-name (:first-name msg)
-        first-name (:first-name notification)
-        mention? (:mention? notification)
-        comment? (:interaction-id notification)
-        title (if comment?
-                (:headline post-data)
-                (:entry-title notification))
-        greeting (if first-name (str "Hello " first-name ", ") (str "Hey there! "))
-        from (-> notification :author :name)
-        attribution (if from
-                      (if mention? 
-                        (str " by *" from "*")
-                        (str " from *" from "*"))
-                      " ")
-        intro (if mention?
-                (str ":speech_balloon: You were mentioned in a "
-                     (if comment? "comment" "post")
-                     attribution
-                     (when comment? " on the post") ":")
-                (str ":speech_balloon: You have a new comment "
-                     attribution
-                     " on your post: "))]
-    (str intro " <" entry-url "|" title ">")))
+  [{:keys [org notification] :as msg}]
+  (let [comment? (:interaction-id notification)
+        from (-> notification :author :name)]
+    (str ":speech_balloon: " from " mentioned you in a "
+         (if comment? "[comment]:" "[post]:"))))
 
 (defn- send-private-board-notification [msg]
   (let [notifications (-> msg :content :notifications)
@@ -297,10 +274,12 @@
         post-data (get-post-data msg)
         entry-url (notification-entry-url msg post-data)
         comment? (:interaction-id (:notification msg))
-        text-for-notification (text-for-notification msg post-data entry-url)]
+        text-for-notification (text-for-notification msg)]
     (slack/post-attachments token
                             (:id receiver)
-                            [{:text content
+                            [{:title (:headline post-data)
+                              :title_link entry-url
+                              :text content
                               :actions [{:type "button"
                                          :text (str "View "
                                                     (if comment?
