@@ -340,7 +340,8 @@
         reminders-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?reminders")
         attachment {:title (str "Reminder: " (:headline reminder))
                     :title_url reminders_url
-                    :text "Occurs every "
+                    :text (str "Occurs every "
+                               (frequency-string (:frequency reminder)))
                     :color "#E8E8E8"
                     :actions [{:type "button"
                                :text "OK, let's do it"
