@@ -312,13 +312,13 @@
   (let [reminder (:reminder notification)
         author (:author reminder)
         first-name (or (:first-name author) (first-name (:name author)))
-        content (str "Hey, " first-name
+        content (str ":clock9: Hey, " first-name
                   " created a new reminder for you in Carrot. "
                   "It's for a " (frequency-string (:frequency reminder)) " update, starting "
                   (reminder-date (:next-send reminder)) ".")
         reminders-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?reminders")
         attachment {:text (str "*" (:headline reminder) "*")
-                    :color "#6187F8"
+                    :color "#E8E8E8"
                     :actions [{:type "button"
                                :text "View reminder"
                                :url reminders-url}]}]
@@ -334,11 +334,14 @@
   (let [reminder (:reminder notification)
         assignee (:assignee reminder)
         first-name (or (:first-name assignee) (first-name (:name assignee)))
-        content (str "Hi " first-name
+        content (str ":clock9: Hi " first-name
                   ", a quick reminder - it's time to share the latest with your team in Carrot. 🙌")
         new-post-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?new")
-        attachment {:text (str "*" (:headline reminder) "*")
-                    :color "#6187F8"
+        reminders-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?reminders")
+        attachment {:title (str "Reminder: " (:headline reminder))
+                    :title_url reminders_url
+                    :text "Occurs every "
+                    :color "#E8E8E8"
                     :actions [{:type "button"
                                :text "OK, let's do it"
                                :url new-post-url}]}]
