@@ -90,7 +90,7 @@
                                     (count reaction-data)
                                     "reaction"
                                     reaction-authors)
-        total-attribution (text/attribution 2
+        total-attribution (attribution-text 2
                                             (+ (count reaction-data)
                                                comment-count)
                                             "comments/reactions"
