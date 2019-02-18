@@ -140,9 +140,12 @@
 (defn- text-for-notification
   [{:keys [org notification] :as msg}]
   (let [comment? (:interaction-id notification)
+        mention? (:mention? notification)
         from (-> notification :author :name)]
-    (str ":speech_balloon: " from " mentioned you in a "
-         (if comment? "[comment]:" "[post]:"))))
+    (if mention?
+      (str ":speech_balloon: You have a new comment by *" from "* on your post")
+      (str ":speech_balloon: " from " mentioned you in a "
+           (if comment? "[comment]:" "[post]:")))))
 
 (defn- send-private-board-notification [msg]
   (let [notifications (-> msg :content :notifications)
