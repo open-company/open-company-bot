@@ -129,14 +129,17 @@
                      :url url}]}
           timestamp-map)]
     (if (pos? (or comment-count 0))
-      (assoc message :footer (attribution
-                               comment-authors
-                               comment-count
-                               reactions
-                               {:user-id (:user-id msg)
-                                :name (str (:first-name msg)
-                                           " "
-                                           (:last-name msg))}))
+      (assoc message
+             :footer
+             (str ">"
+                  (attribution
+                   comment-authors
+                   comment-count
+                   reactions
+                   {:user-id (:user-id msg)
+                    :name (str (:first-name msg)
+                               " "
+                               (:last-name msg))})))
       message)))
 
 (defn- posts-for-board [daily board msg]
