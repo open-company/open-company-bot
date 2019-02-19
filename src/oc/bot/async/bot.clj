@@ -303,9 +303,9 @@
 (defn- frequency-string [f]
   (case (s/lower-case f)
     "weekly" "week"
-    "biweekly" "every other week"
-    "monthly" "monthly"
-    "Quarterly"))
+    "biweekly" "other week"
+    "monthly" "month"
+    "quarter"))
 
 (defn reminder-notification [token receiver {:keys [org notification] :as msg}]
   {:pre [(string? token)
