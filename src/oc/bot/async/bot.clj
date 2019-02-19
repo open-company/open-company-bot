@@ -46,6 +46,8 @@
 (def date-format (time-format/formatter "MMMM d"))
 (def date-format-year (time-format/formatter "MMMM d YYYY"))
 
+(def reminders-day-format (time-format/formatter "EEEE"))
+(def reminders-hour-format (time-format/formatter "k"))
 (def reminders-date-format (time-format/formatter "EEEE, MMMM d"))
 (def reminders-date-format-year (time-format/formatter "EEEE, MMMM d YYYY"))
 
@@ -292,11 +294,11 @@
 ;; Reminders
 
 (defn- reminder-date [timestamp]
-  (let [d (time-format/parse iso-format timestamp)
-        n (time/now)
-        same-year? (= (time/year n) (time/year d))
-        output-format (if same-year? reminders-date-format reminders-date-format-year)]
-    (time-format/unparse output-format d)))
+  (let [d (time-format/parse iso-format timestamp)]
+    
+    (str (time-format/unparse reminders-day-format d)
+         " at "
+         (time-format/unparse reminders-hour-format d))))
 
 (defn- frequency-string [f]
   (case (s/lower-case f)
@@ -316,7 +318,10 @@
                   " created a new reminder for you in Carrot. ")
         reminders-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?reminders")
         attachment {:text (str "Occurs every "
-                               (frequency-string (:frequency reminder)) ".")
+                               (frequency-string (:frequency reminder))
+                               " on "
+                               (reminder-date (:next-send reminder))
+                               ".")
                     :title (str "Reminder: " (:headline reminder))
                     :title_url reminders-url
                     :color "#E8E8E8"
@@ -341,8 +346,11 @@
         reminders-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?reminders")
         attachment {:title (str "Reminder: " (:headline reminder))
                     :title_url reminders-url
-                    :text (str "Occurs every "
-                               (frequency-string (:frequency reminder)))
+                    :text (str (str "Occurs every "
+                               (frequency-string (:frequency reminder))
+                               " on "
+                               (reminder-date (:next-send reminder))
+                               "."))
                     :color "#E8E8E8"
                     :actions [{:type "button"
                                :text "OK, let's do it"
