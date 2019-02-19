@@ -313,11 +313,12 @@
         author (:author reminder)
         first-name (or (:first-name author) (first-name (:name author)))
         content (str ":clock9: Hey, " first-name
-                  " created a new reminder for you in Carrot. "
-                  "It's for a " (frequency-string (:frequency reminder)) " update, starting "
-                  (reminder-date (:next-send reminder)) ".")
+                  " created a new reminder for you in Carrot. ")
         reminders-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?reminders")
-        attachment {:text (str "*" (:headline reminder) "*")
+        attachment {:text (str "Occurs every "
+                               (frequency-string (:frequency reminder)) ".")
+                    :title (str "Reminder: " (:headline reminder))
+                    :title_url reminders-url
                     :color "#E8E8E8"
                     :actions [{:type "button"
                                :text "View reminder"
