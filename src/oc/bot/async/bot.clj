@@ -300,10 +300,10 @@
 
 (defn- frequency-string [f]
   (case (s/lower-case f)
-    "weekly" "weekly"
-    "biweekly" "every other week"
-    "monthly" "monthly"
-    "Quarterly"))
+    "weekly" "a weekly update"
+    "biweekly" "an update for every other week"
+    "monthly" "a monthly update"
+    "a quarterly update"))
 
 (defn reminder-notification [token receiver {:keys [org notification] :as msg}]
   {:pre [(string? token)
@@ -314,7 +314,7 @@
         first-name (or (:first-name author) (first-name (:name author)))
         content (str "Hey, " first-name
                   " created a new reminder for you in Carrot. "
-                  "It's for a " (frequency-string (:frequency reminder)) " update, starting "
+                  "It's for " (frequency-string (:frequency reminder)) ", starting "
                   (reminder-date (:next-send reminder)) ".")
         reminders-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?reminders")
         attachment {:text (str "*" (:headline reminder) "*")
