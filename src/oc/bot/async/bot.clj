@@ -335,11 +335,11 @@
         assignee (:assignee reminder)
         first-name (or (:first-name assignee) (first-name (:name assignee)))
         content (str ":clock9: Hi " first-name
-                  ", a quick reminder - it's time to share the latest with your team in Carrot. 🙌")
+                  ", a quick reminder - it's time to share the latest with your team in Carrot.")
         new-post-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?new")
         reminders-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?reminders")
         attachment {:title (str "Reminder: " (:headline reminder))
-                    :title_url reminders_url
+                    :title_url reminders-url
                     :text (str "Occurs every "
                                (frequency-string (:frequency reminder)))
                     :color "#E8E8E8"
