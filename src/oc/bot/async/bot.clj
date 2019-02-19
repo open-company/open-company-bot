@@ -300,7 +300,7 @@
 
 (defn- frequency-string [f]
   (case (s/lower-case f)
-    "weekly" "weekly"
+    "weekly" "week"
     "biweekly" "every other week"
     "monthly" "monthly"
     "Quarterly"))
