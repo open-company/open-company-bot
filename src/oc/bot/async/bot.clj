@@ -47,7 +47,6 @@
 (def date-format-year (time-format/formatter "MMMM d YYYY"))
 
 (def reminders-day-format (time-format/formatter "EEEE"))
-(def reminders-hour-format (time-format/formatter "k"))
 (def reminders-date-format (time-format/formatter "EEEE, MMMM d"))
 (def reminders-date-format-year (time-format/formatter "EEEE, MMMM d YYYY"))
 
@@ -296,9 +295,7 @@
 (defn- reminder-date [timestamp]
   (let [d (time-format/parse iso-format timestamp)]
     
-    (str (time-format/unparse reminders-day-format d)
-         " at "
-         (time-format/unparse reminders-hour-format d))))
+    (str (time-format/unparse reminders-day-format d))))
 
 (defn- frequency-string [f]
   (case (s/lower-case f)
@@ -321,7 +318,7 @@
                                (frequency-string (:frequency reminder))
                                " on "
                                (reminder-date (:next-send reminder))
-                               ".")
+                               "s.")
                     :title (str "Reminder: " (:headline reminder))
                     :title_url reminders-url
                     :color "#E8E8E8"
