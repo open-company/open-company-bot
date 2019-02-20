@@ -37,6 +37,7 @@
 (defonce storage-server-url (or (env :storage-server-url) (str "http://localhost:" storage-server-port)))
 (defonce change-server-port (Integer/parseInt (or (env :change-server-port) "3006")))
 (defonce change-server-url (or (env :change-server-url) (str "http://localhost:" change-server-port)))
+
 ;; ----- AWS SQS -----
 
 (defonce aws-access-key-id (env :aws-access-key-id))
