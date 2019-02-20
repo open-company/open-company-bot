@@ -304,6 +304,18 @@
     "monthly" "month"
     "quarter"))
 
+(defn- frequency-copy [reminder]
+  (case (s/lower-case (:frequency reminder))
+    "weekly"
+    (str "Occurs every week on " (reminder-date (:next-send reminder)) "s.")
+    "biweekly"
+    (str "Occurs every other week on "
+         (reminder-date (:next-send reminder)) "s.")
+    "monthly"
+    (str "Occurs on the " (:period-occurence reminder ) " of the month.")
+    "quarter"
+    (str "Occurs on the " (:period-occurence reminder) " of the quarter.")))
+
 (defn reminder-notification [token receiver {:keys [org notification] :as msg}]
   {:pre [(string? token)
          (map? receiver)
@@ -314,11 +326,7 @@
         content (str ":clock9: Hey, " first-name
                   " created a new reminder for you in Carrot. ")
         reminders-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?reminders")
-        attachment {:text (str "Occurs every "
-                               (frequency-string (:frequency reminder))
-                               " on "
-                               (reminder-date (:next-send reminder))
-                               "s.")
+        attachment {:text (frequency-copy reminder)
                     :title (str "Reminder: " (:headline reminder))
                     :title_url reminders-url
                     :color "#E8E8E8"
@@ -343,11 +351,7 @@
         reminders-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?reminders")
         attachment {:title (str "Reminder: " (:headline reminder))
                     :title_url reminders-url
-                    :text (str (str "Occurs every "
-                               (frequency-string (:frequency reminder))
-                               " on "
-                               (reminder-date (:next-send reminder))
-                               "."))
+                    :text (frequency-copy reminder)
                     :color "#E8E8E8"
                     :actions [{:type "button"
                                :text "OK, let's do it"
