@@ -313,10 +313,16 @@
                :last-friday "last Friday of the quarter"
                :last "last day of the quarter"}})
 
+(def occurrence-fields
+  {:weekly :week-occurrence
+   :biweekly :week-occurrence
+   :monthly :period-occurrence
+   :quarterly :period-occurrence})
+
 (defn occurrence-value [reminder]
   (let [frequency (keyword (:frequency reminder))
         values (frequency occurrence-values)]
-    ((keyword (:period-occurrence reminder)) values)))
+    ((keyword ((frequency occurrence-fields) reminder)) values)))
 
 (defn- frequency-copy [reminder]
   (case (s/lower-case (:frequency reminder))
