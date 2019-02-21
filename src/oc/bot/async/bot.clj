@@ -302,7 +302,7 @@
 (defn- frequency-string [f]
   (case (s/lower-case f)
     "weekly" "a weekly update"
-    "biweekly" "an update for every other week"
+    "biweekly" "an update every other week"
     "monthly" "a monthly update"
     "a quarterly update"))
 
