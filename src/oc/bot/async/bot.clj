@@ -331,9 +331,9 @@
     "biweekly"
     (str "Occurs every other week on " (occurrence-value reminder) "s.")
     "monthly"    
-    (str "Occurs on the " (occurrence-value reminder ) " of the month.")
+    (str "Occurs on the " (occurrence-value reminder ) ".")
     "quarterly"
-    (str "Occurs on the " (occurrence-value reminder) " of the quarter.")))
+    (str "Occurs on the " (occurrence-value reminder) ".")))
 
 (defn reminder-notification [token receiver {:keys [org notification] :as msg}]
   {:pre [(string? token)
