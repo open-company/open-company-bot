@@ -86,6 +86,7 @@
       (and (= :user type) (s/starts-with? (-> msg :receiver :id) "U"))
       [(assoc msg :receiver {:id (slack/get-dm-channel token (-> msg :receiver :id))
                              :slack-user-id (-> msg :receiver :id)
+                             :slack-org-id (-> msg :receiver :slack-org-id)
                              :type :channel
                              :dm true})]
       
