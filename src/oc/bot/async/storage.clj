@@ -5,7 +5,6 @@
             [schema.core :as schema]
             [oc.lib.jwt :as jwt]
             [oc.lib.schema :as lib-schema]
-            [oc.lib.text :as str]
             [oc.bot.config :as config]))
 
 (def StorageTrigger 
