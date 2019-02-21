@@ -346,7 +346,7 @@
                                    (not (str/blank? (:last-name author))))
                           (str (:first-name author) " " (:last-name author)))
                         (:first-name author)
-                        "someone")
+                        "Someone")
         content (str ":clock9: " author-name
                   " created a new reminder for you. ")
         reminders-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?reminders")
