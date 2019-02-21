@@ -46,9 +46,6 @@
 (def date-format (time-format/formatter "MMMM d"))
 (def date-format-year (time-format/formatter "MMMM d YYYY"))
 
-(def reminders-date-format (time-format/formatter "EEEE, MMMM d"))
-(def reminders-date-format-year (time-format/formatter "EEEE, MMMM d YYYY"))
-
 (defn- post-date [timestamp]
   (let [d (time-format/parse iso-format timestamp)
         n (time/now)
@@ -292,19 +289,51 @@
 
 ;; Reminders
 
-(defn- reminder-date [timestamp]
-  (let [d (time-format/parse iso-format timestamp)
-        n (time/now)
-        same-year? (= (time/year n) (time/year d))
-        output-format (if same-year? reminders-date-format reminders-date-format-year)]
-    (time-format/unparse output-format d)))
+(def occurrence-values
+  {:weekly {:monday "Monday"
+            :tuesday "Tuesday"
+            :wednesday "Wednesday"
+            :thursday "Thursday"
+            :friday "Friday"
+            :saturday "Saturday"
+            :sunday "Sunday"}
+   :biweekly {:monday "Monday"
+              :tuesday "Tuesday"
+              :wednesday "Wednesday"
+              :thursday "Thursday"
+              :friday "Friday"
+              :saturday "Saturday"
+              :sunday "Sunday"}
+   :monthly {:first "first day of the month"
+             :first-monday "first Monday of the month"
+             :last-friday "last Friday of the month"
+             :last "last day of the month"}
+   :quarterly {:first "first day of the quarter"
+               :first-monday "first Monday of the quarter"
+               :last-friday "last Friday of the quarter"
+               :last "last day of the quarter"}})
 
-(defn- frequency-string [f]
-  (case (s/lower-case f)
-    "weekly" "a weekly update"
-    "biweekly" "an update every other week"
-    "monthly" "a monthly update"
-    "a quarterly update"))
+(def occurrence-fields
+  {:weekly :week-occurrence
+   :biweekly :week-occurrence
+   :monthly :period-occurrence
+   :quarterly :period-occurrence})
+
+(defn occurrence-value [reminder]
+  (let [frequency (keyword (:frequency reminder))
+        values (frequency occurrence-values)]
+    ((keyword ((frequency occurrence-fields) reminder)) values)))
+
+(defn- frequency-copy [reminder]
+  (case (s/lower-case (:frequency reminder))
+    "weekly"
+    (str "Occurs every week on " (occurrence-value reminder) "s.")
+    "biweekly"
+    (str "Occurs every other week on " (occurrence-value reminder) "s.")
+    "monthly"    
+    (str "Occurs on the " (occurrence-value reminder ) ".")
+    "quarterly"
+    (str "Occurs on the " (occurrence-value reminder) ".")))
 
 (defn reminder-notification [token receiver {:keys [org notification] :as msg}]
   {:pre [(string? token)
@@ -312,14 +341,19 @@
          (map? msg)]}
   (let [reminder (:reminder notification)
         author (:author reminder)
-        first-name (or (:first-name author) (first-name (:name author)))
-        content (str "Hey, " first-name
-                  " created a new reminder for you in Carrot. "
-                  "It's for " (frequency-string (:frequency reminder)) ", starting "
-                  (reminder-date (:next-send reminder)) ".")
+        author-name (or (:name author)
+                        (when (and (not (str/blank? (:first-name author)))
+                                   (not (str/blank? (:last-name author))))
+                          (str (:first-name author) " " (:last-name author)))
+                        (:first-name author)
+                        "Someone")
+        content (str ":clock9: " author-name
+                  " created a new reminder for you. ")
         reminders-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?reminders")
-        attachment {:text (str "*" (:headline reminder) "*")
-                    :color "#6187F8"
+        attachment {:text (frequency-copy reminder)
+                    :title (str "Reminder: " (:headline reminder))
+                    :title_link reminders-url
+                    :color "#E8E8E8"
                     :actions [{:type "button"
                                :text "View reminder"
                                :url reminders-url}]}]
@@ -335,11 +369,14 @@
   (let [reminder (:reminder notification)
         assignee (:assignee reminder)
         first-name (or (:first-name assignee) (first-name (:name assignee)))
-        content (str "Hi " first-name
-                  ", a quick reminder - it's time to share the latest with your team in Carrot. 🙌")
+        content (str ":clock9: Hi " first-name
+                  ", a quick reminder - it's time to share the latest with your team in Carrot.")
         new-post-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?new")
-        attachment {:text (str "*" (:headline reminder) "*")
-                    :color "#6187F8"
+        reminders-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?reminders")
+        attachment {:title (str "Reminder: " (:headline reminder))
+                    :title_url reminders-url
+                    :text (frequency-copy reminder)
+                    :color "#E8E8E8"
                     :actions [{:type "button"
                                :text "OK, let's do it"
                                :url new-post-url}]}]
