@@ -46,10 +46,6 @@
 (def date-format (time-format/formatter "MMMM d"))
 (def date-format-year (time-format/formatter "MMMM d YYYY"))
 
-(def reminders-day-format (time-format/formatter "EEEE"))
-(def reminders-date-format (time-format/formatter "EEEE, MMMM d"))
-(def reminders-date-format-year (time-format/formatter "EEEE, MMMM d YYYY"))
-
 (defn- post-date [timestamp]
   (let [d (time-format/parse iso-format timestamp)
         n (time/now)
@@ -293,11 +289,6 @@
 
 ;; Reminders
 
-(defn- reminder-date [timestamp]
-  (let [d (time-format/parse iso-format timestamp)]
-    
-    (str (time-format/unparse reminders-day-format d))))
-
 (def occurrence-values
   {:weekly {:monday "Monday"
             :tuesday "Tuesday"
@@ -313,27 +304,30 @@
               :friday "Friday"
               :saturday "Saturday"
               :sunday "Sunday"}
-   :monthly {:first "First day of the month"
-             :first-monday "First Monday of the month"
-             :last-friday "Last Friday of the month"
-             :last "Last day of the month"}
-   :quarterly {:first "First day of the quarter"
-               :first-monday "First Monday of the quarter"
-               :last-friday "Last Friday of the quarter"
-               :last "Last day of the quarter"}})
+   :monthly {:first "first day of the month"
+             :first-monday "first Monday of the month"
+             :last-friday "last Friday of the month"
+             :last "last day of the month"}
+   :quarterly {:first "first day of the quarter"
+               :first-monday "first Monday of the quarter"
+               :last-friday "last Friday of the quarter"
+               :last "last day of the quarter"}})
+
+(defn occurrence-value [reminder]
+  (let [frequency (keyword (:frequency reminder))
+        values (frequency occurrence-values)]
+    ((keyword (:period-occurrence reminder)) values)))
 
 (defn- frequency-copy [reminder]
-  (timbre/debug reminder)
   (case (s/lower-case (:frequency reminder))
     "weekly"
-    (str "Occurs every week on " (reminder-date (:next-send reminder)) "s.")
+    (str "Occurs every week on " (occurrence-value reminder) "s.")
     "biweekly"
-    (str "Occurs every other week on "
-         (reminder-date (:next-send reminder)) "s.")
-    "monthly"
-    (str "Occurs on the " (:occurrence-value reminder ) " of the month.")
+    (str "Occurs every other week on " (occurrence-value reminder) "s.")
+    "monthly"    
+    (str "Occurs on the " (occurrence-value reminder ) " of the month.")
     "quarterly"
-    (str "Occurs on the " (:occurrence-value reminder) " of the quarter.")))
+    (str "Occurs on the " (occurrence-value reminder) " of the quarter.")))
 
 (defn reminder-notification [token receiver {:keys [org notification] :as msg}]
   {:pre [(string? token)
