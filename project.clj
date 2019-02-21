@@ -18,7 +18,7 @@
     ;; String manipulation library https://github.com/funcool/cuerdas
     [funcool/cuerdas "2.1.0"] 
     ;; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
-    [aleph "0.4.7-alpha4"]
+    [aleph "0.4.7-alpha5"]
     ;; Async programming tools https://github.com/ztellman/manifold
     [manifold "0.1.9-alpha3"]
     ;; Namespace management https://github.com/clojure/tools.namespace
