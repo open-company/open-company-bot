@@ -298,13 +298,6 @@
     
     (str (time-format/unparse reminders-day-format d))))
 
-(defn- frequency-string [f]
-  (case (s/lower-case f)
-    "weekly" "week"
-    "biweekly" "other week"
-    "monthly" "month"
-    "quarter"))
-
 (defn- frequency-copy [reminder]
   (case (s/lower-case (:frequency reminder))
     "weekly"
