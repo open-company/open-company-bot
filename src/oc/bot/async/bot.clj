@@ -341,13 +341,18 @@
          (map? msg)]}
   (let [reminder (:reminder notification)
         author (:author reminder)
-        first-name (or (:first-name author) (first-name (:name author)))
-        content (str ":clock9: Hey, " first-name
-                  " created a new reminder for you in Carrot. ")
+        author-name (or (:name author)
+                        (when (and (not (str/blank? (:first-name author)))
+                                   (not (str/blank? (:last-name author))))
+                          (str (:first-name author) " " (:last-name author)))
+                        (:first-name author)
+                        "someone")
+        content (str ":clock9: " author-name
+                  " created a new reminder for you. ")
         reminders-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?reminders")
         attachment {:text (frequency-copy reminder)
                     :title (str "Reminder: " (:headline reminder))
-                    :title_url reminders-url
+                    :title_link reminders-url
                     :color "#E8E8E8"
                     :actions [{:type "button"
                                :text "View reminder"
