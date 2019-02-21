@@ -307,7 +307,7 @@
          (reminder-date (:next-send reminder)) "s.")
     "monthly"
     (str "Occurs on the " (:period-occurence reminder ) " of the month.")
-    "quarter"
+    "quarterly"
     (str "Occurs on the " (:period-occurence reminder) " of the quarter.")))
 
 (defn reminder-notification [token receiver {:keys [org notification] :as msg}]
