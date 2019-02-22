@@ -114,12 +114,12 @@
 
 ;; ----- Bot Request handling -----
 
-(defn- text-for-notification [{:keys [org notification] :as msg}]
-  (let [org-slug (:slug org)
-        post-data (get-post-data msg)
+(defn- notification-entry-url [msg post-data]
+  (let [org (:org msg)
+        org-slug (:slug org)
         uuid (:uuid post-data)
         board-slug (:board-slug post-data)
-        secure-uuid (:secure-uuid notification)
+        secure-uuid (:secure-uuid (:notification msg))
         first-name (:first-name msg)
         token-claims {:org-uuid (:org-id msg)
                       :secure-uuid secure-uuid
@@ -129,30 +129,23 @@
                       :user-id (:user-id msg)
                       :avatar-url (:avatar-url msg)
                       :team-id (:team-id org)} ;; Let's read the team-id from the org to avoid problems on multiple org users}
-        id-token (jwt/generate-id-token token-claims c/passphrase)
-        entry-url (s/join "/" [c/web-url
-                               org-slug
-                               board-slug
-                               "post"
-                               uuid
-                               (str "?id=" id-token)])
-        first-name (:first-name notification)
+        id-token (jwt/generate-id-token token-claims c/passphrase)]
+    (s/join "/" [c/web-url
+                 org-slug
+                 board-slug
+                 "post"
+                 uuid
+                 (str "?id=" id-token)])))
+
+(defn- text-for-notification
+  [{:keys [org notification] :as msg}]
+  (let [comment? (:interaction-id notification)
         mention? (:mention? notification)
-        comment? (:interaction-id notification)
-        title (if comment?
-                (:headline post-data)
-                (:entry-title notification))
-        greeting (if first-name (str "Hello " first-name ", ") (str "Hey there! "))
-        from (-> notification :author :name)
-        attribution (if from
-                      (if mention? 
-                        (str " by *" from "*")
-                        (str " from *" from "*"))
-                      " ")
-        intro (if mention?
-                (str "You were mentioned in a " (if comment? "comment" "post") attribution (when comment? " on the post") ":")
-                (str "You have a new comment " attribution " on your post: "))]
-    (str intro " <" entry-url "|" title ">")))
+        from (-> notification :author :name)]
+    (if mention?
+      (str ":speech_balloon: You have a new comment by *" from "* on your post")
+      (str ":speech_balloon: " from " mentioned you in a "
+           (if comment? "[comment]:" "[post]:")))))
 
 (defn- send-private-board-notification [msg]
   (let [notifications (-> msg :content :notifications)
@@ -281,10 +274,21 @@
          (map? msg)]}
   (timbre/info "Sending notification to Slack channel:" receiver)
   (let [content (.text (soup/parse (:content (:notification msg))))
+        post-data (get-post-data msg)
+        entry-url (notification-entry-url msg post-data)
+        comment? (:interaction-id (:notification msg))
         text-for-notification (text-for-notification msg)]
     (slack/post-attachments token
                             (:id receiver)
-                            [{:text content}]
+                            [{:title (:headline post-data)
+                              :title_link entry-url
+                              :text content
+                              :actions [{:type "button"
+                                         :text (str "View "
+                                                    (if comment?
+                                                      "comment"
+                                                      "post"))
+                                         :url entry-url}]}]
                             text-for-notification)))
 
 ;; Reminders
