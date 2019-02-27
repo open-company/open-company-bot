@@ -46,9 +46,6 @@
 (def date-format (time-format/formatter "MMMM d"))
 (def date-format-year (time-format/formatter "MMMM d YYYY"))
 
-(def reminders-date-format (time-format/formatter "EEEE, MMMM d"))
-(def reminders-date-format-year (time-format/formatter "EEEE, MMMM d YYYY"))
-
 (defn- post-date [timestamp]
   (let [d (time-format/parse iso-format timestamp)
         n (time/now)
@@ -85,6 +82,7 @@
       (and (= :user type) (s/starts-with? (-> msg :receiver :id) "U"))
       [(assoc msg :receiver {:id (slack/get-dm-channel token (-> msg :receiver :id))
                              :slack-user-id (-> msg :receiver :id)
+                             :slack-org-id (-> msg :receiver :slack-org-id)
                              :type :channel
                              :dm true})]
       
@@ -116,12 +114,12 @@
 
 ;; ----- Bot Request handling -----
 
-(defn- text-for-notification [{:keys [org notification] :as msg}]
-  (let [org-slug (:slug org)
-        post-data (get-post-data msg)
+(defn- notification-entry-url [msg post-data]
+  (let [org (:org msg)
+        org-slug (:slug org)
         uuid (:uuid post-data)
         board-slug (:board-slug post-data)
-        secure-uuid (:secure-uuid notification)
+        secure-uuid (:secure-uuid (:notification msg))
         first-name (:first-name msg)
         token-claims {:org-uuid (:org-id msg)
                       :secure-uuid secure-uuid
@@ -131,30 +129,24 @@
                       :user-id (:user-id msg)
                       :avatar-url (:avatar-url msg)
                       :team-id (:team-id org)} ;; Let's read the team-id from the org to avoid problems on multiple org users}
-        id-token (jwt/generate-id-token token-claims c/passphrase)
-        entry-url (s/join "/" [c/web-url
-                               org-slug
-                               board-slug
-                               "post"
-                               uuid
-                               (str "?id=" id-token)])
-        first-name (:first-name notification)
-        mention? (:mention notification)
-        comment? (:interaction-id notification)
-        title (if comment?
-                (:headline post-data)
-                (:entry-title notification))
-        greeting (if first-name (str "Hello " first-name ", ") (str "Hey there! "))
-        from (-> notification :author :name)
-        attribution (if from
-                      (if mention? 
-                        (str " by *" from "*")
-                        (str " from *" from "*"))
-                      " ")
-        intro (if mention?
-                (str "You were mentioned in a " (if comment? "comment" "post") attribution (when comment? " on the post") ":")
-                (str "You have a new comment " attribution " on your post: "))]
-    (str intro " <" entry-url "|" title ">")))
+        id-token (jwt/generate-id-token token-claims c/passphrase)]
+    (s/join "/" [c/web-url
+                 org-slug
+                 board-slug
+                 "post"
+                 uuid
+                 (str "?id=" id-token)])))
+
+(defn- text-for-notification
+  [{:keys [org notification] :as msg}]
+  (let [comment? (:interaction-id notification)
+        mention? (:mention? notification)
+        from (-> notification :author :name)]
+    (if-not mention?
+      (str ":speech_balloon: You have a new comment by *" from "* on your post")
+      (str ":speech_balloon: " from " mentioned you in a "
+       (if comment? "comment" "post")
+       ":"))))
 
 (defn- send-private-board-notification [msg]
   (let [notifications (-> msg :content :notifications)
@@ -191,6 +183,8 @@
                                            org-logo-url
                                            org-name
                                            board-name
+                                           board-slug
+                                           entry-uuid
                                            headline
                                            note
                                            body
@@ -207,7 +201,7 @@
          (map? msg)]}
   (timbre/info "Sending entry share to Slack channel:" receiver)
   (let [channel (:id receiver)
-        update-url (s/join "/" [c/web-url org-slug "post" secure-uuid])
+        update-url (s/join "/" [c/web-url org-slug board-slug "post" entry-uuid])
         clean-note (when-not (s/blank? note) (str (clean-text note)))
         clean-headline (digest/post-headline headline must-see video-id)
         clean-body (if-not (s/blank? body)
@@ -281,27 +275,70 @@
          (map? msg)]}
   (timbre/info "Sending notification to Slack channel:" receiver)
   (let [content (.text (soup/parse (:content (:notification msg))))
+        post-data (get-post-data msg)
+        entry-url (notification-entry-url msg post-data)
+        comment? (:interaction-id (:notification msg))
         text-for-notification (text-for-notification msg)]
     (slack/post-attachments token
                             (:id receiver)
-                            [{:text content}]
+                            [{:title (:headline post-data)
+                              :title_link entry-url
+                              :text content
+                              :actions [{:type "button"
+                                         :text (str "View "
+                                                    (if comment?
+                                                      "comment"
+                                                      "post"))
+                                         :url entry-url}]}]
                             text-for-notification)))
 
 ;; Reminders
 
-(defn- reminder-date [timestamp]
-  (let [d (time-format/parse iso-format timestamp)
-        n (time/now)
-        same-year? (= (time/year n) (time/year d))
-        output-format (if same-year? reminders-date-format reminders-date-format-year)]
-    (time-format/unparse output-format d)))
+(def occurrence-values
+  {:weekly {:monday "Monday"
+            :tuesday "Tuesday"
+            :wednesday "Wednesday"
+            :thursday "Thursday"
+            :friday "Friday"
+            :saturday "Saturday"
+            :sunday "Sunday"}
+   :biweekly {:monday "Monday"
+              :tuesday "Tuesday"
+              :wednesday "Wednesday"
+              :thursday "Thursday"
+              :friday "Friday"
+              :saturday "Saturday"
+              :sunday "Sunday"}
+   :monthly {:first "first day of the month"
+             :first-monday "first Monday of the month"
+             :last-friday "last Friday of the month"
+             :last "last day of the month"}
+   :quarterly {:first "first day of the quarter"
+               :first-monday "first Monday of the quarter"
+               :last-friday "last Friday of the quarter"
+               :last "last day of the quarter"}})
 
-(defn- frequency-string [f]
-  (case (s/lower-case f)
-    "weekly" "weekly"
-    "biweekly" "every other week"
-    "monthly" "monthly"
-    "Quarterly"))
+(def occurrence-fields
+  {:weekly :week-occurrence
+   :biweekly :week-occurrence
+   :monthly :period-occurrence
+   :quarterly :period-occurrence})
+
+(defn occurrence-value [reminder]
+  (let [frequency (keyword (:frequency reminder))
+        values (frequency occurrence-values)]
+    ((keyword ((frequency occurrence-fields) reminder)) values)))
+
+(defn- frequency-copy [reminder]
+  (case (s/lower-case (:frequency reminder))
+    "weekly"
+    (str "Occurs every week on " (occurrence-value reminder) "s.")
+    "biweekly"
+    (str "Occurs every other week on " (occurrence-value reminder) "s.")
+    "monthly"    
+    (str "Occurs on the " (occurrence-value reminder ) ".")
+    "quarterly"
+    (str "Occurs on the " (occurrence-value reminder) ".")))
 
 (defn reminder-notification [token receiver {:keys [org notification] :as msg}]
   {:pre [(string? token)
@@ -309,14 +346,19 @@
          (map? msg)]}
   (let [reminder (:reminder notification)
         author (:author reminder)
-        first-name (or (:first-name author) (first-name (:name author)))
-        content (str "Hey, " first-name
-                  " created a new reminder for you in Carrot. "
-                  "It's for a " (frequency-string (:frequency reminder)) " update, starting "
-                  (reminder-date (:next-send reminder)) ".")
+        author-name (or (:name author)
+                        (when (and (not (str/blank? (:first-name author)))
+                                   (not (str/blank? (:last-name author))))
+                          (str (:first-name author) " " (:last-name author)))
+                        (:first-name author)
+                        "Someone")
+        content (str ":clock9: " author-name
+                  " created a new reminder for you. ")
         reminders-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?reminders")
-        attachment {:text (str "*" (:headline reminder) "*")
-                    :color "#6187F8"
+        attachment {:text (frequency-copy reminder)
+                    :title (str "Reminder: " (:headline reminder))
+                    :title_link reminders-url
+                    :color "#E8E8E8"
                     :actions [{:type "button"
                                :text "View reminder"
                                :url reminders-url}]}]
@@ -332,11 +374,14 @@
   (let [reminder (:reminder notification)
         assignee (:assignee reminder)
         first-name (or (:first-name assignee) (first-name (:name assignee)))
-        content (str "Hi " first-name
-                  ", a quick reminder - it's time to share the latest with your team in Carrot. 🙌")
+        content (str ":clock9: Hi " first-name
+                  ", a quick reminder - it's time to share the latest with your team in Carrot.")
         new-post-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?new")
-        attachment {:text (str "*" (:headline reminder) "*")
-                    :color "#6187F8"
+        reminders-url (str (s/join "/" [c/web-url (:slug org) "all-posts"]) "?reminders")
+        attachment {:title (str "Reminder: " (:headline reminder))
+                    :title_url reminders-url
+                    :text (frequency-copy reminder)
+                    :color "#E8E8E8"
                     :actions [{:type "button"
                                :text "OK, let's do it"
                                :url new-post-url}]}]
