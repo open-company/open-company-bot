@@ -67,7 +67,9 @@ lein deps
 
 An [AWS SQS queue](https://aws.amazon.com/sqs/) is used to pass messages to the Bot. Setup an SQS Queue and key/secret access to the queue using the AWS Web Console or API.
 
-Before running anything make sure you copy `config.edn.template` to `config.edn` and adjust the values in the contained map.
+An [AWS S3 bucket](https://aws.amazon.com/s3/) is used to cache Slack banner images for the Bot. Setup an S3 bucket using the AWS Web Console or API with access of "Objects can be public".
+
+Before running anything make sure you adjust the values in the config map.
 
 ```clojure
 {
@@ -77,6 +79,7 @@ Before running anything make sure you copy `config.edn.template` to `config.edn`
     :aws-secret-access-key "CHANGE-ME"
     :aws-sqs-bot-queue "CHANGE-ME" ; SQS queue to read inbound notifications/requests
     :aws-sqs-storage-queue "CHANGE-ME" ; SQS queue to send requests to the Storage service
+    :aws-s3-digest-banner-bucket "CHANGE-ME" ; S3 bucket for caching digest banners
 }
 ```
 

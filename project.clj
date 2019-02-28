@@ -18,7 +18,7 @@
     ;; String manipulation library https://github.com/funcool/cuerdas
     [funcool/cuerdas "2.1.0"] 
     ;; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
-    [aleph "0.4.7-alpha4"]
+    [aleph "0.4.7-alpha5"]
     ;; Async programming tools https://github.com/ztellman/manifold
     [manifold "0.1.9-alpha3"]
     ;; Namespace management https://github.com/clojure/tools.namespace
@@ -26,7 +26,7 @@
     [org.clojure/tools.namespace "0.3.0-alpha4" :exclusions [org.clojure/tools.reader]] 
 
     ;; Library for OC projects https://github.com/open-company/open-company-lib
-    [open-company/lib "0.16.36"]
+    [open-company/lib "0.16.37"]
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; defun - Erlang-esque pattern matching for Clojure functions https://github.com/killme2008/defun
     ;; core.async - Async programming and communication https://github.com/clojure/core.async
@@ -74,6 +74,7 @@
         :aws-secret-access-key "CHANGE-ME"
         :aws-sqs-bot-queue "CHANGE-ME" ; SQS queue to read inbound notifications/requests
         :aws-sqs-storage-queue "CHANGE-ME" ; SQS queue to send requests to the Storage service
+        :aws-s3-digest-banner-bucket "CHANGE-ME" ; S3 bucket for caching digest banners
       }
       :plugins [
         ;; Check for code smells https://github.com/dakrone/lein-bikeshed

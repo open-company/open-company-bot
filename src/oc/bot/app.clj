@@ -32,8 +32,10 @@
     "AWS SQS bot queue: " c/aws-sqs-bot-queue "\n"
     "AWS SQS storage queue: " c/aws-sqs-storage-queue "\n"
     "Web URL: " c/web-url "\n"
-    "Auth Service URL: " c/auth-server-url "\n"
-    "Storage Service URL: " c/storage-server-url "\n"
+    "Auth service URL: " c/auth-server-url "\n"
+    "Storage service URL: " c/storage-server-url "\n"
+    "Change service URL: " c/change-server-url "\n"
+    "Slack banner S3 bucket: " c/slack-digest-s3-bucket "\n"
     "Log level: " (name c/log-level) "\n"
     "Sentry: " (or c/dsn "false") "\n\n"
     (when c/intro? "Ready to serve...\n"))))

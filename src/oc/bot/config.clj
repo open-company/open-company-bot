@@ -35,6 +35,8 @@
 (defonce auth-server-url (or (env :auth-server-url) (str "http://localhost:" auth-server-port)))
 (defonce storage-server-port (Integer/parseInt (or (env :storage-server-port) "3001")))
 (defonce storage-server-url (or (env :storage-server-url) (str "http://localhost:" storage-server-port)))
+(defonce change-server-port (Integer/parseInt (or (env :change-server-port) "3006")))
+(defonce change-server-url (or (env :change-server-url) (str "http://localhost:" change-server-port)))
 
 ;; ----- AWS SQS -----
 
@@ -44,6 +46,10 @@
 (defonce aws-sqs-bot-queue (env :aws-sqs-bot-queue)) ; in-bound requests / notifications to the bot
 (defonce aws-sqs-storage-queue (env :aws-sqs-storage-queue)) ; out-bound to the Storage service
 
+;; ----- AWS S3 -----
+
+(defonce slack-digest-s3-bucket (env :aws-s3-digest-banner-bucket))
+
 ;; ----- JWT -----
 
 (defonce passphrase (env :open-company-auth-passphrase))
@@ -51,20 +57,16 @@
 ;; ----- Bot -----
 
 ;; https://api.slack.com/docs/message-formatting
-(defonce usage-bullets (str ">- I ensure comments from Carrot make it into Slack\n"
-                            ">- I also make sure posts shared from Carrot make it into Slack\n"
-                            ">- I unfurl links to Carrot that are sent in Slack messages\n" 
-                            ">- I provide a Slack action to capture Slack messages as Carrot posts\n"
-                            ">- I let people know when they've been mentioned in Carrot\n" 
-                            ">- I notify people when they've been invited to a private board\n" 
-                            ">- I remind people when they need to update the team\n" 
-                            ">- And, I send a daily digest of new posts from the team"))
+(defonce usage-bullets (str ">- Provide a daily digest that keeps everyone focused on what matters most\n"
+                            ">- Add Carrot posts and comments to Slack\n"
+                            ">- Unfurl links to Carrot\n"
+                            ">- Make it easy to add new Carrot posts from Slack\n"
+                            ">- Notify people in Slack for Carrot mentions, comments, and invites\n" 
+                            ">- Remind people when it’s time to update so no one forgets"))
 (defonce usage-message (str "I'm the Carrot Bot, and it seems you have something to say to me. Well... I'm just a Carrot, I've got no ears!\n\n"
                             "Ha! 😜 I kid of course! But for the most part, I do like to stay deep in the soil, out of your way.\n\n"
                             "*Here's what I do:*\n"
                             usage-bullets))
-(defonce welcome-message (str "Hey there! Your Slack account has been successfully connected to Carrot.\n\n"
-                              "I'm the Carrot Bot; I work in the background to help out. Here's what I do:\n\n"
+(defonce welcome-message (str "Hey there! Your Slack account has been successfully connected to Carrot. The Carrot bot works in the background to keep Carrot and Slack in sync.\n\n"
+                              "*Here's what it does:*\n\n"
                               usage-bullets))
-
-(defonce slack-digest-s3-bucket (env :aws-s3-digest-banner-bucket))
