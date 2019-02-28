@@ -4,6 +4,7 @@
   "
   (:require [taoensso.timbre :as timbre]
             [clj-time.coerce :as coerce]
+            [cheshire.core :as json]
             [jsoup.soup :as soup]
             [oc.lib.text :as text]
             [oc.lib.slack :as slack]
@@ -180,6 +181,28 @@
         attachments (map #(post-as-attachment daily (:name board) % msg) (:posts board))]
     (concat [(assoc (first attachments) :pretext (str "*" pretext "*"))] (rest attachments))))
 
+(defn- split-attachments
+  "Split message attachments into multiple message if over 16kb
+   https://api.slack.com/docs/rate-limits"
+  [attachments]
+  (let [default-split 5 ;; 4 posts plus header
+        four-split (partition default-split default-split nil attachments)
+        four-bytes (.getBytes (json/generate-string (first four-split) "UTF-8"))
+        four-count (count four-bytes)
+        bytes (.getBytes (json/generate-string attachments) "UTF-8")
+        byte-count (count bytes)
+        byte-limit 6000] ;; 16k is the limit but need to account for HTTP
+    (timbre/info "Slack limit?: " four-count byte-count byte-limit)
+    (if (> four-count byte-limit)
+      (let [parts-num (quot (count attachments)
+                            (inc (quot byte-count byte-limit)))
+            split-num (if (> default-split parts-num)
+                          default-split
+                          parts-num)
+            parts (partition split-num split-num nil attachments)]
+        {:intro (first parts) :rest (rest parts)})
+      {:intro (first four-split) :rest (rest four-split)})))
+
 (defn send-digest [token {channel :id :as receiver} {:keys [org-name org-slug logo-url boards] :as msg}]
   {:pre [(string? token)
          (map? receiver)
@@ -189,6 +212,14 @@
                           :text org-name
                           :fallback "Your morning digest"
                           :color "#FA6452"}
-        attachments (conj (flatten (map #(posts-for-board true % msg) boards)) intro-attachment)]
+        attachments (conj (flatten (map #(posts-for-board true % msg) boards)) intro-attachment)
+        split-attachments (split-attachments attachments)]
     (timbre/info "Sending digest to:" channel " with:" token)
-    (slack/post-attachments token channel attachments intro)))
+    (if (:intro split-attachments)
+      (do
+        (slack/post-attachments token
+                                channel
+                                (:intro split-attachments) intro)
+        (doseq [part (:rest split-attachments)]
+          (slack/post-attachments token channel part)))
+      (slack/post-attachments token channel (:rest split-attachments) intro))))
