@@ -46,6 +46,10 @@
 (defonce aws-sqs-bot-queue (env :aws-sqs-bot-queue)) ; in-bound requests / notifications to the bot
 (defonce aws-sqs-storage-queue (env :aws-sqs-storage-queue)) ; out-bound to the Storage service
 
+;; ----- AWS S3 -----
+
+(defonce slack-digest-s3-bucket (env :aws-s3-digest-banner-bucket))
+
 ;; ----- JWT -----
 
 (defonce passphrase (env :open-company-auth-passphrase))
@@ -66,5 +70,3 @@
 (defonce welcome-message (str "Hey there! Your Slack account has been successfully connected to Carrot. The Carrot bot works in the background to keep Carrot and Slack in sync.\n\n"
                               "*Here's what it does:*\n\n"
                               usage-bullets))
-
-(defonce slack-digest-s3-bucket (env :aws-s3-digest-banner-bucket))

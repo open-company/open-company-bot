@@ -75,6 +75,7 @@
         :aws-secret-access-key "CHANGE-ME"
         :aws-sqs-bot-queue "CHANGE-ME" ; SQS queue to read inbound notifications/requests
         :aws-sqs-storage-queue "CHANGE-ME" ; SQS queue to send requests to the Storage service
+        :aws-s3-digest-banner-bucket "CHANGE-ME" ; S3 bucket for caching digest banners
       }
       :plugins [
         ;; Check for code smells https://github.com/dakrone/lein-bikeshed
