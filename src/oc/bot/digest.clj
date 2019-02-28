@@ -115,9 +115,16 @@
         author-text (clojure.string/join " "
                       (subvec
                        (clojure.string/split total-attribution #" ") 2))]
-    (if (pos? (or (count reaction-data) 0))
+    (cond 
+      ;; Comments and reactions
+      (and (pos? comment-count) (pos? (or (count reaction-data) 0)))
       (str comment-text " and " reaction-text " " author-text)
-      (str comment-text " " author-text))))
+      ;; Comments only
+      (pos? comment-count)
+      (str comment-text " " author-text)
+      ;; Reactions only
+      :else
+      (str reaction-text " " author-text))))
 
 
 (def seen-text "✓ You've viewed this post.")
@@ -153,7 +160,8 @@
           :footer (when seen-this seen-text)
           :actions seen-attach}
           timestamp-map)]
-    (if (pos? (or comment-count 0))
+    (if (or (pos? (or comment-count 0))
+            (pos? (or (count reactions) 0)))
       (let [interaction-attribution (str ">"
                                       (attribution
                                          comment-authors
