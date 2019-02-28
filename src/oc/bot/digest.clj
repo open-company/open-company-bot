@@ -115,7 +115,9 @@
         author-text (clojure.string/join " "
                       (subvec
                        (clojure.string/split total-attribution #" ") 2))]
-    (str comment-text " and " reaction-text " " author-text)))
+    (if (pos? (or (count reaction-data) 0))
+      (str comment-text " and " reaction-text " " author-text)
+      (str comment-text " " author-text))))
 
 
 (def seen-text "✓ You've viewed this post.")
@@ -152,17 +154,17 @@
           :actions seen-attach}
           timestamp-map)]
     (if (pos? (or comment-count 0))
-      (assoc message
-             :footer
-             (str ">"
-                  (attribution
-                   comment-authors
-                   comment-count
-                   reactions
-                   {:user-id (:user-id msg)
-                    :name (str (:first-name msg)
-                               " "
-                               (:last-name msg))})))
+      (let [interaction-attribution (str ">"
+                                      (attribution
+                                         comment-authors
+                                         comment-count
+                                         reactions
+                                         {:user-id (:user-id msg)
+                                          :name (str (:first-name msg)
+                                                     " "
+                                                     (:last-name msg))}))
+            footer-text (if seen-this (str interaction-attribution "\n" seen-text) interaction-attribution)]
+        (assoc message :footer footer-text))
       message)))
 
 (defn- posts-for-board [daily board msg]
