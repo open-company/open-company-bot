@@ -52,7 +52,7 @@
         more-authors? (> (count distinct-authors) (count author-names))
         multiple-authors? (> (count author-names) 1)
         author-attribution (cond
-                              ;; more distinct authors than we are going to mention
+                              ;; more distinct authors than we are going to mention individually
                               more-authors?
                               (let [other-count (- (count distinct-authors)
                                                    attribution-count)]
@@ -60,8 +60,7 @@
                                      " and "
                                      other-count
                                      " other"
-                                     (when (and (zero? other-count)
-                                                (> 1 other-count))
+                                     (when (> other-count 1)
                                        "s")))
 
                               ;; more than 1 author so last mention needs an "and", not a comma
@@ -73,9 +72,16 @@
                               ;; just 1 author
                               :else
                               (first author-names))]
+    (timbre/info "\n\nA:" (vec authors))
+    (timbre/info "DA:" (vec distinct-authors))
+    (timbre/info "AN:" (vec author-names))
+    (timbre/info "MA:" multiple-authors?)
+    (timbre/info "AA:" author-attribution)
+    (timbre/info (str item-count " " item-name (when (> item-count 1) "s") " by " author-attribution) "\n\n")
     (str item-count " " item-name (when (> item-count 1) "s") " by " author-attribution)))
 
 (defn- attribution [comment-authors comment-count reaction-data receiver]
+  (timbre/info "\n\nCA:" comment-authors)
   (let [comments (text/attribution 3 comment-count "comment" comment-authors)
         reaction-authors (map #(hash-map :name %)
                               (flatten (map :authors reaction-data)))
