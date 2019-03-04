@@ -81,9 +81,7 @@
       message)))
 
 (defn- posts-for-board [daily board msg]
-  (let [pretext (clojure.string/trim (:name board))
-        attachments (map #(post-as-attachment daily (:name board) % msg) (:posts board))]
-    (concat [(assoc (first attachments) :pretext (str "*" pretext "*"))] (rest attachments))))
+  (map #(post-as-attachment daily (:name board) % msg) (:posts board)))
 
 (defn- split-attachments
   "Split message attachments into multiple message if over 16kb
