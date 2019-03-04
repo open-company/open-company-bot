@@ -72,16 +72,10 @@
                               ;; just 1 author
                               :else
                               (first author-names))]
-    (timbre/info "\n\nA:" (vec authors))
-    (timbre/info "DA:" (vec distinct-authors))
-    (timbre/info "AN:" (vec author-names))
-    (timbre/info "MA:" multiple-authors?)
-    (timbre/info "AA:" author-attribution)
     (timbre/info (str item-count " " item-name (when (> item-count 1) "s") " by " author-attribution) "\n\n")
     (str item-count " " item-name (when (> item-count 1) "s") " by " author-attribution)))
 
 (defn- attribution [comment-authors comment-count reaction-data receiver]
-  (timbre/info "\n\nCA:" comment-authors)
   (let [comments (text/attribution 3 comment-count "comment" comment-authors)
         reaction-authors (map #(hash-map :name %)
                               (flatten (map :authors reaction-data)))
@@ -93,8 +87,9 @@
                                        %)
                                     reaction-authors)
                                reaction-authors)
-        comment-authors-you (map #(when (= (:user-id receiver) (:user-id %))
-                                    (assoc % :name "you"))
+        comment-authors-you (map #(if (= (:user-id receiver) (:user-id %))
+                                    (assoc % :name "you")
+                                    %)
                                  comment-authors)
         comment-authors-name (map #(hash-map :name (:name %))
                                   comment-authors-you)
