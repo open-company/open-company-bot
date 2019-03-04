@@ -12,6 +12,9 @@
             [oc.bot.image :as image]
             [oc.bot.config :as c]))
 
+(def must-see-color "#6187F8")
+(def digest-grey-color "#F3F3F3")
+
 (defn get-seen-data [payload entry-id]
   (let [team (:team-id payload)
         slack-bot (:bot payload)
@@ -61,7 +64,7 @@
                       [])
         message (merge {
           :fallback (str "A post in " board-name " by " author-name ", '" clean-headline "'.")
-          :color "#FA6452"
+          :color (if must-see must-see-color digest-grey-color)
           :author_name (str author-name " in " board-name)
           :author_icon (:avatar-url publisher)
           :title clean-headline
@@ -112,7 +115,7 @@
         intro-attachment {:image_url (image/slack-banner-url org-slug logo-url)
                           :text org-name
                           :fallback "Your morning digest"
-                          :color "#FA6452"}
+                          :color digest-grey-color}
         attachments (conj (flatten (map #(posts-for-board true % msg) boards)) intro-attachment)
         split-attachments (split-attachments attachments)]
     (timbre/info "Sending digest to:" channel " with:" token)
