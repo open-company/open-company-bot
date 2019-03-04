@@ -285,10 +285,7 @@
                               :title_link entry-url
                               :text content
                               :actions [{:type "button"
-                                         :text (str "View "
-                                                    (if comment?
-                                                      "comment"
-                                                      "post"))
+                                         :text (if comment? "Reply" "View post")
                                          :url entry-url}]}]
                             text-for-notification)))
 
