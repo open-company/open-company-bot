@@ -72,7 +72,6 @@
                               ;; just 1 author
                               :else
                               (first author-names))]
-    (timbre/info (str item-count " " item-name (when (> item-count 1) "s") " by " author-attribution) "\n\n")
     (str item-count " " item-name (when (> item-count 1) "s") " by " author-attribution)))
 
 (defn- attribution [comment-authors comment-count reaction-data receiver]
