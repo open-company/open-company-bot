@@ -53,7 +53,7 @@
         output-format (if same-year? date-format date-format-year)]
     (time-format/unparse output-format d)))
 
-(def carrot-explainer "Carrot is the company digest that keeps fast-growing and remote teams up to date with the information that matters.")
+(def carrot-explainer "Carrot is your company digest for the team news and updates no one should miss.")
 
 (defn get-post-data [payload]
   (let [notification (:notification payload)
