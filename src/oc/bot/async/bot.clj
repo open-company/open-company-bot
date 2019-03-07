@@ -19,6 +19,8 @@
 
 (def db-pool (atom false)) ; atom holding DB pool so it can be used for each SQS message
 
+(def attachment-grey-color "#E8E8E8")
+
 ;; ----- core.async -----
 
 (defonce bot-chan (async/chan 10000)) ; buffered channel to protect Slack from too many requests
@@ -284,6 +286,7 @@
                             [{:title (:headline post-data)
                               :title_link entry-url
                               :text content
+                              :color attachment-grey-color
                               :actions [{:type "button"
                                          :text (if comment? "Reply" "View post")
                                          :url entry-url}]}]
@@ -355,7 +358,7 @@
         attachment {:text (frequency-copy reminder)
                     :title (str "Reminder: " (:headline reminder))
                     :title_link reminders-url
-                    :color "#E8E8E8"
+                    :color attachment-grey-color
                     :actions [{:type "button"
                                :text "View reminder"
                                :url reminders-url}]}]
@@ -378,7 +381,7 @@
         attachment {:title (str "Reminder: " (:headline reminder))
                     :title_url reminders-url
                     :text (frequency-copy reminder)
-                    :color "#E8E8E8"
+                    :color attachment-grey-color
                     :actions [{:type "button"
                                :text "OK, let's do it"
                                :url new-post-url}]}]

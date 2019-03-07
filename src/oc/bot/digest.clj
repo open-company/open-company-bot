@@ -13,7 +13,7 @@
             [oc.bot.config :as c]))
 
 (def must-see-color "#6187F8")
-(def digest-grey-color "#F3F3F3")
+(def digest-grey-color "#E8E8E8")
 
 (defn get-seen-data [payload entry-id]
   (let [team (:team-id payload)
