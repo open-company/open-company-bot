@@ -12,8 +12,16 @@
             [oc.bot.image :as image]
             [oc.bot.config :as c]))
 
-(def must-see-color "#6187F8")
-(def digest-grey-color "#E8E8E8")
+(defonce must-see-color "#6187F8")
+(defonce digest-grey-color "#E8E8E8")
+
+(defonce footer-fallbacks [
+  "That's all for now!"
+  "You're all caught up."
+  "Have a great day!"
+  "Now you're in sync."
+  "Go seize the day."
+  "That's a wrap, enjoy the day!"])
 
 (defn get-seen-data [payload entry-id]
   (let [team (:team-id payload)
@@ -110,12 +118,20 @@
          (map? receiver)
          (map? msg)]}
   (let [intro (str ":coffee: Good morning " (or org-name "Carrot"))
-        intro-attachment {:image_url (image/slack-banner-url org-slug logo-url)
+        banner-attachment {:image_url (image/slack-banner-url org-slug logo-url)
                           :text org-name
                           :fallback "Your morning digest"
                           :color digest-grey-color}
-        attachments (conj (flatten (map #(posts-for-board true % msg) boards)) intro-attachment)
+        footer-selection (rand-int 7)
+        footer-attachment {:image_url (image/slack-footer-url footer-selection)
+                          :text "The end"
+                          :fallback (nth footer-fallbacks (dec footer-selection))
+                          :color digest-grey-color}
+        attachments (concat [banner-attachment]
+                            (flatten (map #(posts-for-board true % msg) boards))
+                            [footer-attachment])
         split-attachments (split-attachments attachments)]
+    (timbre/debug "Footer attachment:" footer-attachment)
     (timbre/info "Sending digest to:" channel " with:" token)
     (if (:intro split-attachments)
       (do

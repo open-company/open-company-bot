@@ -35,7 +35,8 @@
     "Auth service URL: " c/auth-server-url "\n"
     "Storage service URL: " c/storage-server-url "\n"
     "Change service URL: " c/change-server-url "\n"
-    "Slack banner S3 bucket: " c/slack-digest-s3-bucket "\n"
+    "Digest banner S3 bucket: " c/digest-banner-s3-bucket "\n"
+    "Digest footer S3 bucket: " c/digest-footer-s3-bucket "\n"
     "Log level: " (name c/log-level) "\n"
     "Sentry: " (or c/dsn "false") "\n\n"
     (when c/intro? "Ready to serve...\n"))))

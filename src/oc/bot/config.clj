@@ -48,7 +48,11 @@
 
 ;; ----- AWS S3 -----
 
-(defonce slack-digest-s3-bucket (env :aws-s3-digest-banner-bucket))
+(defonce digest-banner-version "v1")
+(defonce digest-banner-s3-bucket (str (env :digest-banner-s3-bucket) "-" digest-banner-version))
+
+(defonce digest-footer-version "v1")
+(defonce digest-footer-s3-bucket (str (env :digest-footer-s3-bucket) "-" digest-footer-version))
 
 ;; ----- JWT -----
 
