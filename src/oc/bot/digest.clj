@@ -31,11 +31,11 @@
   (let [clean-headline (.text (soup/parse headline))] ; Strip out any HTML tags
     (cond
       (and must-see video-id)
-      (str "[Must see video] " clean-headline)
+      (str clean-headline " — [Must see video]")
       must-see
-      (str "[Must see] " clean-headline)
+      (str clean-headline " — [Must see]")
       video-id
-      (str "[Video] " clean-headline)
+      (str clean-headline " — [Video]")
       :else
       clean-headline)))
 
