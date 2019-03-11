@@ -122,7 +122,7 @@
                           :text org-name
                           :fallback "Your morning digest"
                           :color digest-grey-color}
-        footer-selection (rand-int 7)
+        footer-selection (inc (rand-int 6)) ; 1 through 6
         footer-attachment {:image_url (image/slack-footer-url footer-selection)
                           :text "The end"
                           :fallback (nth footer-fallbacks (dec footer-selection))
