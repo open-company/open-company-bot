@@ -95,13 +95,13 @@
   "Split message attachments into multiple message if over 16kb
    https://api.slack.com/docs/rate-limits"
   [attachments]
-  (let [default-split 5 ;; 4 posts plus header
+  (let [default-split 5 ; 4 posts plus header
         four-split (partition default-split default-split nil attachments)
         four-bytes (.getBytes (json/generate-string (first four-split) "UTF-8"))
         four-count (count four-bytes)
         bytes (.getBytes (json/generate-string attachments) "UTF-8")
         byte-count (count bytes)
-        byte-limit 6000] ;; 16k is the limit but need to account for HTTP
+        byte-limit 6000] ; 16k is the limit but need to account for HTTP
     (timbre/info "Slack limit?: " four-count byte-count byte-limit)
     (if (> four-count byte-limit)
       (let [parts-num (quot (count attachments)
@@ -127,8 +127,12 @@
                           :text "The end"
                           :fallback (nth footer-fallbacks (dec footer-selection))
                           :color digest-grey-color}
+        all-attachments (flatten (map #(posts-for-board true % msg) boards))
+        must-see-attachments (filter #(= (:color %) must-see-color) all-attachments)
+        regular-attachments (remove #(= (:color %) must-see-color) all-attachments)
         attachments (concat [banner-attachment]
-                            (flatten (map #(posts-for-board true % msg) boards))
+                            must-see-attachments
+                            regular-attachments
                             [footer-attachment])
         split-attachments (split-attachments attachments)]
     (timbre/debug "Footer attachment:" footer-attachment)
