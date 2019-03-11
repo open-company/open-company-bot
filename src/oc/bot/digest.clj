@@ -12,8 +12,16 @@
             [oc.bot.image :as image]
             [oc.bot.config :as c]))
 
-(def must-see-color "#6187F8")
-(def digest-grey-color "#E8E8E8")
+(defonce must-see-color "#6187F8")
+(defonce digest-grey-color "#E8E8E8")
+
+(defonce footer-fallbacks [
+  "That's all for now!"
+  "You're all caught up."
+  "Have a great day!"
+  "Now you're in sync."
+  "Go seize the day."
+  "That's a wrap, enjoy the day!"])
 
 (defn get-seen-data [payload entry-id]
   (let [team (:team-id payload)
@@ -31,11 +39,11 @@
   (let [clean-headline (.text (soup/parse headline))] ; Strip out any HTML tags
     (cond
       (and must-see video-id)
-      (str "[Must see video] " clean-headline)
+      (str clean-headline " — [Must see video]")
       must-see
-      (str "[Must see] " clean-headline)
+      (str clean-headline " — [Must see]")
       video-id
-      (str "[Video] " clean-headline)
+      (str clean-headline " — [Video]")
       :else
       clean-headline)))
 
@@ -87,13 +95,13 @@
   "Split message attachments into multiple message if over 16kb
    https://api.slack.com/docs/rate-limits"
   [attachments]
-  (let [default-split 5 ;; 4 posts plus header
+  (let [default-split 5 ; 4 posts plus header
         four-split (partition default-split default-split nil attachments)
         four-bytes (.getBytes (json/generate-string (first four-split) "UTF-8"))
         four-count (count four-bytes)
         bytes (.getBytes (json/generate-string attachments) "UTF-8")
         byte-count (count bytes)
-        byte-limit 6000] ;; 16k is the limit but need to account for HTTP
+        byte-limit 6000] ; 16k is the limit but need to account for HTTP
     (timbre/info "Slack limit?: " four-count byte-count byte-limit)
     (if (> four-count byte-limit)
       (let [parts-num (quot (count attachments)
@@ -110,12 +118,24 @@
          (map? receiver)
          (map? msg)]}
   (let [intro (str ":coffee: Good morning " (or org-name "Carrot"))
-        intro-attachment {:image_url (image/slack-banner-url org-slug logo-url)
+        banner-attachment {:image_url (image/slack-banner-url org-slug logo-url)
                           :text org-name
                           :fallback "Your morning digest"
                           :color digest-grey-color}
-        attachments (conj (flatten (map #(posts-for-board true % msg) boards)) intro-attachment)
+        footer-selection (inc (rand-int 6)) ; 1 through 6
+        footer-attachment {:image_url (image/slack-footer-url footer-selection)
+                          :text "The end"
+                          :fallback (nth footer-fallbacks (dec footer-selection))
+                          :color digest-grey-color}
+        all-attachments (flatten (map #(posts-for-board true % msg) boards))
+        must-see-attachments (filter #(= (:color %) must-see-color) all-attachments)
+        regular-attachments (remove #(= (:color %) must-see-color) all-attachments)
+        attachments (concat [banner-attachment]
+                            must-see-attachments
+                            regular-attachments
+                            [footer-attachment])
         split-attachments (split-attachments attachments)]
+    (timbre/debug "Footer attachment:" footer-attachment)
     (timbre/info "Sending digest to:" channel " with:" token)
     (if (:intro split-attachments)
       (do

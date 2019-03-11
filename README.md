@@ -80,6 +80,7 @@ Before running anything make sure you adjust the values in the config map.
     :aws-sqs-bot-queue "CHANGE-ME" ; SQS queue to read inbound notifications/requests
     :aws-sqs-storage-queue "CHANGE-ME" ; SQS queue to send requests to the Storage service
     :aws-s3-digest-banner-bucket "CHANGE-ME" ; S3 bucket for caching digest banners
+    :aws-s3-digest-footer-bucket "CHANGE-ME" ; S3 bucket for storing/serving digest footers
 }
 ```
 
@@ -125,7 +126,7 @@ Please note that this project is released with a [Contributor Code of Conduct](h
 
 Distributed under the [GNU Affero General Public License Version 3](https://www.gnu.org/licenses/agpl-3.0.en.html).
 
-Copyright © 2016-2018 OpenCompany, LLC.
+Copyright © 2016-2019 OpenCompany, LLC.
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
