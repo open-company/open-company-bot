@@ -75,6 +75,8 @@
         :aws-sqs-bot-queue "CHANGE-ME" ; SQS queue to read inbound notifications/requests
         :aws-sqs-storage-queue "CHANGE-ME" ; SQS queue to send requests to the Storage service
         :aws-s3-digest-banner-bucket "CHANGE-ME" ; S3 bucket for caching digest banners
+        :aws-s3-digest-footer-bucket "CHANGE-ME" ; S3 bucket for storing/serving digest footers
+        :log-level "debug"
       }
       :plugins [
         ;; Check for code smells https://github.com/dakrone/lein-bikeshed

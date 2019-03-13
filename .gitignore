@@ -12,3 +12,5 @@ pom.xml.asc
 
 .ruby-gemset
 .ruby-version
+
+.DS_Store
