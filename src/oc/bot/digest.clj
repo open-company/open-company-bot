@@ -89,7 +89,7 @@
       message)))
 
 (defn- posts-for-board [daily board msg]
-  (map #(post-as-attachment daily (:name board) % msg) (:posts board)))
+  (reverse (sort-by :published-at (map #(post-as-attachment daily (:name board) % msg) (:posts board)))))
 
 (defn- split-attachments
   "Split message attachments into multiple message if over 16kb
