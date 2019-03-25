@@ -54,6 +54,8 @@
 (defonce digest-footer-version "v1")
 (defonce digest-footer-s3-bucket (str (env :digest-footer-s3-bucket) "-" digest-footer-version))
 
+(defonce digest-bot-static-images-url (or (env :digest-bot-static-images-url) "https://open-company-assets-non-prod.s3.amazonaws.com"))
+
 ;; ----- JWT -----
 
 (defonce passphrase (env :open-company-auth-passphrase))
