@@ -3,7 +3,6 @@
   Namespace to convert an OC digest request into a Slack message with an attachment per post, and to send it via Slack.
   "
   (:require [taoensso.timbre :as timbre]
-            [clj-time.coerce :as coerce]
             [cheshire.core :as json]
             [jsoup.soup :as soup]
             [oc.lib.text :as text]
