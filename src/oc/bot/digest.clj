@@ -137,11 +137,13 @@
         split-attachments (split-attachments attachments)]
     (timbre/debug "Footer attachment:" footer-attachment)
     (timbre/info "Sending digest to:" channel " with:" token)
-    (if (:intro split-attachments)
-      (do
-        (slack/post-attachments token
-                                channel
-                                (:intro split-attachments) intro)
-        (doseq [part (:rest split-attachments)]
-          (slack/post-attachments token channel part)))
-      (slack/post-attachments token channel (:rest split-attachments) intro))))
+    ;; FIXME: publishing digest with a single message to trigger an error
+    ; (if (:intro split-attachments)
+    ;   (do
+    ;     (slack/post-attachments token
+    ;                             channel
+    ;                             (:intro split-attachments) intro)
+    ;     (doseq [part (:rest split-attachments)]
+    ;       (slack/post-attachments token channel part)))
+    ;   (slack/post-attachments token channel (:rest split-attachments) intro))
+    (slack/post-attachments token channel attachments)))
