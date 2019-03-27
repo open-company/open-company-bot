@@ -6,6 +6,7 @@
             [cheshire.core :as json]
             [jsoup.soup :as soup]
             [oc.lib.text :as text]
+            [oc.lib.html :as html]
             [oc.lib.slack :as slack]
             [oc.lib.change :as change]
             [oc.bot.image :as image]
@@ -64,6 +65,7 @@
         author-name (:name publisher)
         clean-headline (post-headline headline must-see video-id)
         reduced-body (text/truncated-body body)
+        accessory-image (html/first-body-thumbnail body)
         ;; if read/seen use seen attachment, else use button
         seen-this? (some #(= (:user-id msg) (:user-id %))
                       (get-in seen-data [:post :read]))
@@ -81,10 +83,17 @@
                     (when must-see
                       {:type "plain_text"
                        :text "Must See"})])}
-        body {:type "section"
-              :text {
-                :type "mrkdwn"
-                :text (markdown-post url headline reduced-body)}}
+        body-block {:type "section"
+                    :text {
+                      :type "mrkdwn"
+                      :text (markdown-post url headline reduced-body)}}
+        body-with-thumbnail (if accessory-image
+                             (merge body-block
+                              {:accessory {
+                                :type "image"
+                                :image_url (:thumbnail accessory-image)
+                                :alt_text "Thumbnail"}})
+                             body-block)
         interaction-block (when (or (pos? (or comment-count 0))
                                     (pos? (or (count reactions) 0)))
                             {:type "context"
@@ -106,7 +115,7 @@
         separator-block {:type "divider"}]
     (remove nil?
      [pre-block
-      body
+      body-with-thumbnail
       interaction-block
       post-block
       separator-block])))
