@@ -91,18 +91,11 @@
                                :elements [
                                 {:type "mrkdwn"
                                  :text (str "_" interaction-attribution "_")}]})
-        post-block (if seen-this?
+        post-block (when seen-this?
                     {:type "context"
                      :elements [
                       {:type "plain_text"
-                       :text seen-text}]}
-                    {:type "actions"
-                     :elements [
-                       {:type "button"
-                        :url url
-                        :text {
-                          :type "plain_text"
-                          :text "View post"}}]})
+                       :text seen-text}]})
         separator-block {:type "divider"}]
     (remove nil?
      [pre-block
