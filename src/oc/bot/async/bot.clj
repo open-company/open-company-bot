@@ -11,6 +11,7 @@
             [oc.lib.sqs :as sqs]
             [oc.lib.slack :as slack]
             [oc.lib.jwt :as jwt]
+            [oc.lib.html :as html]
             [oc.bot.digest :as digest]
             [oc.lib.storage :as storage]
             [oc.bot.async.slack-action :as slack-action]
@@ -213,6 +214,7 @@
                        (filter not-empty
                          (take 20 ;; 20 words is the average sentence
                            (clojure.string/split clean-body #" "))))
+        accessory-image (html/first-body-thumbnail body)
         share-attribution (if (= (:name publisher) (:name sharer))
                             (str "*" (:name sharer) "* shared a post in *" board-name "*")
                             (str "*" (:name sharer) "* shared a post by *" (:name publisher) "* in *" board-name "*"))
@@ -235,6 +237,7 @@
                             reduced-body)
                     :author_name (:name publisher)
                     :author_icon (:avatar-url publisher)
+                    :thumb_url (:thumbnail accessory-image)
                     :footer footer
                     :color "#FA6452"}
         attachments (if clean-note
