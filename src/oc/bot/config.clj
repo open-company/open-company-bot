@@ -56,6 +56,10 @@
 
 (defonce digest-bot-static-images-url (or (env :digest-bot-static-images-url) "https://open-company-assets-non-prod.s3.amazonaws.com"))
 
+;; ----- Filestack -----
+
+(defonce filestack-api-key (env :filestack-api-key))
+
 ;; ----- JWT -----
 
 (defonce passphrase (env :open-company-auth-passphrase))
