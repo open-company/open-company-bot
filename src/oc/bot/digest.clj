@@ -80,7 +80,6 @@
         body-block {:type "section"
                     :text {
                       :type "mrkdwn"
-                      :emoji true
                       :text (markdown-post url clean-headline reduced-body)}}
         body-with-thumbnail (if accessory-image
                              (merge body-block
@@ -94,7 +93,6 @@
                             {:type "context"
                                :elements [
                                 {:type "mrkdwn"
-                                 :emoji true
                                  :text (str "_" interaction-attribution "_")}]})
         post-block (when seen-this?
                     {:type "context"
