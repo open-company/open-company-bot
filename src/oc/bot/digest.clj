@@ -9,6 +9,7 @@
             [oc.lib.slack :as slack]
             [oc.lib.change :as change]
             [oc.bot.image :as image]
+            [oc.lib.user-avatar :as user-avatar]
             [oc.bot.config :as c]
             [clojure.string :as s]))
 
@@ -70,7 +71,7 @@
         pre-block {:type "context"
                    :elements (remove nil? [
                     {:type "image"
-                     :image_url (:avatar-url publisher)
+                     :image_url (user-avatar/fix-user-avatar c/filestack-api-key (:avatar-url publisher))
                      :alt_text author-name}
                     {:type "plain_text"
                      :emoji true
