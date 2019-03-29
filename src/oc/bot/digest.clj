@@ -73,6 +73,7 @@
                      :image_url (:avatar-url publisher)
                      :alt_text author-name}
                     {:type "plain_text"
+                     :emoji true
                      :text (str author-name " in " board-name)}
                     (when must-see
                       {:type "image"
@@ -80,21 +81,25 @@
                        :alt_text "Must See"})
                     (when must-see
                       {:type "plain_text"
+                       :emoji true
                        :text "Must See"})])}
         body {:type "section"
               :text {
                 :type "mrkdwn"
+                :emoji true
                 :text (markdown-post url headline reduced-body)}}
         interaction-block (when (or (pos? (or comment-count 0))
                                     (pos? (or (count reactions) 0)))
                             {:type "context"
                                :elements [
                                 {:type "mrkdwn"
+                                 :emoji true
                                  :text (str "_" interaction-attribution "_")}]})
         post-block (when seen-this?
                     {:type "context"
                      :elements [
                       {:type "plain_text"
+                       :emoji true
                        :text seen-text}]})
         separator-block {:type "divider"}]
     (remove nil?
@@ -149,6 +154,7 @@
                       :alt_text org-name
                       :title {
                         :type "plain_text"
+                        :emoji true
                         :text org-name}}
         footer-selection (inc (rand-int 6)) ; 1 through 6
         footer-block {:type "image"
