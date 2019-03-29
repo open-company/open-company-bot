@@ -86,14 +86,12 @@
         body {:type "section"
               :text {
                 :type "mrkdwn"
-                :emoji true
                 :text (markdown-post url headline reduced-body)}}
         interaction-block (when (or (pos? (or comment-count 0))
                                     (pos? (or (count reactions) 0)))
                             {:type "context"
                                :elements [
                                 {:type "mrkdwn"
-                                 :emoji true
                                  :text (str "_" interaction-attribution "_")}]})
         post-block (when seen-this?
                     {:type "context"
