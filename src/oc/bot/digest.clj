@@ -65,7 +65,7 @@
         pre-block {:type "context"
                    :elements (remove nil? [
                     {:type "image"
-                     :image_url (user-avatar/fix-user-avatar c/filestack-api-key (:avatar-url publisher))
+                     :image_url (user-avatar/fix-avatar-url c/filestack-api-key (:avatar-url publisher))
                      :alt_text author-name}
                     {:type "plain_text"
                      :emoji true
