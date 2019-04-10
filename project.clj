@@ -24,8 +24,7 @@
     [org.clojure/tools.namespace "0.3.0-alpha4" :exclusions [org.clojure/tools.reader]] 
 
     ;; Library for OC projects https://github.com/open-company/open-company-lib
-    [open-company/lib "0.17.3"]
-
+    [open-company/lib "0.17.4"]
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; defun - Erlang-esque pattern matching for Clojure functions https://github.com/killme2008/defun
     ;; core.async - Async programming and communication https://github.com/clojure/core.async
@@ -76,6 +75,7 @@
         :aws-sqs-storage-queue "CHANGE-ME" ; SQS queue to send requests to the Storage service
         :aws-s3-digest-banner-bucket "CHANGE-ME" ; S3 bucket for caching digest banners
         :aws-s3-digest-footer-bucket "CHANGE-ME" ; S3 bucket for storing/serving digest footers
+        :filestack-api-key "CHANGE-ME"
         :log-level "debug"
       }
       :plugins [

@@ -48,11 +48,17 @@
 
 ;; ----- AWS S3 -----
 
-(defonce digest-banner-version "v1")
+(defonce digest-banner-version "v2")
 (defonce digest-banner-s3-bucket (str (env :digest-banner-s3-bucket) "-" digest-banner-version))
 
-(defonce digest-footer-version "v1")
+(defonce digest-footer-version "v2")
 (defonce digest-footer-s3-bucket (str (env :digest-footer-s3-bucket) "-" digest-footer-version))
+
+(defonce digest-bot-static-images-url (or (env :digest-bot-static-images-url) "https://open-company-assets-non-prod.s3.amazonaws.com"))
+
+;; ----- Filestack -----
+
+(defonce filestack-api-key (env :filestack-api-key))
 
 ;; ----- JWT -----
 
