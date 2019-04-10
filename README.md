@@ -69,6 +69,10 @@ An [AWS SQS queue](https://aws.amazon.com/sqs/) is used to pass messages to the 
 
 An [AWS S3 bucket](https://aws.amazon.com/s3/) is used to cache Slack banner images for the Bot. Setup an S3 bucket using the AWS Web Console or API with access of "Objects can be public".
 
+Another AWS S3 bucket is used to store the 6 footer image varients.
+
+An API key is needed for [Filestack](https://www.filestack.com/) to build URL's that do image processing.
+
 Before running anything make sure you adjust the values in the config map.
 
 ```clojure
@@ -81,6 +85,8 @@ Before running anything make sure you adjust the values in the config map.
     :aws-sqs-storage-queue "CHANGE-ME" ; SQS queue to send requests to the Storage service
     :aws-s3-digest-banner-bucket "CHANGE-ME" ; S3 bucket for caching digest banners
     :aws-s3-digest-footer-bucket "CHANGE-ME" ; S3 bucket for storing/serving digest footers
+    :filestack-api-key "CHANGE-ME"
+    :log-level "debug"
 }
 ```
 

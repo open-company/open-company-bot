@@ -54,7 +54,7 @@
         g (.getGraphics source)
         ;; x and y are gathered from the background image.
         ;; scale logo to 212x212
-        banner (.drawImage g logo 896 164 212 212 nil)
+        banner (.drawImage g logo 1100 112 200 200 nil)
         _ (ImageIO/write (cast BufferedImage source) "png" (File. (tmp-file org-slug)))]
     ;; upload image to s3
     (write-to-s3 org-slug)))

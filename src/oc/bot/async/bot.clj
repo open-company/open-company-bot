@@ -11,6 +11,7 @@
             [oc.lib.sqs :as sqs]
             [oc.lib.slack :as slack]
             [oc.lib.jwt :as jwt]
+            [oc.lib.html :as html]
             [oc.bot.digest :as digest]
             [oc.lib.storage :as storage]
             [oc.bot.async.slack-action :as slack-action]
@@ -201,7 +202,7 @@
   (let [channel (:id receiver)
         update-url (s/join "/" [c/web-url org-slug board-slug "post" entry-uuid])
         clean-note (when-not (s/blank? note) (str (clean-text note)))
-        clean-headline (digest/post-headline headline must-see video-id)
+        clean-headline (digest/post-headline headline)
         clean-body (if-not (s/blank? body)
                      (clean-text (.text (soup/parse body)))
                      "")
@@ -209,6 +210,7 @@
                        (filter not-empty
                          (take 20 ;; 20 words is the average sentence
                            (clojure.string/split clean-body #" "))))
+        accessory-image (html/first-body-thumbnail body)
         share-attribution (if (= (:name publisher) (:name sharer))
                             (str "*" (:name sharer) "* shared a post in *" board-name "*")
                             (str "*" (:name sharer) "* shared a post by *" (:name publisher) "* in *" board-name "*"))
@@ -231,6 +233,7 @@
                             reduced-body)
                     :author_name (:name publisher)
                     :author_icon (:avatar-url publisher)
+                    :thumb_url (:thumbnail accessory-image)
                     :footer footer
                     :color "#FA6452"}
         attachments (if clean-note
