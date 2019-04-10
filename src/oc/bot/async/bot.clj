@@ -206,7 +206,7 @@
   (let [channel (:id receiver)
         update-url (s/join "/" [c/web-url org-slug board-slug "post" entry-uuid])
         clean-note (when-not (s/blank? note) (str (clean-text note)))
-        clean-headline (digest/post-headline headline must-see video-id)
+        clean-headline (digest/post-headline headline)
         clean-body (if-not (s/blank? body)
                      (clean-text (.text (soup/parse body)))
                      "")
