@@ -14,9 +14,7 @@
   ;; All profile dependencies
   :dependencies [
     ;; Lisp on the JVM http://clojure.org/documentation
-    [org.clojure/clojure "1.10.0"]
-    ;; String manipulation library https://github.com/funcool/cuerdas
-    [funcool/cuerdas "2.1.0"] 
+    [org.clojure/clojure "1.10.1-beta1"]
     ;; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
     [aleph "0.4.7-alpha5"]
     ;; Async programming tools https://github.com/ztellman/manifold
@@ -27,7 +25,6 @@
 
     ;; Library for OC projects https://github.com/open-company/open-company-lib
     [open-company/lib "0.17.3-alpha8"]
-
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; defun - Erlang-esque pattern matching for Clojure functions https://github.com/killme2008/defun
     ;; core.async - Async programming and communication https://github.com/clojure/core.async
@@ -43,6 +40,7 @@
     ;; environ - Environment settings from different sources https://github.com/weavejester/environ  ]
     ;; Clojure HTTP client https://github.com/dakrone/clj-http
     ;; Clojure wrapper for jsoup HTML parser https://github.com/mfornos/clojure-soup
+    ;; String manipulation library https://github.com/funcool/cuerdas
   ]
 
   ;; All profile plugins
@@ -83,7 +81,7 @@
       :plugins [
         ;; Check for code smells https://github.com/dakrone/lein-bikeshed
         ;; NB: org.clojure/tools.cli is pulled in by lein-kibit
-        [lein-bikeshed "0.5.1" :exclusions [org.clojure/tools.cli]] 
+        [lein-bikeshed "0.5.2" :exclusions [org.clojure/tools.cli]] 
         ;; Runs bikeshed, kibit and eastwood https://github.com/itang/lein-checkall
         [lein-checkall "0.1.1"]
         ;; pretty-print the lein project map https://github.com/technomancy/leiningen/tree/master/lein-pprint
@@ -95,7 +93,7 @@
         ;; Dead code finder https://github.com/venantius/yagni
         [venantius/yagni "0.1.7" :exclusions [org.clojure/clojure]]
         ;; Autotest https://github.com/jakemcc/lein-test-refresh
-        [com.jakemccrary/lein-test-refresh "0.23.0"]
+        [com.jakemccrary/lein-test-refresh "0.24.1"]
       ]  
     }]
 
