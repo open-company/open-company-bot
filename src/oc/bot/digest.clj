@@ -6,6 +6,7 @@
             [cheshire.core :as json]
             [jsoup.soup :as soup]
             [oc.lib.text :as text]
+            [oc.lib.html :as html]
             [oc.lib.slack :as slack]
             [oc.lib.change :as change]
             [oc.bot.image :as image]
@@ -33,17 +34,8 @@
                 :service-name "Bot"}]
     (change/seen-data-for config slack-user-map entry-id)))
 
-(defn post-headline [headline must-see video-id]
-  (let [clean-headline (.text (soup/parse headline))] ; Strip out any HTML tags
-    (cond
-      (and must-see video-id)
-      (str clean-headline " — [Must see video]")
-      must-see
-      (str clean-headline " — [Must see]")
-      video-id
-      (str clean-headline " — [Video]")
-      :else
-      clean-headline)))
+(defn post-headline [headline]
+  (.text (soup/parse headline)))
 
 (def seen-text "✓ You've viewed this post")
 
@@ -54,7 +46,8 @@
   (-> text
    (s/replace #"<" "&lt;")
    (s/replace #">" "&gt;")
-   (s/replace #"&" "&amp;")))
+   (s/replace #"&" "&amp;")
+   (s/replace #"\n" "\n")))
 
 (defn- markdown-post [url headline body]
   (str "<" url "|*" (slack-escaped-text headline) "*>\n" (slack-escaped-text body)))
@@ -63,8 +56,9 @@
                               interaction-attribution must-see video-id body uuid reactions]} msg]
   (let [seen-data (get-seen-data msg uuid)
         author-name (:name publisher)
-        clean-headline (post-headline headline must-see video-id)
+        clean-headline (post-headline headline)
         reduced-body (text/truncated-body body)
+        accessory-image (html/first-body-thumbnail body)
         ;; if read/seen use seen attachment, else use button
         seen-this? (some #(= (:user-id msg) (:user-id %))
                       (get-in seen-data [:post :read]))
@@ -84,10 +78,17 @@
                       {:type "plain_text"
                        :emoji true
                        :text "Must See"})])}
-        body {:type "section"
-              :text {
-                :type "mrkdwn"
-                :text (markdown-post url headline reduced-body)}}
+        body-block {:type "section"
+                    :text {
+                      :type "mrkdwn"
+                      :text (markdown-post url clean-headline reduced-body)}}
+        body-with-thumbnail (if accessory-image
+                             (merge body-block
+                              {:accessory {
+                                :type "image"
+                                :image_url (:thumbnail accessory-image)
+                                :alt_text "Thumbnail"}})
+                             body-block)
         interaction-block (when (or (pos? (or comment-count 0))
                                     (pos? (or (count reactions) 0)))
                             {:type "context"
@@ -103,7 +104,7 @@
         separator-block {:type "divider"}]
     (remove nil?
      [pre-block
-      body
+      body-with-thumbnail
       interaction-block
       post-block
       separator-block])))
@@ -176,6 +177,8 @@
                             all-posts-blocks
                             [footer-block])
         split-blocks (split-blocks all-blocks)]
+    (timbre/debug "All blocks count:" (count all-blocks))
+    (timbre/debug "Split blocks:" split-blocks)
     (timbre/debug "Footer attachment:" footer-block)
     (timbre/info "Sending digest to:" channel " with:" token)
     (if (:intro split-blocks)
