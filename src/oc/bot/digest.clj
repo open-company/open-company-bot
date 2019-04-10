@@ -177,8 +177,8 @@
                             all-posts-blocks
                             [footer-block])
         split-blocks (split-blocks all-blocks)]
-    (timbre/info "DBG all blocks" (count all-blocks))
-    (timbre/info "DBG split blocks" split-blocks)
+    (timbre/debug "All blocks count:" (count all-blocks))
+    (timbre/debug "Split blocks:" split-blocks)
     (timbre/debug "Footer attachment:" footer-block)
     (timbre/info "Sending digest to:" channel " with:" token)
     (if (:intro split-blocks)
