@@ -38,6 +38,7 @@
     "Digest banner S3 bucket: " c/digest-banner-s3-bucket "\n"
     "Digest footer S3 bucket: " c/digest-footer-s3-bucket "\n"
     "Log level: " (name c/log-level) "\n"
+    "FileStack: " (or c/filestack-api-key "false") "\n"
     "Sentry: " (or c/dsn "false") "\n\n"
     (when c/intro? "Ready to serve...\n"))))
 
