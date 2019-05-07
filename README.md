@@ -1,4 +1,4 @@
-# [OpenCompany](https://github.com/open-company) Bot 
+# [OpenCompany](https://github.com/open-company) Bot
 
 [![AGPL License](http://img.shields.io/badge/license-AGPL-blue.svg?style=flat)](https://www.gnu.org/licenses/agpl-3.0.en.html)
 [![Build Status](https://travis-ci.org/open-company/open-company-bot.svg?branch=master)](https://travis-ci.org/open-company/open-company-bot)
@@ -71,6 +71,11 @@ An [AWS S3 bucket](https://aws.amazon.com/s3/) is used to cache Slack banner ima
 
 Another AWS S3 bucket is used to store the 6 footer image varients.
 
+_**Note on bucket naming:** the bot service will look for a bucket named "YOUR-BUCKET-v2",
+where `YOUR-BUCKET` is the name that you've configured for both `:digest-banner-s3-bucket` and
+`:digset-footer-s3-bucket`. So, make sure that when you create the bucket in S3 that you append
+"-v2" to its name._
+
 An API key is needed for [Filestack](https://www.filestack.com/) to build URL's that do image processing.
 
 Before running anything make sure you adjust the values in the config map.
@@ -83,8 +88,8 @@ Before running anything make sure you adjust the values in the config map.
     :aws-secret-access-key "CHANGE-ME"
     :aws-sqs-bot-queue "CHANGE-ME" ; SQS queue to read inbound notifications/requests
     :aws-sqs-storage-queue "CHANGE-ME" ; SQS queue to send requests to the Storage service
-    :aws-s3-digest-banner-bucket "CHANGE-ME" ; S3 bucket for caching digest banners
-    :aws-s3-digest-footer-bucket "CHANGE-ME" ; S3 bucket for storing/serving digest footers
+    :digest-banner-s3-bucket "CHANGE-ME" ; S3 bucket for caching digest banners
+    :digest-footer-s3-bucket "CHANGE-ME" ; S3 bucket for storing/serving digest footers
     :filestack-api-key "CHANGE-ME"
     :log-level "debug"
 }
