@@ -71,11 +71,12 @@ An [AWS S3 bucket](https://aws.amazon.com/s3/) is used to cache Slack banner ima
 
 Another AWS S3 bucket is used to store the 6 footer image varients.
 
-_**Note on bucket naming:** the bot service will look for a bucket named "{YOUR-BUCKET}-{VERSION}",
-where `{YOUR-BUCKET}` is the name that you've configured for both `:digest-banner-s3-bucket` and
-`:digset-footer-s3-bucket` and `{VERSION}` is the [currently configured (hard-coded) version string][1].
-So, make sure that when you create the bucket in S3 that you append `{VERSION}` to its name, or
-you'll receive "bucket not found" exceptions when trying to start the service._
+_**Note on bucket naming:** the bot service will look for a bucket named `{YOUR-BUCKET}-{VERSION}`,
+where `{YOUR-BUCKET}` is the name that you've configured for `:digest-banner-s3-bucket` and
+`:digset-footer-s3-bucket` respectively, and `{VERSION}` is the [currently configured (hard-coded)
+version string][1].So, make sure that when you create the bucket in S3 that you append `{VERSION}`
+to its name, or you'll receive "bucket not found" exceptions when trying to start the service.
+Check the [config][1] file to obtain the current version strings._
 
 An API key is needed for [Filestack](https://www.filestack.com/) to build URL's that do image processing.
 
