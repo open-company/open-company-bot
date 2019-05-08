@@ -71,10 +71,11 @@ An [AWS S3 bucket](https://aws.amazon.com/s3/) is used to cache Slack banner ima
 
 Another AWS S3 bucket is used to store the 6 footer image varients.
 
-_**Note on bucket naming:** the bot service will look for a bucket named "YOUR-BUCKET-v2",
-where `YOUR-BUCKET` is the name that you've configured for both `:digest-banner-s3-bucket` and
-`:digset-footer-s3-bucket`. So, make sure that when you create the bucket in S3 that you append
-"-v2" to its name._
+_**Note on bucket naming:** the bot service will look for a bucket named "{YOUR-BUCKET}-{VERSION}",
+where `{YOUR-BUCKET}` is the name that you've configured for both `:digest-banner-s3-bucket` and
+`:digset-footer-s3-bucket` and `{VERSION}` is the [currently configured (hard-coded) version string][1].
+So, make sure that when you create the bucket in S3 that you append `{VERSION}` to its name, or
+you'll receive "bucket not found" exceptions when trying to start the service._
 
 An API key is needed for [Filestack](https://www.filestack.com/) to build URL's that do image processing.
 
@@ -142,3 +143,5 @@ Copyright © 2016-2019 OpenCompany, LLC.
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the [GNU Affero General Public License](https://www.gnu.org/licenses/agpl-3.0.en.html) for more details.
+
+[1]: https://github.com/open-company/open-company-bot/blob/74e5327601e9781555af9c127f5a64e32820672e/src/oc/bot/config.clj#L51-L55
