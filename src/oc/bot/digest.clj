@@ -58,7 +58,8 @@
         author-name (:name publisher)
         clean-headline (post-headline headline)
         reduced-body (text/truncated-body body)
-        accessory-image (html/first-body-thumbnail body)
+        accessory-image (:thumbnail (html/first-body-thumbnail body))
+        has-accessory-image? (not-empty accessory-image)
         ;; if read/seen use seen attachment, else use button
         seen-this? (some #(= (:user-id msg) (:user-id %))
                       (get-in seen-data [:post :read]))
@@ -82,11 +83,11 @@
                     :text {
                       :type "mrkdwn"
                       :text (markdown-post url clean-headline reduced-body)}}
-        body-with-thumbnail (if accessory-image
+        body-with-thumbnail (if has-accessory-image?
                              (merge body-block
                               {:accessory {
                                 :type "image"
-                                :image_url (:thumbnail accessory-image)
+                                :image_url accessory-image
                                 :alt_text "Thumbnail"}})
                              body-block)
         interaction-block (when (or (pos? (or comment-count 0))
