@@ -67,9 +67,16 @@ lein deps
 
 An [AWS SQS queue](https://aws.amazon.com/sqs/) is used to pass messages to the Bot. Setup an SQS Queue and key/secret access to the queue using the AWS Web Console or API.
 
-An [AWS S3 bucket](https://aws.amazon.com/s3/) is used to cache Slack banner images for the Bot. Setup an S3 bucket using the AWS Web Console or API with access of "Objects can be public".
+An [AWS S3 bucket](https://aws.amazon.com/s3/) is used to cache Slack banner images for the Bot.
 
-Another AWS S3 bucket is used to store the 6 footer image varients.
+Another AWS S3 bucket is used to store the 6 footer image variants. You will need to upload the
+[footer image folders][2] to this bucket manually via the S3 console.
+
+For both buckets, make sure the image objects are publicly accessible from the web. This is
+preferably done by selecting the object in the S3 console, going to the `Permissions` tab,
+and then checking the `Everyone` box under `Public access`. For local development, it's
+fine to just make the bucket itself public, but know that this is not acceptable in production,
+as it allows anyone to list the contents of the bucket.
 
 **Note on bucket naming:** the bot service will look for a bucket named `{YOUR-BUCKET}-{VERSION}`,
 where `{YOUR-BUCKET}` is the name that you've configured for `:digest-banner-s3-bucket` or
@@ -146,3 +153,4 @@ This program is free software: you can redistribute it and/or modify it under th
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the [GNU Affero General Public License](https://www.gnu.org/licenses/agpl-3.0.en.html) for more details.
 
 [1]: https://github.com/open-company/open-company-bot/blob/74e5327601e9781555af9c127f5a64e32820672e/src/oc/bot/config.clj#L51-L55
+[2]: ./src/oc/assets/img/footer/v2
