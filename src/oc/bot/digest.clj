@@ -112,7 +112,8 @@
 (defn- build-slack-digest-messages
   "
   Given a banner-block, a footer-block, and a sequence of post-chunks, returns a sequence of messages
-  where each message is ready to pass to the slack/post-blocks function.
+  where each message is ready to pass to the slack/post-blocks function. When given 0 post-chunks
+  returns nil.
   Here, chunk is defined as a sequence of blocks. While a post-chunk is considered one logical unit, it
   is composed of multiple blocks in order to achieve stylized display in Slack.
   Parition rules are as follows:
@@ -128,12 +129,11 @@
         middle-post-chunks           (->> post-chunks (drop 1) (butlast))
         header-post-chunk            (into [banner-block] (first post-chunks))
         footer-post-chunk            (conj (vec (last post-chunks)) footer-block)]
-    (if (>= num-post-chunks 2)
-      (concat [header-post-chunk]
-              middle-post-chunks
-              [footer-post-chunk])
-      (concat [banner-block] (flatten post-chunks) [footer-block])
-      )))
+    (when (pos? num-post-chunks)
+      (if (= num-post-chunks 1)
+        [[banner-block (ffirst post-chunks) footer-block]]
+        (concat [header-post-chunk] middle-post-chunks [footer-post-chunk])
+        ))))
 
 (defn- posts-with-board-name [board]
   (let [board-name (:name board)]
