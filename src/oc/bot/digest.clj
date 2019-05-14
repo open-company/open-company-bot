@@ -128,10 +128,10 @@
   (let [num-post-chunks              (count post-chunks)
         middle-post-chunks           (->> post-chunks (drop 1) (butlast))
         header-post-chunk            (into [banner-block] (first post-chunks))
-        footer-post-chunk            (conj (vec (last post-chunks)) footer-block)]
+        footer-post-chunk            (-> post-chunks last vec (conj footer-block))]
     (when (pos? num-post-chunks)
       (if (= num-post-chunks 1)
-        [[banner-block (ffirst post-chunks) footer-block]]
+        (vector (conj header-post-chunk footer-block))
         (concat [header-post-chunk] middle-post-chunks [footer-post-chunk])
         ))))
 
