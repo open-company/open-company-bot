@@ -13,4 +13,6 @@ pom.xml.asc
 .ruby-gemset
 .ruby-version
 
+.eastwood
+
 .DS_Store
