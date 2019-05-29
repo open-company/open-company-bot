@@ -231,7 +231,7 @@
                     " comments ")))
         attachment {:title clean-headline
                     :title_link update-url
-                    :text (or abstract reduced-body)
+                    :text (if (s/blank? abstract) reduced-body abstract)
                     :author_name (:name publisher)
                     :author_icon (:avatar-url publisher)
                     :thumb_url (:thumbnail accessory-image)
