@@ -52,12 +52,12 @@
 (defn- markdown-post [url headline body]
   (str "<" url "|*" (slack-escaped-text headline) "*>\n" (slack-escaped-text body)))
 
-(defn- post-as-block [{:keys [publisher url headline published-at comment-count comment-authors board-name
-                              interaction-attribution must-see video-id body uuid reactions]} msg]
+(defn- post-as-block [{:keys [publisher url headline abstract published-at comment-count comment-authors
+                              board-name interaction-attribution must-see video-id body uuid reactions]} msg]
   (let [seen-data (get-seen-data msg uuid)
         author-name (:name publisher)
         clean-headline (post-headline headline)
-        reduced-body (text/truncated-body body)
+        reduced-body (if (s/blank? abstract) (text/truncated-body body) abstract)
         accessory-image (html/first-body-thumbnail body)
         ;; if read/seen use seen attachment, else use button
         seen-this? (some #(= (:user-id msg) (:user-id %))

@@ -16,7 +16,8 @@
             [oc.lib.storage :as storage]
             [oc.bot.async.slack-action :as slack-action]
             [oc.bot.resources.slack-org :as slack-org]
-            [oc.bot.config :as c]))
+            [oc.bot.config :as c]
+            [oc.lib.text :as text]))
 
 (def db-pool (atom false)) ; atom holding DB pool so it can be used for each SQS message
 
@@ -185,6 +186,7 @@
                                            board-slug
                                            entry-uuid
                                            headline
+                                           abstract
                                            note
                                            body
                                            comment-count
@@ -206,10 +208,7 @@
         clean-body (if-not (s/blank? body)
                      (clean-text (.text (soup/parse body)))
                      "")
-        reduced-body (clojure.string/join " "
-                       (filter not-empty
-                         (take 20 ;; 20 words is the average sentence
-                           (clojure.string/split clean-body #" "))))
+        reduced-body (text/truncated-body clean-body)
         accessory-image (html/first-body-thumbnail body)
         share-attribution (if (= (:name publisher) (:name sharer))
                             (str "*" (:name sharer) "* shared a post in *" board-name "*")
@@ -228,9 +227,7 @@
                     " comments ")))
         attachment {:title clean-headline
                     :title_link update-url
-                    :text (if (< (count reduced-body) (count clean-body))
-                            (str reduced-body " ...")
-                            reduced-body)
+                    :text (if (s/blank? abstract) reduced-body abstract)
                     :author_name (:name publisher)
                     :author_icon (:avatar-url publisher)
                     :thumb_url (:thumbnail accessory-image)
@@ -238,7 +235,7 @@
                     :color "#FA6452"}
         attachments (if clean-note
                         [{:pretext text :text clean-note} attachment]
-                        [(assoc attachment :pretext text)])] ; no optional note provided 
+                        [(assoc attachment :pretext text)])] ; no optional note provided
     (slack/post-attachments token channel attachments)))
 
 (defn- invite [token receiver {:keys [org-name from from-id first-name url note] :as msg}]
