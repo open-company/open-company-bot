@@ -6,7 +6,7 @@
     :url "https://www.gnu.org/licenses/agpl-3.0.en.html"
   }
 
-  :min-lein-version "2.7.1"
+  :min-lein-version "2.9.1"
 
   ;; JVM memory
   :jvm-opts ^:replace ["-Xms512m" "-Xmx3072m" "-server"]
@@ -15,8 +15,6 @@
   :dependencies [
     ;; Lisp on the JVM http://clojure.org/documentation
     [org.clojure/clojure "1.10.1"]
-    ;; Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
-    [aleph "0.4.7-alpha5"]
     ;; Async programming tools https://github.com/ztellman/manifold
     [manifold "0.1.9-alpha3"]
     ;; Namespace management https://github.com/clojure/tools.namespace
@@ -26,6 +24,7 @@
     ;; Library for OC projects https://github.com/open-company/open-company-lib
     [open-company/lib "0.17.11"]
     ;; In addition to common functions, brings in the following common dependencies used by this project:
+    ;; Aleph - Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
     ;; defun - Erlang-esque pattern matching for Clojure functions https://github.com/killme2008/defun
     ;; core.async - Async programming and communication https://github.com/clojure/core.async
     ;; Component - Component Lifecycle https://github.com/stuartsierra/component

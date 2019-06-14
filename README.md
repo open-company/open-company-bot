@@ -1,4 +1,4 @@
-# [OpenCompany](https://github.com/open-company) Bot 
+# [OpenCompany](https://github.com/open-company) Bot
 
 [![AGPL License](http://img.shields.io/badge/license-AGPL-blue.svg?style=flat)](https://www.gnu.org/licenses/agpl-3.0.en.html)
 [![Build Status](https://travis-ci.org/open-company/open-company-bot.svg?branch=master)](https://travis-ci.org/open-company/open-company-bot)
@@ -33,18 +33,24 @@ Prospective users of [Carrot](https://carrot.io/) should get started by going to
 
 Most of the dependencies are internal, meaning [Leiningen](https://github.com/technomancy/leiningen) will handle getting them for you. There are a few exceptions:
 
-* [Java 8+](http://www.oracle.com/technetwork/java/javase/downloads/index.html) - a Java 8+ JRE is needed to run Clojure
-* [Leiningen](https://github.com/technomancy/leiningen) 2.7.1+ - Clojure's build and dependency management tool
+* [Java](https://openjdk.java.net/) - a Java 8+ JRE is needed to run Clojure
+* [Leiningen](https://github.com/technomancy/leiningen) - Leiningen  2.9.1+ is a Clojure build and dependency management tool
 
 #### Java
 
-Chances are your system already has Java 8+ installed. You can verify this with:
+Your system may already have Java 8+ installed. You can verify this with:
 
 ```console
 java -version
 ```
 
 If you do not have Java 8+ [download it](http://www.oracle.com/technetwork/java/javase/downloads/index.html) and follow the installation instructions.
+
+An option we recommend is [OpenJDK](https://openjdk.java.net/). There are [instructions for Linux](https://openjdk.java.net/install/index.html) and [Homebrew](https://brew.sh/) can be used to install OpenJDK on a Mac with:
+
+```
+brew update && brew cask install adoptopenjdk8
+```
 
 #### Leiningen
 
@@ -67,9 +73,23 @@ lein deps
 
 An [AWS SQS queue](https://aws.amazon.com/sqs/) is used to pass messages to the Bot. Setup an SQS Queue and key/secret access to the queue using the AWS Web Console or API.
 
-An [AWS S3 bucket](https://aws.amazon.com/s3/) is used to cache Slack banner images for the Bot. Setup an S3 bucket using the AWS Web Console or API with access of "Objects can be public".
+An [AWS S3 bucket](https://aws.amazon.com/s3/) is used to cache Slack banner images for the Bot.
 
-Another AWS S3 bucket is used to store the 6 footer image varients.
+Another AWS S3 bucket is used to store the 6 footer image variants. You will need to upload the
+[footer image folders][2] to this bucket manually via the S3 console.
+
+For both buckets, make sure the image objects are publicly accessible from the web. This is
+preferably done by selecting the object in the S3 console, going to the `Permissions` tab,
+and then checking the `Everyone` box under `Public access`. For local development, it's
+fine to just make the bucket itself public, but know that this is not acceptable in production,
+as it allows anyone to list the contents of the bucket.
+
+**Note on bucket naming:** the bot service will look for a bucket named `{YOUR-BUCKET}-{VERSION}`,
+where `{YOUR-BUCKET}` is the name that you've configured for `:digest-banner-s3-bucket` or
+`:digset-footer-s3-bucket` respectively, and `{VERSION}` is the [currently configured
+version string][1] (e.g. "v2"). So, make sure that when you create the bucket in S3 that you append
+`{VERSION}` to its name, or you'll receive "bucket not found" exceptions when trying to start the service.
+Check the [config][1] file to obtain the current version strings. For example: `my-banner-bucket-v2`.
 
 An API key is needed for [Filestack](https://www.filestack.com/) to build URL's that do image processing.
 
@@ -83,8 +103,8 @@ Before running anything make sure you adjust the values in the config map.
     :aws-secret-access-key "CHANGE-ME"
     :aws-sqs-bot-queue "CHANGE-ME" ; SQS queue to read inbound notifications/requests
     :aws-sqs-storage-queue "CHANGE-ME" ; SQS queue to send requests to the Storage service
-    :aws-s3-digest-banner-bucket "CHANGE-ME" ; S3 bucket for caching digest banners
-    :aws-s3-digest-footer-bucket "CHANGE-ME" ; S3 bucket for storing/serving digest footers
+    :digest-banner-s3-bucket "CHANGE-ME" ; S3 bucket for caching digest banners
+    :digest-footer-s3-bucket "CHANGE-ME" ; S3 bucket for storing/serving digest footers
     :filestack-api-key "CHANGE-ME"
     :log-level "debug"
 }
@@ -137,3 +157,6 @@ Copyright © 2016-2019 OpenCompany, LLC.
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the [GNU Affero General Public License](https://www.gnu.org/licenses/agpl-3.0.en.html) for more details.
+
+[1]: https://github.com/open-company/open-company-bot/blob/74e5327601e9781555af9c127f5a64e32820672e/src/oc/bot/config.clj#L51-L55
+[2]: ./src/oc/assets/img/footer/v2

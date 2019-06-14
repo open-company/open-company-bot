@@ -51,12 +51,12 @@
 (defn- markdown-post [url headline body]
   (str "<" url "|*" (slack-escaped-text headline) "*>\n" (slack-escaped-text body)))
 
-(defn- post-as-chunk [{:keys [publisher url headline published-at comment-count comment-authors board-name
-                              interaction-attribution must-see video-id body uuid reactions]} msg]
+(defn- post-as-chunk [{:keys [publisher url headline abstract published-at comment-count comment-authors
+                              board-name interaction-attribution must-see video-id body uuid reactions]} msg]
   (let [seen-data (get-seen-data msg uuid)
         author-name (:name publisher)
         clean-headline (post-headline headline)
-        reduced-body (text/truncated-body body)
+        reduced-body (if (s/blank? abstract) (text/truncated-body body) abstract)
         accessory-image (:thumbnail (html/first-body-thumbnail body))
         has-accessory-image? (not-empty accessory-image)
         ;; if read/seen use seen attachment, else use button
