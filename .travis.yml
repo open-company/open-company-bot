@@ -11,6 +11,7 @@ before_script:
   - "echo $JAVA_OPTS"
   - lein clean
 script:
+- lein midje
 - lein eastwood
 - lein kibit
 branches:

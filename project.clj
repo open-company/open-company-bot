@@ -14,12 +14,12 @@
   ;; All profile dependencies
   :dependencies [
     ;; Lisp on the JVM http://clojure.org/documentation
-    [org.clojure/clojure "1.10.1-RC1"]
+    [org.clojure/clojure "1.10.1"]
     ;; Async programming tools https://github.com/ztellman/manifold
     [manifold "0.1.9-alpha3"]
     ;; Namespace management https://github.com/clojure/tools.namespace
     ;; NB: org.clojure/tools.reader pulled in by oc.lib
-    [org.clojure/tools.namespace "0.3.0-alpha4" :exclusions [org.clojure/tools.reader]] 
+    [org.clojure/tools.namespace "0.3.0" :exclusions [org.clojure/tools.reader]]
 
     ;; Library for OC projects https://github.com/open-company/open-company-lib
     [open-company/lib "0.17.11"]
@@ -55,12 +55,21 @@
       :env {
         :db-name "open_company_auth_qa"
       }
+      :dependencies [
+        ;; Example-based testing https://github.com/marick/Midje
+        ;; NB: clj-time is pulled in by oc.lib
+        ;; NB: joda-time is pulled in by oc.lib via clj-time
+        ;; NB: commons-codec pulled in by oc.lib
+        [midje "1.9.8" :exclusions [joda-time clj-time commons-codec]]
+        ]
       :plugins [
         ;; Linter https://github.com/jonase/eastwood
         [jonase/eastwood "0.3.5"]
-        ;; Static code search for non-idiomatic code https://github.com/jonase/kibit        
+        ;; Test framework https://github.com/marick/Midje
+        [lein-midje "3.2.1"]
+        ;; Static code search for non-idiomatic code https://github.com/jonase/kibit
         [lein-kibit "0.1.6" :exclusions [org.clojure/clojure]]
-      ]
+        ]
     }
 
     ;; Dev environment and dependencies
@@ -80,7 +89,7 @@
       :plugins [
         ;; Check for code smells https://github.com/dakrone/lein-bikeshed
         ;; NB: org.clojure/tools.cli is pulled in by lein-kibit
-        [lein-bikeshed "0.5.2" :exclusions [org.clojure/tools.cli]] 
+        [lein-bikeshed "0.5.2" :exclusions [org.clojure/tools.cli]]
         ;; Runs bikeshed, kibit and eastwood https://github.com/itang/lein-checkall
         [lein-checkall "0.1.1"]
         ;; pretty-print the lein project map https://github.com/technomancy/leiningen/tree/master/lein-pprint
@@ -93,7 +102,7 @@
         [venantius/yagni "0.1.7" :exclusions [org.clojure/clojure]]
         ;; Autotest https://github.com/jakemcc/lein-test-refresh
         [com.jakemccrary/lein-test-refresh "0.24.1"]
-      ]  
+      ]
     }]
 
     :repl-config [:dev {
@@ -123,7 +132,7 @@
       :env {
         :db-name "open_company_auth"
         :env "production"
-      }      
+      }
     }
 
     :uberjar {
@@ -152,7 +161,7 @@
 
   :eastwood {
     ;; Disable some linters that are enabled by default
-    ;; contant-test - just seems mostly ill-advised, logical constants are useful in something like a `->cond` 
+    ;; contant-test - just seems mostly ill-advised, logical constants are useful in something like a `->cond`
     ;; wrong-arity - unfortunate, but it's failing on 3/arity of sqs/send-message
     ;; implicit-dependencies - uhh, just seems dumb
     :exclude-linters [:constant-test :wrong-arity :implicit-dependencies]
