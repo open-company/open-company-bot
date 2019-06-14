@@ -51,8 +51,18 @@
 (defn- markdown-post [url headline body]
   (str "<" url "|*" (slack-escaped-text headline) "*>\n" (slack-escaped-text body)))
 
+(defn- board-access-string [board-access]
+  (cond
+    (= board-access "private")
+    " (private)"
+    (= board-access "public")
+    " (public)"
+    :else
+    ""))
+
 (defn- post-as-chunk [{:keys [publisher url headline abstract published-at comment-count comment-authors
-                              board-name interaction-attribution must-see video-id body uuid reactions]} msg]
+                              board-name board-access interaction-attribution must-see video-id body uuid
+                              reactions]} msg]
   (let [seen-data (get-seen-data msg uuid)
         author-name (:name publisher)
         clean-headline (post-headline headline)
@@ -69,7 +79,7 @@
                      :alt_text author-name}
                     {:type "plain_text"
                      :emoji true
-                     :text (str author-name " in " board-name)}
+                     :text (str author-name " in " board-name (board-access-string board-access))}
                     (when must-see
                       {:type "image"
                        :image_url (static-image-url "digest_must_see_icon@4x.png")
