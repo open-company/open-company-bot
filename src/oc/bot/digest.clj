@@ -176,10 +176,13 @@
         non-must-see    (filter (comp not :must-see) sorted-posts)
         must-see-chunks (mapv #(post-as-chunk % msg) must-see)
         regular-chunks  (mapv #(post-as-chunk % msg) non-must-see)
-        regular-chunks* (update regular-chunks (-> regular-chunks count dec) butlast) ;; remove the last divider
-        all-chunks      (concat must-see-chunks regular-chunks*)
+        all-chunks      (concat must-see-chunks regular-chunks)
+        all-chunks*     (if-let [last-chunk (last all-chunks)]
+                          (conj (-> all-chunks butlast vec)
+                                (butlast last-chunk)) ;; remove the last section divider
+                          all-chunks)
         digest-messages (build-slack-digest-messages banner-block
-                                                     all-chunks
+                                                     all-chunks*
                                                      footer-block)
         ]
     (timbre/debug "Banner attachment:" banner-block)
