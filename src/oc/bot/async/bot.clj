@@ -236,7 +236,8 @@
                     :author_icon (:avatar-url publisher)
                     :thumb_url (:thumbnail accessory-image)
                     :footer footer
-                    :color "#FA6452"}
+                    :color "#FA6452"
+                    :actions [{:text "View post" :type "button" :url update-url}]}
         attachments (if clean-note
                         [{:pretext text :text clean-note} attachment]
                         [(assoc attachment :pretext text)])] ; no optional note provided
