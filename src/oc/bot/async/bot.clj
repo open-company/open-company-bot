@@ -22,6 +22,7 @@
 (def db-pool (atom false)) ; atom holding DB pool so it can be used for each SQS message
 
 (def attachment-grey-color "#E8E8E8")
+(def attachment-blue-color "#6187F8")
 
 ;; ----- core.async -----
 
@@ -161,6 +162,11 @@
     :else
     ""))
 
+(defn- vertical-line-color [must-see]
+  (if must-see
+    attachment-blue-color
+    attachment-grey-color))
+
 (defn- send-private-board-notification [msg]
   (let [notifications (-> msg :content :notifications)
         board (-> msg :content :new)
@@ -249,7 +255,7 @@
                     :author_icon (:avatar-url publisher)
                     :thumb_url (:thumbnail accessory-image)
                     :footer footer
-                    :color "#FA6452"
+                    :color (vertical-line-color must-see)
                     :actions [{:text "View post" :type "button" :url update-url}]}
         attachments (if clean-note
                         [{:pretext text :text clean-note} attachment]
