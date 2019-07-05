@@ -64,7 +64,7 @@
         ]
       :plugins [
         ;; Linter https://github.com/jonase/eastwood
-        [jonase/eastwood "0.3.5"]
+        [jonase/eastwood "0.3.6"]
         ;; Test framework https://github.com/marick/Midje
         [lein-midje "3.2.1"]
         ;; Static code search for non-idiomatic code https://github.com/jonase/kibit
