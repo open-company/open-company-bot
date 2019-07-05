@@ -152,6 +152,15 @@
        (if comment? "comment" "post")
        ":"))))
 
+(defn- board-access-string [board-access]
+  (cond
+    (= board-access "private")
+    " (private)"
+    (= board-access "public")
+    " (public)"
+    :else
+    ""))
+
 (defn- send-private-board-notification [msg]
   (let [notifications (-> msg :content :notifications)
         board (-> msg :content :new)
@@ -172,7 +181,7 @@
                                            (:slug (:org msg))
                                            (:slug board)])
                     message (str "You've been invited to a private section: "
-                                 "<" board-url "|" (:name board) ">"
+                                 "<" board-url "|" (:name board) (board-access-string (:access board)) ">"
                                  " on Carrot.\n\n")
                     receiver (first (adjust-receiver
                                      {:receiver {
@@ -188,6 +197,7 @@
                                            org-name
                                            board-name
                                            board-slug
+                                           board-access
                                            entry-uuid
                                            headline
                                            abstract
@@ -215,11 +225,14 @@
         reduced-body (text/truncated-body clean-body)
         accessory-image (html/first-body-thumbnail body)
         share-attribution (if (= (:name publisher) (:name sharer))
-                            (str "*" (:name sharer) "* shared a post in *" board-name "*")
-                            (str "*" (:name sharer) "* shared a post by *" (:name publisher) "* in *" board-name "*"))
+                            (str "*" (:name sharer) "* shared a post in *" board-name (board-access-string board-access) "*")
+                            (str "*" (:name sharer)
+                             "* shared a post by *" (:name publisher)
+                             "* in *" board-name (board-access-string board-access) "*"))
         text (if auto-share
               ;; Post automatically shared on publication
-              (str "A new post from *" (:name publisher) "* in *" board-name "*")
+              (str "A new post from *" (:name publisher) "* in *" board-name
+                (board-access-string board-access) "*")
               ;; Manual share
               (str share-attribution))
         footer (when-not auto-share
