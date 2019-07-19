@@ -22,20 +22,12 @@
 (defn post-headline [headline]
   (.text (soup/parse headline)))
 
-(def seen-text "✓ You've viewed this post")
-
-(defn- static-image-url [image-name]
-  (str c/digest-bot-static-images-url "/slack_images/" image-name))
-
 (defn- slack-escaped-text [text]
   (-> text
    (s/replace #"<" "&lt;")
    (s/replace #">" "&gt;")
    (s/replace #"&" "&amp;")
    (s/replace #"\n" "\n")))
-
-(defn- markdown-post [url headline body]
-  (str "<" url "|*" (slack-escaped-text headline) "*>\n" (slack-escaped-text body)))
 
 (defn- board-access-string [board-access]
   (cond
@@ -57,9 +49,9 @@
         seen-attach [{:type "button"
                       :text "👀 View post"
                       :url url}]
-        message {:fallback (str "A post in " board-name " by " author-name ", '" clean-headline "'.")
+        message {:fallback (str "A post in " board-name (board-access-string board-access) " by " author-name ", '" clean-headline "'.")
                  :color (if must-see "#6187f8" "#e8e8e8")
-                 :author_name (str author-name " in " board-name)
+                 :author_name (str author-name " in " board-name (board-access-string board-access))
                  :author_icon (user-avatar/fix-avatar-url c/filestack-api-key (:avatar-url publisher))
                  :title clean-headline
                  :title_link url
