@@ -60,7 +60,7 @@
         message {:fallback (str "A post in " board-name " by " author-name ", '" clean-headline "'.")
                  :color (if must-see "#6187f8" "#e8e8e8")
                  :author_name (str author-name " in " board-name)
-                 :author_icon (user-avatar/fix-avatar-url config/filestack-api-key (:avatar-url publisher))
+                 :author_icon (user-avatar/fix-avatar-url c/filestack-api-key (:avatar-url publisher))
                  :title clean-headline
                  :title_link url
                  :text reduced-body
