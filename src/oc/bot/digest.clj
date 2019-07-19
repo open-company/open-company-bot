@@ -22,13 +22,6 @@
 (defn post-headline [headline]
   (.text (soup/parse headline)))
 
-(defn- slack-escaped-text [text]
-  (-> text
-   (s/replace #"<" "&lt;")
-   (s/replace #">" "&gt;")
-   (s/replace #"&" "&amp;")
-   (s/replace #"\n" "\n")))
-
 (defn- board-access-string [board-access]
   (cond
     (= board-access "private")
