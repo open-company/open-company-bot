@@ -64,15 +64,18 @@
   (let [board-name (:name board)]
     (assoc board :posts (map #(assoc % :board-name board-name) (:posts board)))))
 
+(defn get-post-chunks [msg]
+  (let [boards          (map posts-with-board-name (:boards msg))
+        all-posts       (mapcat :posts boards)
+        sorted-posts    (sort-by (juxt :must-see :board-name :published-at) all-posts)]
+    (mapv #(post-as-chunk % msg) sorted-posts)))
+
 (defn send-digest [token {channel :id :as receiver} {:keys [org-name org-slug logo-url boards] :as msg}]
   {:pre [(string? token)
          (map? receiver)
          (map? msg)]}
   (let [intro           (str ":coffee: Good morning " (or org-name "Carrot"))
-        boards          (map posts-with-board-name (:boards msg))
-        all-posts       (mapcat :posts boards)
-        sorted-posts    (sort-by (juxt :must-see :board-name :published-at) all-posts)
-        all-chunks      (mapv #(post-as-chunk % msg) sorted-posts)]
+        all-chunks (msg)]
     (timbre/debug "Chunk count:" (count all-chunks))
     (timbre/info "Sending digest to:" channel " with:" token)
     (slack/post-attachments token channel [(first all-chunks)] intro)
