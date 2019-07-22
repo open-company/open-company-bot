@@ -75,7 +75,7 @@
          (map? receiver)
          (map? msg)]}
   (let [intro           (str ":coffee: Good morning " (or org-name "Carrot"))
-        all-chunks (msg)]
+        all-chunks (get-post-chunks msg)]
     (timbre/debug "Chunk count:" (count all-chunks))
     (timbre/info "Sending digest to:" channel " with:" token)
     (slack/post-attachments token channel [(first all-chunks)] intro)
