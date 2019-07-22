@@ -51,7 +51,7 @@
                  :text reduced-body
                  :actions seen-attach}
         with-accessory-image (if has-accessory-image?
-                               (assoc message :image_url accessory-image)
+                               (assoc message :thumb_url accessory-image)
                                message)
         comment-label (str comment-count-label
                            (when (seq new-comment-label)
