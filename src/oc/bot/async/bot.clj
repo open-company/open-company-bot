@@ -410,6 +410,30 @@
                             [attachment]
                             content)))
 
+(defn- follow-up-notification [token receiver {:keys [org follow-up] :as msg}]
+  {:pre [(string? token)
+         (map? receiver)
+         (map? msg)]}
+  (timbre/info "Sending follow-up notification to Slack channel:" receiver)
+  (let [post-data (get-post-data msg)
+        clean-body (if-not (s/blank? (:body post-data))
+                     (clean-text (.text (soup/parse (:body post-data))))
+                     "")
+        entry-url (notification-entry-url msg post-data)
+        follow-up-author (:author follow-up)
+        author-name (or (:name follow-up-author) (str (:first-name follow-up-author) " " (:last-name follow-up-author)))
+        text-for-notification (str ":zap: " author-name " created a follow-up for you")]
+    (slack/post-attachments token
+                            (:id receiver)
+                            [{:title (:headline post-data)
+                              :title_link entry-url
+                              :text clean-body
+                              :color attachment-blue-color
+                              :actions [{:type "button"
+                                         :text "View post"
+                                         :url entry-url}]}]
+                            text-for-notification)))
+
 ;; Messages type handler
 
 (defn- bot-handler [msg]
@@ -429,6 +453,7 @@
       :notify (notify token receiver msg)
       :reminder-notification (reminder-notification token receiver msg)
       :reminder-alert (reminder-alert token receiver msg)
+      :follow-up (follow-up-notification token receiver msg)
       (timbre/warn "Ignoring message with script type:" script-type))))
 
 ;; ----- Event loop -----
