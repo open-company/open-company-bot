@@ -39,18 +39,13 @@
         headline-with-tag (cond
                             follow-up (str clean-headline " [Follow-up]")
                             must-see (str clean-headline " [Must See]")
-                            clean-headline)
+                            :else clean-headline)
         reduced-body (if (s/blank? abstract) (text/truncated-body body) abstract)
         accessory-image (:thumbnail (html/first-body-thumbnail body))
         has-accessory-image? (not-empty accessory-image)
-        btn-attach (remove nil?
-                    [{:type "button"
+        btn-attach [{:type "button"
                       :text "👀 View post"
-                      :url url}
-                     (when-not follow-up
-                       {:type "button"
-                        :text "⏰ Follow-up later"
-                        :url url})])
+                      :url url}]
         message {:fallback (str "A post in " board-name (board-access-string board-access) " by " author-name ", '" clean-headline "'.")
                  :color (if (or must-see follow-up) "#6187f8" "#e8e8e8")
                  :author_name (str author-name " in " board-name (board-access-string board-access))
@@ -58,7 +53,7 @@
                  :title headline-with-tag
                  :title_link url
                  :text reduced-body
-                 :actions seen-attach}
+                 :actions btn-attach}
         with-accessory-image (if has-accessory-image?
                                (assoc message :thumb_url accessory-image)
                                message)
