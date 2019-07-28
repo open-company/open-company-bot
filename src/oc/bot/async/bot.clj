@@ -16,6 +16,7 @@
             [oc.lib.storage :as storage]
             [oc.bot.async.slack-action :as slack-action]
             [oc.bot.resources.slack-org :as slack-org]
+            [oc.lib.user :as user]
             [oc.bot.config :as c]
             [oc.lib.text :as text]))
 
@@ -416,12 +417,12 @@
          (map? msg)]}
   (timbre/info "Sending follow-up notification to Slack channel:" receiver)
   (let [post-data (get-post-data msg)
+        follow-up-data (first (filterv #(= (-> % :assignee :user-id) (:user-id msg)) (:follow-ups post-data)))
         clean-body (if-not (s/blank? (:body post-data))
-                     (clean-text (.text (soup/parse (:body post-data))))
+                     (text/truncated-body (clean-text (.text (soup/parse (:body post-data)))))
                      "")
         entry-url (notification-entry-url msg post-data)
-        follow-up-author (:author follow-up)
-        author-name (or (:name follow-up-author) (str (:first-name follow-up-author) " " (:last-name follow-up-author)))
+        author-name (user/name-for (:author follow-up-data))
         text-for-notification (str ":zap: " author-name " created a follow-up for you")]
     (slack/post-attachments token
                             (:id receiver)
