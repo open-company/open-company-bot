@@ -150,7 +150,7 @@
         user-id (:user-id notification)
         from (:author notification)]
     (if-not mention?
-      (if (not= (:user-id entry-publisher-id) user-id)
+      (if (not= (:user-id entry-publisher) user-id)
         (str ":speech_balloon: Also *" (:name from) "* commented on " (:name entry-publisher) "'s post")
         (str ":speech_balloon: You have a new comment by *" (:name from) "* on your post"))
       (str ":speech_balloon: " (:name from) " mentioned you in a "
