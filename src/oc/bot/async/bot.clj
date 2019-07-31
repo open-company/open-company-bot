@@ -146,10 +146,14 @@
   [{:keys [org notification] :as msg}]
   (let [comment? (:interaction-id notification)
         mention? (:mention? notification)
-        from (-> notification :author :name)]
+        entry-publisher (:entry-publisher notification)
+        user-id (:user-id notification)
+        from (:author notification)]
     (if-not mention?
-      (str ":speech_balloon: You have a new comment by *" from "* on your post")
-      (str ":speech_balloon: " from " mentioned you in a "
+      (if (not= (:user-id entry-publisher-id) user-id)
+        (str ":speech_balloon: Also *" (:name from) "* commented on " (:name entry-publisher) "'s post")
+        (str ":speech_balloon: You have a new comment by *" (:name from) "* on your post"))
+      (str ":speech_balloon: " (:name from) " mentioned you in a "
        (if comment? "comment" "post")
        ":"))))
 
