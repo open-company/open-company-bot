@@ -60,7 +60,7 @@
         ;; NB: clj-time is pulled in by oc.lib
         ;; NB: joda-time is pulled in by oc.lib via clj-time
         ;; NB: commons-codec pulled in by oc.lib
-        [midje "1.9.8" :exclusions [joda-time clj-time commons-codec]]
+        [midje "1.9.9" :exclusions [joda-time clj-time commons-codec]]
         ]
       :plugins [
         ;; Linter https://github.com/jonase/eastwood
@@ -68,7 +68,7 @@
         ;; Test framework https://github.com/marick/Midje
         [lein-midje "3.2.1"]
         ;; Static code search for non-idiomatic code https://github.com/jonase/kibit
-        [lein-kibit "0.1.6" :exclusions [org.clojure/clojure]]
+        [lein-kibit "0.1.7" :exclusions [org.clojure/clojure]]
         ]
     }
 
