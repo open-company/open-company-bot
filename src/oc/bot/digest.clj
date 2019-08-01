@@ -9,7 +9,11 @@
             [oc.lib.slack :as slack]
             [oc.lib.user-avatar :as user-avatar]
             [oc.bot.config :as c]
-            [clojure.string :as s]))
+            [clojure.string :as s]
+            [clj-time.core :as t]
+            [clj-time.format :as f]))
+
+(def date-format (f/formatter "MMMM d, YYYY"))
 
 (defonce footer-fallbacks [
   "That's all for now!"
@@ -74,7 +78,8 @@
   {:pre [(string? token)
          (map? receiver)
          (map? msg)]}
-  (let [intro           (str ":coffee: Good morning " (or org-name "Carrot"))
+  (let [date-str   (f/unparse date-format (t/now))
+        intro      (str ":coffee: Your " (or org-name "Carrot") " daily digest for " date-str)
         all-chunks (get-post-chunks msg)]
     (timbre/debug "Chunk count:" (count all-chunks))
     (timbre/info "Sending digest to:" channel " with:" token)
