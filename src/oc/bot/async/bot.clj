@@ -134,13 +134,12 @@
                       :user-id (:user-id msg)
                       :avatar-url (:avatar-url msg)
                       :team-id (:team-id org)} ;; Let's read the team-id from the org to avoid problems on multiple org users}
-        id-token (jwt/generate-id-token token-claims c/passphrase)]
-    (s/join "/" [c/web-url
-                 org-slug
-                 board-slug
-                 "post"
-                 uuid
-                 (str "?id=" id-token)])))
+        id-token (jwt/generate-id-token token-claims c/passphrase)
+        interaction-id (:interaction-id (:notification msg))
+        base-url (if (seq interaction-id)
+                   (s/join "/" [c/web-url org-slug board-slug "post" uuid])
+                   (s/join "/" [c/web-url org-slug board-slug "post" uuid "comment" interaction-id]))]
+    (str base-url "?id=" id-token)))
 
 (defn- text-for-notification
   [{:keys [org notification] :as msg}]
