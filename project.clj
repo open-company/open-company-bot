@@ -19,10 +19,10 @@
     [manifold "0.1.9-alpha3"]
     ;; Namespace management https://github.com/clojure/tools.namespace
     ;; NB: org.clojure/tools.reader pulled in by oc.lib
-    [org.clojure/tools.namespace "0.3.0" :exclusions [org.clojure/tools.reader]]
+    [org.clojure/tools.namespace "0.3.1" :exclusions [org.clojure/tools.reader]]
 
     ;; Library for OC projects https://github.com/open-company/open-company-lib
-    [open-company/lib "0.17.13-alpha2"]
+    [open-company/lib "0.17.14"]
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; Aleph - Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
     ;; defun - Erlang-esque pattern matching for Clojure functions https://github.com/killme2008/defun

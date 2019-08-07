@@ -7,7 +7,7 @@
             [oc.lib.text :as text]
             [oc.lib.html :as html]
             [oc.lib.slack :as slack]
-            [oc.lib.user :as user]
+            [oc.lib.user :as user-avatar]
             [oc.bot.config :as c]
             [clojure.string :as s]
             [clj-time.core :as t]
@@ -53,7 +53,7 @@
         message {:fallback (str "A post in " board-name (board-access-string board-access) " by " author-name ", '" clean-headline "'.")
                  :color (if (or must-see follow-up) "#6187f8" "#e8e8e8")
                  :author_name (str author-name " in " board-name (board-access-string board-access))
-                 :author_icon (user/fix-avatar-url c/filestack-api-key (:avatar-url publisher))
+                 :author_icon (user-avatar/fix-avatar-url c/filestack-api-key (:avatar-url publisher))
                  :title headline-with-tag
                  :title_link url
                  :text reduced-body
