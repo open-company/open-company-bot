@@ -137,8 +137,8 @@
         id-token (jwt/generate-id-token token-claims c/passphrase)
         interaction-id (:interaction-id (:notification msg))
         base-url (if (seq interaction-id)
-                   (s/join "/" [c/web-url org-slug board-slug "post" uuid])
-                   (s/join "/" [c/web-url org-slug board-slug "post" uuid "comment" interaction-id]))]
+                   (s/join "/" [c/web-url org-slug board-slug "post" uuid "comment" interaction-id])
+                   (s/join "/" [c/web-url org-slug board-slug "post" uuid]))]
     (str base-url "?id=" id-token)))
 
 (defn- text-for-notification
