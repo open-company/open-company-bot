@@ -84,13 +84,6 @@ and then checking the `Everyone` box under `Public access`. For local developmen
 fine to just make the bucket itself public, but know that this is not acceptable in production,
 as it allows anyone to list the contents of the bucket.
 
-**Note on bucket naming:** the bot service will look for a bucket named `{YOUR-BUCKET}-{VERSION}`,
-where `{YOUR-BUCKET}` is the name that you've configured for `:digest-banner-s3-bucket` or
-`:digset-footer-s3-bucket` respectively, and `{VERSION}` is the [currently configured
-version string][1] (e.g. "v2"). So, make sure that when you create the bucket in S3 that you append
-`{VERSION}` to its name, or you'll receive "bucket not found" exceptions when trying to start the service.
-Check the [config][1] file to obtain the current version strings. For example: `my-banner-bucket-v2`.
-
 An API key is needed for [Filestack](https://www.filestack.com/) to build URL's that do image processing.
 
 Before running anything make sure you adjust the values in the config map.
@@ -103,8 +96,6 @@ Before running anything make sure you adjust the values in the config map.
     :aws-secret-access-key "CHANGE-ME"
     :aws-sqs-bot-queue "CHANGE-ME" ; SQS queue to read inbound notifications/requests
     :aws-sqs-storage-queue "CHANGE-ME" ; SQS queue to send requests to the Storage service
-    :digest-banner-s3-bucket "CHANGE-ME" ; S3 bucket for caching digest banners
-    :digest-footer-s3-bucket "CHANGE-ME" ; S3 bucket for storing/serving digest footers
     :filestack-api-key "CHANGE-ME"
     :log-level "debug"
 }
