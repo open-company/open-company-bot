@@ -7,7 +7,7 @@
             [oc.lib.text :as text]
             [oc.lib.html :as html]
             [oc.lib.slack :as slack]
-            [oc.lib.user-avatar :as user-avatar]
+            [oc.lib.user :as user-avatar]
             [oc.bot.config :as c]
             [clojure.string :as s]
             [clj-time.core :as t]
