@@ -15,14 +15,6 @@
 
 (def date-format (f/formatter "MMMM d, YYYY"))
 
-(defonce footer-fallbacks [
-  "That's all for now!"
-  "You're all caught up."
-  "Have a great day!"
-  "Now you're in sync."
-  "Go seize the day."
-  "That's a wrap, enjoy the day!"])
-
 (defn post-headline [headline]
   (.text (soup/parse headline)))
 
