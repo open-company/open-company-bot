@@ -15,14 +15,6 @@
 
 (def date-format (f/formatter "MMMM d, YYYY"))
 
-(defonce footer-fallbacks [
-  "That's all for now!"
-  "You're all caught up."
-  "Have a great day!"
-  "Now you're in sync."
-  "Go seize the day."
-  "That's a wrap, enjoy the day!"])
-
 (defn post-headline [headline]
   (.text (soup/parse headline)))
 
@@ -37,23 +29,27 @@
 
 (defn- post-as-chunk [{:keys [publisher url headline abstract published-at comment-count-label new-comment-label
                               board-name board-access interaction-attribution must-see video-id body uuid
-                              reactions]} msg]
+                              reactions follow-up]} msg]
   (let [author-name (:name publisher)
         clean-headline (post-headline headline)
+        headline-with-tag (cond
+                            follow-up (str clean-headline " [Follow-up]")
+                            must-see (str clean-headline " [Must See]")
+                            :else clean-headline)
         reduced-body (if (s/blank? abstract) (text/truncated-body body) abstract)
         accessory-image (:thumbnail (html/first-body-thumbnail body))
         has-accessory-image? (not-empty accessory-image)
-        seen-attach [{:type "button"
+        btn-attach [{:type "button"
                       :text "👀 View post"
                       :url url}]
         message {:fallback (str "A post in " board-name (board-access-string board-access) " by " author-name ", '" clean-headline "'.")
-                 :color (if must-see "#6187f8" "#e8e8e8")
+                 :color (if (or must-see follow-up) "#6187f8" "#e8e8e8")
                  :author_name (str author-name " in " board-name (board-access-string board-access))
                  :author_icon (user-avatar/fix-avatar-url c/filestack-api-key (:avatar-url publisher))
-                 :title clean-headline
+                 :title headline-with-tag
                  :title_link url
                  :text reduced-body
-                 :actions seen-attach}
+                 :actions btn-attach}
         with-accessory-image (if has-accessory-image?
                                (assoc message :thumb_url accessory-image)
                                message)
@@ -71,7 +67,7 @@
 (defn get-post-chunks [msg]
   (let [boards          (map posts-with-board-name (:boards msg))
         all-posts       (mapcat :posts boards)
-        sorted-posts    (sort-by (juxt :must-see :board-name :published-at) all-posts)]
+        sorted-posts    (sort-by (juxt :follow-up :board-name :published-at) all-posts)]
     (mapv #(post-as-chunk % msg) sorted-posts)))
 
 (defn send-digest [token {channel :id :as receiver} {:keys [org-name org-slug logo-url boards] :as msg}]
