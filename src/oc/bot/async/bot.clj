@@ -16,6 +16,7 @@
             [oc.lib.storage :as storage]
             [oc.bot.async.slack-action :as slack-action]
             [oc.bot.resources.slack-org :as slack-org]
+            [oc.lib.user :as user]
             [oc.bot.config :as c]
             [oc.lib.text :as text]))
 
@@ -409,6 +410,30 @@
                             [attachment]
                             content)))
 
+(defn- follow-up-notification [token receiver {:keys [org follow-up] :as msg}]
+  {:pre [(string? token)
+         (map? receiver)
+         (map? msg)]}
+  (timbre/info "Sending follow-up notification to Slack channel:" receiver)
+  (let [post-data (get-post-data msg)
+        follow-up-data (first (filterv #(= (-> % :assignee :user-id) (:user-id msg)) (:follow-ups post-data)))
+        clean-body (if-not (s/blank? (:body post-data))
+                     (text/truncated-body (clean-text (.text (soup/parse (:body post-data)))))
+                     "")
+        entry-url (notification-entry-url msg post-data)
+        author-name (user/name-for (:author follow-up-data))
+        text-for-notification (str ":zap: " author-name " created a follow-up for you")]
+    (slack/post-attachments token
+                            (:id receiver)
+                            [{:title (:headline post-data)
+                              :title_link entry-url
+                              :text clean-body
+                              :color attachment-blue-color
+                              :actions [{:type "button"
+                                         :text "View post"
+                                         :url entry-url}]}]
+                            text-for-notification)))
+
 ;; Messages type handler
 
 (defn- bot-handler [msg]
@@ -428,6 +453,7 @@
       :notify (notify token receiver msg)
       :reminder-notification (reminder-notification token receiver msg)
       :reminder-alert (reminder-alert token receiver msg)
+      :follow-up (follow-up-notification token receiver msg)
       (timbre/warn "Ignoring message with script type:" script-type))))
 
 ;; ----- Event loop -----
