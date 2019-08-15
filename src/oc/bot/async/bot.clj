@@ -25,6 +25,10 @@
 (def attachment-grey-color "#E8E8E8")
 (def attachment-blue-color "#6187F8")
 
+(def iso-format (time-format/formatters :date-time))
+(def date-format (time-format/formatter "MMMM d"))
+(def date-format-year (time-format/formatter "MMMM d YYYY"))
+
 ;; ----- core.async -----
 
 (defonce bot-chan (async/chan 10000)) ; buffered channel to protect Slack from too many requests
@@ -48,9 +52,10 @@
     (str/strip-tags)
     (str/strip-newlines)))
 
-(def iso-format (time-format/formatters :date-time))
-(def date-format (time-format/formatter "MMMM d"))
-(def date-format-year (time-format/formatter "MMMM d YYYY"))
+(defn- clean-html [text]
+  (if-not (s/blank? text)
+    (clean-text (.text (soup/parse text)))
+    ""))
 
 (defn- post-date [timestamp]
   (let [d (time-format/parse iso-format timestamp)
@@ -226,9 +231,8 @@
         update-url (s/join "/" [c/web-url org-slug board-slug "post" entry-uuid])
         clean-note (when-not (s/blank? note) (str (clean-text note)))
         clean-headline (digest/post-headline headline)
-        clean-body (if-not (s/blank? body)
-                     (clean-text (.text (soup/parse body)))
-                     "")
+        clean-body (clean-html body)
+        clean-abstract (clean-html abstract)
         reduced-body (text/truncated-body clean-body)
         accessory-image (html/first-body-thumbnail body)
         share-attribution (if (= (:name publisher) (:name sharer))
@@ -251,7 +255,7 @@
                     " comments ")))
         attachment {:title clean-headline
                     :title_link update-url
-                    :text (if (s/blank? abstract) reduced-body abstract)
+                    :text (if (s/blank? clean-abstract) reduced-body clean-abstract)
                     :author_name (:name publisher)
                     :author_icon (:avatar-url publisher)
                     :thumb_url (:thumbnail accessory-image)
