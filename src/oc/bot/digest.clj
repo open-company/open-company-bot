@@ -6,7 +6,6 @@
             [clj-time.core :as t]
             [clj-time.format :as f]
             [taoensso.timbre :as timbre]
-            [jsoup.soup :as soup]
             [oc.lib.text :as lib-text]
             [oc.lib.html :as html]
             [oc.lib.slack :as slack]
