@@ -5,20 +5,20 @@
             [cuerdas.core :as str]
             [taoensso.timbre :as timbre]
             [cheshire.core :as json]
-            [jsoup.soup :as soup]
             [clj-time.core :as time]
             [clj-time.format :as time-format]
             [oc.lib.sqs :as sqs]
             [oc.lib.slack :as slack]
             [oc.lib.jwt :as jwt]
             [oc.lib.html :as html]
-            [oc.bot.digest :as digest]
             [oc.lib.storage :as storage]
+            [oc.lib.user :as user]
+            [oc.lib.text :as lib-text]
+            [oc.bot.digest :as digest]
             [oc.bot.async.slack-action :as slack-action]
             [oc.bot.resources.slack-org :as slack-org]
-            [oc.lib.user :as user]
             [oc.bot.config :as c]
-            [oc.lib.text :as text]))
+            [oc.bot.lib.text :as text]))
 
 (def db-pool (atom false)) ; atom holding DB pool so it can be used for each SQS message
 
@@ -46,16 +46,6 @@
 (defn- first-name [name]
   (first (s/split name #"\s")))
 
-(defn- clean-text [text]
-  (-> text
-    (s/replace #"&nbsp;" " ")
-    (str/strip-tags)
-    (str/strip-newlines)))
-
-(defn- clean-html [text]
-  (if-not (s/blank? text)
-    (clean-text (.text (soup/parse text)))
-    ""))
 
 (defn- post-date [timestamp]
   (let [d (time-format/parse iso-format timestamp)
@@ -229,11 +219,11 @@
   (timbre/info "Sending entry share to Slack channel:" receiver)
   (let [channel (:id receiver)
         update-url (s/join "/" [c/web-url org-slug board-slug "post" entry-uuid])
-        clean-note (when-not (s/blank? note) (str (clean-text note)))
+        clean-note (text/clean-html note)
         clean-headline (digest/post-headline headline)
-        clean-body (clean-html body)
-        clean-abstract (clean-html abstract)
-        reduced-body (text/truncated-body clean-body)
+        clean-body (text/clean-html body)
+        clean-abstract (text/clean-html abstract)
+        reduced-body (lib-text/truncated-body clean-body)
         accessory-image (html/first-body-thumbnail body)
         share-attribution (if (= (:name publisher) (:name sharer))
                             (str "*" (:name sharer) "* shared a post in *" board-name (board-access-string board-access) "*")
@@ -301,7 +291,7 @@
          (map? receiver)
          (map? msg)]}
   (timbre/info "Sending notification to Slack channel:" receiver)
-  (let [content (.text (soup/parse (:content (:notification msg))))
+  (let [content (text/clean-html (:content (:notification msg)))
         post-data (get-post-data msg)
         entry-url (notification-entry-url msg post-data)
         comment? (:interaction-id (:notification msg))
@@ -422,9 +412,7 @@
   (timbre/info "Sending follow-up notification to Slack channel:" receiver)
   (let [post-data (get-post-data msg)
         follow-up-data (first (filterv #(= (-> % :assignee :user-id) (:user-id msg)) (:follow-ups post-data)))
-        clean-body (if-not (s/blank? (:body post-data))
-                     (text/truncated-body (clean-text (.text (soup/parse (:body post-data)))))
-                     "")
+        clean-body (lib-text/truncated-body (text/clean-html (:body post-data)))
         entry-url (notification-entry-url msg post-data)
         author-name (user/name-for (:author follow-up-data))
         text-for-notification (str ":zap: " author-name " created a follow-up for you")]
