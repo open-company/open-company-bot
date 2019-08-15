@@ -220,7 +220,7 @@
   (let [channel (:id receiver)
         update-url (s/join "/" [c/web-url org-slug board-slug "post" entry-uuid])
         clean-note (text/clean-html note)
-        clean-headline (digest/post-headline headline)
+        clean-headline (text/clean-html headline)
         clean-body (text/clean-html body)
         clean-abstract (text/clean-html abstract)
         reduced-body (lib-text/truncated-body clean-body)
