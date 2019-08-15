@@ -2,21 +2,18 @@
   "
   Namespace to convert an OC digest request into a Slack message with an attachment per post, and to send it via Slack.
   "
-  (:require [taoensso.timbre :as timbre]
-            [jsoup.soup :as soup]
-            [oc.lib.text :as text]
+  (:require [clojure.string :as s]
+            [clj-time.core :as t]
+            [clj-time.format :as f]
+            [taoensso.timbre :as timbre]
+            [oc.lib.text :as lib-text]
             [oc.lib.html :as html]
             [oc.lib.slack :as slack]
             [oc.lib.user :as user-avatar]
             [oc.bot.config :as c]
-            [clojure.string :as s]
-            [clj-time.core :as t]
-            [clj-time.format :as f]))
+            [oc.bot.lib.text :as text]))
 
 (def date-format (f/formatter "MMMM d, YYYY"))
-
-(defn post-headline [headline]
-  (.text (soup/parse headline)))
 
 (defn- board-access-string [board-access]
   (cond
@@ -31,12 +28,14 @@
                               board-name board-access interaction-attribution must-see video-id body uuid
                               reactions follow-up]} msg]
   (let [author-name (:name publisher)
-        clean-headline (post-headline headline)
+        clean-headline (text/clean-html headline)
+        clean-body (text/clean-html body)
+        clean-abstract (text/clean-html abstract)
         headline-with-tag (cond
                             follow-up (str clean-headline " [Follow-up]")
                             must-see (str clean-headline " [Must See]")
                             :else clean-headline)
-        reduced-body (if (s/blank? abstract) (text/truncated-body body) abstract)
+        reduced-body (if (s/blank? clean-abstract) (lib-text/truncated-body clean-body) clean-abstract)
         accessory-image (:thumbnail (html/first-body-thumbnail body))
         has-accessory-image? (not-empty accessory-image)
         btn-attach [{:type "button"
