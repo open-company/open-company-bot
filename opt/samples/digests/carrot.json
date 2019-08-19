@@ -17,7 +17,11 @@
             "name" : "Lisa Malo",
             "user-id" : "d6e9-4529-8e7b"
           },
-          "published-at": "2017-11-5T17:00:48.729Z"
+          "body": "<p>This ajsndajnskd jnasj dnaks jbdahbs dkan slkdnal smdamslkdma;sl md;la s,ld, aslkmdklasn dnas ndkajsn lkdnlasi nda nsdlna skdn akls</p>",
+          "comment-count-label": "3 comments",
+          "new-comment-label": "1 NEW",
+          "published-at": "2017-11-5T17:00:48.729Z",
+          "follow-up": true
         }, {
           "headline": "We've hit 2,000 paid subscribers!",
           "url": "http://localhost:3000/carrot/all-hands/post/e921-4f0c-9b9c",
@@ -26,6 +30,8 @@
             "name" : "David Smith",
             "user-id" : "d6e9-4529-8e7b"
           },
+          "body": "<p>This ajsndajnskd jnasj dnaks jbdahbs dkan</p><p>Slkdnal smdamslkdma;sl md;la s,ld, aslkmdklasn dnas ndkajsn lkdnlasi nda nsdlna skdn akls</p>",
+          "comment-count-label": "1 comment",
           "published-at": "2017-11-5T17:00:48.729Z"
         }
       ]
@@ -42,6 +48,9 @@
             "name" : "Lisa Malo",
             "user-id" : "d6e9-4529-8e7b"
           },
+          "body": "<p>This ajsndajnskdsdk nsakdnad jkna dnajs lksndkas dlkam kdm aldlk amsdlk maskld malks mdlkam  jnasj dnaks jbdahbs dkan</p><p>Slkdnal smdamslkdma;sl md;la s,ld, aslkmdklasn dnas ndkajsn lkdnlasi nda nsdlna skdn akls</p>",
+          "comment-count-label": "2 comments",
+          "new-comment-label": "2 NEW",
           "published-at": "2017-11-5T17:00:48.729Z"
         }, {
           "headline": "Versioning, Licensing and Sketch 4.0",
@@ -51,7 +60,11 @@
             "name" : "David Smith",
             "user-id" : "d6e9-4529-8e7b"
           },
-          "published-at": "2017-11-5T17:00:48.729Z"
+          "body": "<p>This ajsndajnskdsdk nsakdnad jkna dnajs lksndkas dlkam kdm aldlk amsdlk maskld malks mdlkam  jnasj dnaks jbdahbs dkan</p><p>Slkdnal smdamslkdma;sl md;la s,ld, aslkmdklasn dnas ndkajsn lkdnlasi nda nsdlna skdn akls</p><p>Slkdnal smdamslkdma;sl md;la s,ld, aslkmdklasn dnas ndkajsn lkdnlasi nda nsdlna skdn akls</p>",
+          "comment-count-label": "5 comments",
+          "new-comment-label": "3 NEW",
+          "published-at": "2017-11-5T17:00:48.729Z",
+          "follow-up": true
         }
       ]
     }

@@ -19,10 +19,10 @@
     [manifold "0.1.9-alpha3"]
     ;; Namespace management https://github.com/clojure/tools.namespace
     ;; NB: org.clojure/tools.reader pulled in by oc.lib
-    [org.clojure/tools.namespace "0.3.0" :exclusions [org.clojure/tools.reader]]
+    [org.clojure/tools.namespace "0.3.1" :exclusions [org.clojure/tools.reader]]
 
     ;; Library for OC projects https://github.com/open-company/open-company-lib
-    [open-company/lib "0.17.12"]
+    [open-company/lib "0.17.14"]
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; Aleph - Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
     ;; defun - Erlang-esque pattern matching for Clojure functions https://github.com/killme2008/defun
@@ -60,15 +60,15 @@
         ;; NB: clj-time is pulled in by oc.lib
         ;; NB: joda-time is pulled in by oc.lib via clj-time
         ;; NB: commons-codec pulled in by oc.lib
-        [midje "1.9.8" :exclusions [joda-time clj-time commons-codec]]
+        [midje "1.9.9" :exclusions [joda-time clj-time commons-codec]]
         ]
       :plugins [
         ;; Linter https://github.com/jonase/eastwood
-        [jonase/eastwood "0.3.5"]
+        [jonase/eastwood "0.3.6"]
         ;; Test framework https://github.com/marick/Midje
         [lein-midje "3.2.1"]
         ;; Static code search for non-idiomatic code https://github.com/jonase/kibit
-        [lein-kibit "0.1.6" :exclusions [org.clojure/clojure]]
+        [lein-kibit "0.1.7" :exclusions [org.clojure/clojure]]
         ]
     }
 
