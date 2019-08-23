@@ -416,7 +416,7 @@
         clean-body (lib-text/truncated-body (text/clean-html (:body post-data)))
         entry-url (notification-entry-url msg post-data)
         author-name (user/name-for (:author follow-up-data))
-        text-for-notification (str ":zap: " author-name " created a follow-up for you")]
+        text-for-notification (str ":zap: " author-name " requested you to follow up")]
     (slack/post-attachments token
                             (:id receiver)
                             [{:title (:headline post-data)
