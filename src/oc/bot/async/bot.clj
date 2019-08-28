@@ -130,24 +130,25 @@
                       :user-id (:user-id msg)
                       :avatar-url (:avatar-url msg)
                       :team-id (:team-id org)} ;; Let's read the team-id from the org to avoid problems on multiple org users}
-        id-token (jwt/generate-id-token token-claims c/passphrase)]
-    (s/join "/" [c/web-url
-                 org-slug
-                 board-slug
-                 "post"
-                 uuid
-                 (str "?id=" id-token)])))
+        id-token (jwt/generate-id-token token-claims c/passphrase)
+        interaction-id (:interaction-id (:notification msg))
+        base-url (if (seq interaction-id)
+                   (s/join "/" [c/web-url org-slug board-slug "post" uuid "comment" interaction-id])
+                   (s/join "/" [c/web-url org-slug board-slug "post" uuid]))]
+    (str base-url "?id=" id-token)))
 
 (defn- text-for-notification
   [{:keys [org notification] :as msg}]
   (let [comment? (:interaction-id notification)
         mention? (:mention? notification)
-        from (-> notification :author :name)]
+        entry-publisher (:entry-publisher notification)
+        user-id (:user-id notification)
+        from (:author notification)]
     (if-not mention?
-      (str ":speech_balloon: You have a new comment by *" from "* on your post")
-      (str ":speech_balloon: " from " mentioned you in a "
-       (if comment? "comment" "post")
-       ":"))))
+      (if (not= (:user-id entry-publisher) user-id)
+        (str ":speech_balloon: *" (:name from) "* replied to a thread:")
+        (str ":speech_balloon: *" (:name from) "* commented on your post:"))
+      (str ":speech_balloon: " (:name from) " mentioned you:"))))
 
 (defn- board-access-string [board-access]
   (cond
@@ -415,7 +416,7 @@
         clean-body (lib-text/truncated-body (text/clean-html (:body post-data)))
         entry-url (notification-entry-url msg post-data)
         author-name (user/name-for (:author follow-up-data))
-        text-for-notification (str ":zap: " author-name " created a follow-up for you")]
+        text-for-notification (str ":zap: " author-name " requested you to follow up")]
     (slack/post-attachments token
                             (:id receiver)
                             [{:title (:headline post-data)
