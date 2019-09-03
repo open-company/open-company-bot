@@ -13,7 +13,7 @@
             [oc.bot.config :as c]
             [oc.bot.lib.text :as text]))
 
-(def date-format (f/formatter "MMMM d, YYYY"))
+(def date-format (f/formatter "MMM d, YYYY"))
 
 (defn- board-access-string [board-access]
   (cond
