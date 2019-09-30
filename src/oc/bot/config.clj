@@ -60,9 +60,9 @@
 
 ;; https://api.slack.com/docs/message-formatting
 (defonce usage-bullets (str ">- Provide a daily digest that keeps everyone focused on what matters most\n"
-                            ">- Add Carrot posts and comments to Slack\n"
+                            ">- Share Carrot posts to Slack\n"
                             ">- Unfurl links to Carrot\n"
-                            ">- Make it easy to add new Carrot posts from Slack\n"
+                            ;">- Make it easy to add new Carrot posts from Slack\n"
                             ">- Notify people in Slack for Carrot mentions, comments, and invites\n" 
                             ">- Remind people when it’s time to update their team so no one forgets"))
 (defonce usage-message (str "I'm the Carrot Bot, and it seems you have something to say to me. Well... I'm just a Carrot, I've got no ears!\n\n"
