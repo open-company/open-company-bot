@@ -74,7 +74,7 @@
          (map? receiver)
          (map? msg)]}
   (let [date-str   (f/unparse date-format (t/now))
-        intro      (str ":coffee: Your " (or org-name "Carrot") " digest for " date-str)
+        intro      (str "Your " (or org-name "Carrot") " digest for " date-str)
         all-chunks (get-post-chunks msg)]
     (timbre/debug "Chunk count:" (count all-chunks))
     (timbre/info "Sending digest to:" channel " with:" token)
