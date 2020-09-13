@@ -36,7 +36,11 @@
     "Storage service URL: " c/storage-server-url "\n"
     "Log level: " (name c/log-level) "\n"
     "FileStack: " (or c/filestack-api-key "false") "\n"
-    "Sentry: " (or c/dsn "false") "\n\n"
+    "Sentry: " (or c/dsn "false") "\n"
+    "  env: " c/sentry-env "\n"
+    (when-not (clojure.string/blank? c/sentry-release)
+      (str "  release: " c/sentry-release "\n"))
+    "\n"
     (when c/intro? "Ready to serve...\n"))))
 
 (defn start
@@ -47,7 +51,8 @@
   (if c/dsn
     (timbre/merge-config!
       {:level (keyword c/log-level)
-       :appenders {:sentry (sa/sentry-appender c/dsn)}})
+       :appenders {:sentry (sa/sentry-appender c/dsn {:environment c/sentry-env
+                                                      :release c/sentry-release})}})
     (timbre/merge-config! {:level (keyword c/log-level)}))
 
   ;; Echo config information

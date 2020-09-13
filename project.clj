@@ -22,7 +22,7 @@
     [org.clojure/tools.namespace "1.0.0" :exclusions [org.clojure/tools.reader]]
     
     ;; Library for OC projects https://github.com/open-company/open-company-lib
-    [open-company/lib "0.17.26-alpha1"]
+    [open-company/lib "0.17.29-alpha36"]
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; Aleph - Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
     ;; defun - Erlang-esque pattern matching for Clojure functions https://github.com/killme2008/defun
