@@ -145,9 +145,7 @@
         user-id (:user-id notification)
         from (:author notification)]
     (if-not mention?
-      (if (not= (:user-id entry-publisher) user-id)
-        (str ":speech_balloon: *" (:name from) "* replied to a thread:")
-        (str ":speech_balloon: *" (:name from) "* commented on your post:"))
+      (str ":speech_balloon: *" (:name from) "* added a comment:")
       (str ":speech_balloon: " (:name from) " mentioned you:"))))
 
 (defn- board-access-string [board-access]
