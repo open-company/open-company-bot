@@ -53,8 +53,7 @@
   (if c/dsn
     (timbre/merge-config!
       {:level (keyword c/log-level)
-       :appenders {:sentry (sa/sentry-appender c/dsn {:environment c/sentry-env
-                                                      :release c/sentry-release})}})
+       :appenders {:sentry (sa/sentry-appender c/dsn)}})
     (timbre/merge-config! {:level (keyword c/log-level)}))
 
   ;; Echo config information
