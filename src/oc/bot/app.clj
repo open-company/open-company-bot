@@ -19,7 +19,9 @@
    (uncaughtException [_ thread ex]
      (timbre/error ex "Uncaught exception on" (.getName thread) (.getMessage ex))
      (when c/dsn
-       (sentry/capture c/dsn (-> {:message (.getMessage ex)}
+       (sentry/capture c/dsn (-> {:message (.getMessage ex)
+                                  :environment c/sentry-env
+                                  :release c/sentry-release}
                                  (assoc-in [:extra :exception-data] (ex-data ex))
                                  (sentry-interfaces/stacktrace ex)))))))
 
