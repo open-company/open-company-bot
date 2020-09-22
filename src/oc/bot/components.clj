@@ -24,7 +24,7 @@
         (timbre/info "[rethinkdb-pool] stopping...")
         (pool/shutdown-pool! pool)
         (timbre/info "[rethinkdb-pool] stopped")
-        (dissoc component :pool))
+        (assoc component :pool nil))
       component)))
 
 (defrecord BotChannelConsumer [db-pool]
@@ -42,7 +42,7 @@
         (timbre/info "[bot] stopping...")
         (bot/stop)
         (timbre/info "[bot] stopped")
-        (dissoc component :bot))
+        (assoc component :bot nil))
       component)))
 
 (defrecord SlackAction [db-pool]
@@ -57,7 +57,7 @@
       (do
         (timbre/info "[slack-action] stopped")
         (slack-action/stop)
-        (dissoc component :slack-action))
+        (assoc component :slack-action nil))
       component)))
 
 
@@ -70,7 +70,7 @@
 
   (stop [component]
     (timbre/info "[handler] stopped")
-    (dissoc component :handler)))
+    (assoc component :handler nil)))
 
 (defn bot-system
   "Define our system components."
