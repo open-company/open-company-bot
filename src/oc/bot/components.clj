@@ -1,6 +1,7 @@
 (ns oc.bot.components
     (:require [com.stuartsierra.component :as component]
               [taoensso.timbre :as timbre]
+              [oc.lib.sentry.core :refer (map->SentryCapturer)]
               [oc.lib.db.pool :as pool]
               [oc.lib.sqs :as sqs]
               [oc.bot.async.bot :as bot]
@@ -74,9 +75,12 @@
 (defn bot-system
   "Define our system components."
   [config-options]
-  (let [{:keys [sqs-creds sqs-queue sqs-msg-handler]} config-options]
+  (let [{:keys [sqs-creds sqs-queue sqs-msg-handler sentry]} config-options]
     (component/system-map
-      :db-pool (map->RethinkPool {:size c/db-pool-size :regenerate-interval 5})
+      :sentry-capturer (map->SentryCapturer sentry)
+      :db-pool (component/using
+                (map->RethinkPool {:size c/db-pool-size :regenerate-interval 5})
+                [:sentry-capturer])
       :bot (component/using
               (map->BotChannelConsumer {})
               [:db-pool])
@@ -85,5 +89,7 @@
                     [:db-pool])
       :handler (component/using
                 (map->Handler {:handler-fn sqs-msg-handler})
-                [])
-      :sqs (sqs/sqs-listener sqs-creds sqs-queue sqs-msg-handler))))
+                [:sentry-capturer])
+      :sqs (component/using
+            (sqs/sqs-listener sqs-creds sqs-queue sqs-msg-handler)
+            [:sentry-capturer]))))

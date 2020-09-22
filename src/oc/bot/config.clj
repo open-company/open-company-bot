@@ -27,8 +27,11 @@
 ;; ----- Sentry -----
 
 (defonce dsn (or (env :sentry-dsn) false))
-(defonce sentry-release (or (env :sentry-release) ""))
-(defonce sentry-env (or (env :sentry-env) "local"))
+(defonce sentry-release (or (env :release) ""))
+(defonce sentry-env (or (env :environment) "local"))
+(defonce sentry-config {:dsn dsn
+                        :release sentry-release
+                        :environment sentry-env})
 
 ;; ------ URLs -----
 
