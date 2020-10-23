@@ -68,8 +68,9 @@
                             ">- Share Carrot posts to Slack\n"
                             ">- Unfurl links to Carrot\n"
                             ;">- Make it easy to add new Carrot posts from Slack\n"
-                            ">- Notify people in Slack for Carrot mentions, comments, and invites\n" 
-                            ">- Remind people when it’s time to update their team so no one forgets"))
+                            ;; ">- Notify people in Slack for Carrot mentions, comments, and invites\n" 
+                            ;; ">- Remind people when it’s time to update their team so no one forgets"
+                            ))
 (defonce usage-message (str "I'm the Carrot Bot, and it seems you have something to say to me. Well... I'm just a Carrot, I've got no ears!\n\n"
                             "Ha! 😜 I kid of course! But for the most part, I do like to stay deep in the soil, out of your way.\n\n"
                             "*Here's what I do:*\n"
