@@ -115,6 +115,11 @@
 
 ;; ----- Bot Request handling -----
 
+(defn- notification-org-url [msg]
+  (let [org (:org msg)
+        org-slug (:slug org)]
+    (s/join "/" [c/web-url org-slug "home"])))
+
 (defn- notification-entry-url [msg post-data]
   (let [org (:org msg)
         org-slug (:slug org)
@@ -285,11 +290,29 @@
   (timbre/info "Sending welcome message to Slack channel:" receiver)
   (slack/post-message token (:id receiver) c/welcome-message))
 
-(defn- notify [token receiver msg]
+(defn- team-notify [token receiver msg]
   {:pre [(string? token)
          (map? receiver)
          (map? msg)]}
-  (timbre/info "Sending notification to Slack channel:" receiver)
+  (timbre/info "Sending notification for team to Slack channel:" receiver)
+  (let [content (text/clean-html (:content (:notification msg)))
+        org-url (notification-org-url msg)]
+    (slack/post-attachments token
+                            (:id receiver)
+                            [{:title "Team invite"
+                              :title_link org-url
+                              :text content
+                              :color attachment-grey-color
+                              :actions [{:type "button"
+                                         :text "Home"
+                                         :url org-url}]}]
+                            content)))
+
+(defn- entry-notify [token receiver msg]
+  {:pre [(string? token)
+         (map? receiver)
+         (map? msg)]}
+  (timbre/info "Sending notification for entry to Slack channel:" receiver)
   (let [content (text/clean-html (:content (:notification msg)))
         post-data (get-post-data msg)
         entry-url (notification-entry-url msg post-data)
@@ -305,6 +328,14 @@
                                          :text (if comment? "Reply" "View post")
                                          :url entry-url}]}]
                             text-for-notification)))
+
+(defn- notify [token receiver msg]
+  {:pre [(string? token)
+         (map? receiver)
+         (map? msg)]}
+  (if (:team? (:notification msg))
+    (team-notify token receiver msg)
+    (entry-notify token receiver msg)))
 
 ;; Reminders
 
@@ -434,9 +465,9 @@
          (string? (-> msg :bot :token))]}
   (let [token (-> msg :bot :token)
         receiver (:receiver msg)
-        script-type (keyword (:type msg))]
-    (timbre/trace "Routing message with type:" script-type)
-    (case script-type
+        msg-type (keyword (:type msg))]
+    (timbre/trace "Routing message with type:" msg-type)
+    (case msg-type
       :share-entry (share-entry token receiver msg)
       :invite (invite token receiver msg)
       :digest (digest/send-digest token receiver msg)
@@ -446,7 +477,7 @@
       :reminder-notification (reminder-notification token receiver msg)
       :reminder-alert (reminder-alert token receiver msg)
       :follow-up (follow-up-notification token receiver msg)
-      (timbre/warn "Ignoring message with script type:" script-type))))
+      (timbre/warn "Ignoring message with script type:" msg-type))))
 
 ;; ----- Event loop -----
 
