@@ -299,12 +299,11 @@
         org-url (notification-org-url msg)]
     (slack/post-attachments token
                             (:id receiver)
-                            [{:title "Team invite"
+                            [{:title (:name (:org msg))
                               :title_link org-url
-                              :text content
                               :color attachment-grey-color
                               :actions [{:type "button"
-                                         :text "Home"
+                                         :text "Open"
                                          :url org-url}]}]
                             content)))
 
