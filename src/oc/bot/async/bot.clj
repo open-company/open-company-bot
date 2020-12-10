@@ -304,7 +304,7 @@
                               :color attachment-grey-color
                               :actions [{:type "button"
                                          :text "Open"
-                                         :url org-url}]}]
+                                         :url (str org-url "?force-refresh-jwt=1")}]}]
                             content)))
 
 (defn- entry-notify [token receiver msg]
