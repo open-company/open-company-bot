@@ -103,13 +103,73 @@ Before running anything make sure you adjust the values in the config map.
 
 You can also override these settings with environmental variables in the form of `AWS_ACCESS_KEY_ID`, etc. Use environmental variables to provide production secrets when running in production.
 
-You will also need to subscribe the SQS queue to the storage SNS topic. To do this you will need to go to the AWS console and follow these instruction:
+You will also need to subscribe the SQS queue to the `oc-storage` and `oc-slack` SNS topics. To do this you will need to go to the AWS console and follow these instruction:
 
 Go to the AWS SQS Console and select the bot queue configured above. From the 'Queue Actions' dropdown, select 'Subscribe Queue to SNS Topic'. Select the SNS topic you've configured your Storage Service instance to publish to, and click the 'Subscribe' button.
 
 ##### Shared Secrets
 
 A secret, `open-company-auth-passphrase`, is shared between the OpenCompany services for creating and validating [JSON Web Tokens](https://jwt.io/).
+
+
+## Technical Design
+
+```
+                                                                                                ┌─────────────────────┐ 
+                                                                                                │                     │ 
+                                                                                                │        Slack        │ 
+                                                                                                │                     │ 
+                                                                                                └─────────────────────┘ 
+                                                                                                           │            
+                                                                                                           │            
+                                                                                                           │            
+                                                                                                         HTTP           
+                                                                                                           │            
+                                                                                                           │            
+                                                                                                           ▼            
+┌─────────────────────┐ ┌─────────────────────┐ ┌─────────────────────┐ ┌─────────────────────┐ ┌─────────────────────┐ 
+│                     │ │                     │ │                     │ │                     │ │                     │ 
+│   Storage Service   │ │    Notify Service   │ │    Auth Service     │ │   Digest Service    │ │Slack Router Service │ 
+│                     │ │                     │ │                     │ │                     │ │                     │ 
+└───┬─────────────────┘ └─────────────────────┘ └─────────────────────┘ └─────────────────────┘ └─────────────────┬───┘ 
+   HTTP    │                       │                       │                       │                       │      │     
+    │      │                       │                       │                       │                       │    HTTP    
+ Private   │                       │                       │                       │                       │      │     
+  board    └───────────────────────┴───────────────────────┼───────────────────────┴───────────────────────┘  Add post  
+  events                                                   │                                                   events   
+    │                                                    HTTP                                                     │     
+    ▼                                                      │                                                      ▼     
+ ┌─────────────────────┐                                   ▼                                    ┌─────────────────────┐ 
+ │SNS Topic            │               ┌──────────────────────────────────────┐                 │SNS Topic            │ 
+ │                     │               │ SQS                                  │                 │                     │ 
+ │      oc-storage     │◀──subscribe───│                oc-bot                │───subscribe────▶│       oc-slack      │ 
+ │                     │               │                                      │                 │                     │ 
+ └─────────────────────┘               └──────────────────────────────────────┘                 └─────────────────────┘ 
+                                                           ▲                                                            
+                                                           │                                                            
+                                                         HTTP                                                           
+                                                           │                                                            
+                                       ┌─────────────────────────────────────┐                                          
+                                       │                                     │                                          
+                                       │                                     │                                          
+                                       │                                     │                                          
+                                       │             Bot Service             │                                          
+                                       │                                     │                                          
+                                       │                                     │                                          
+                                       │                                     │                                          
+                                       └─────────────────────────────────────┘                                          
+                                                           │                                                            
+                                                         HTTP                                                           
+                           ┌───────────────────────────────┼───────────────────────────────┐                            
+                           │                               │                               │                            
+                           ▼                               ▼                               ▼                            
+                ┌─────────────────────┐ ┌─────────────────────────────────────┐ ┌─────────────────────┐                 
+                │                     │ │                                     │ │                     │                 
+                │     Auth Service    │ │             Slack API               │ │   Storage Service   │                 
+                │                     │ │                                     │ │                     │                 
+                └─────────────────────┘ └─────────────────────────────────────┘ └─────────────────────┘                 
+```
+
 
 ## Usage
 
