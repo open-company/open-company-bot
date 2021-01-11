@@ -5,68 +5,85 @@
   "logo-url": "https://slack-files2.s3-us-west-2.amazonaws.com/avatars/2017-09-16/243287999207_9e662352c5c6175b971a_230.png",
   "logo-height": 230,
   "logo-width": 230,
-  "boards": [
-    {
-      "name": "All-hands 🙌",
-      "posts": [
-        {
-          "headline": "Introducing some new faces!",
-          "url": "http://localhost:3000/carrot/all-hands/post/e921-4f0c-9b9c",
-          "publisher" : {
-            "avatar-url" : "https://secure.gravatar.com/avatar/866a6350e399e67e749c6f2aef0b96c0.jpg?s=512&d=https%3A%2F%2Fa.slack-edge.com%2F7fa9%2Fimg%2Favatars%2Fava_0020-512.png",
-            "name" : "Lisa Malo",
-            "user-id" : "d6e9-4529-8e7b"
-          },
-          "body": "<p>This ajsndajnskd jnasj dnaks jbdahbs dkan slkdnal smdamslkdma;sl md;la s,ld, aslkmdklasn dnas ndkajsn lkdnlasi nda nsdlna skdn akls</p>",
-          "comment-count-label": "3 comments",
-          "new-comment-label": "1 NEW",
-          "published-at": "2017-11-5T17:00:48.729Z",
-          "follow-up": true
-        }, {
-          "headline": "We've hit 2,000 paid subscribers!",
-          "url": "http://localhost:3000/carrot/all-hands/post/e921-4f0c-9b9c",
-          "publisher" : {
-            "avatar-url" : "https://secure.gravatar.com/avatar/866a6350e399e67e749c6f2aef0b96c0.jpg?s=512&d=https%3A%2F%2Fa.slack-edge.com%2F7fa9%2Fimg%2Favatars%2Fava_0020-512.png",
-            "name" : "David Smith",
-            "user-id" : "d6e9-4529-8e7b"
-          },
-          "body": "<p>This ajsndajnskd jnasj dnaks jbdahbs dkan</p><p>Slkdnal smdamslkdma;sl md;la s,ld, aslkmdklasn dnas ndkajsn lkdnlasi nda nsdlna skdn akls</p>",
-          "comment-count-label": "1 comment",
-          "published-at": "2017-11-5T17:00:48.729Z"
-        }
-      ]
-    }, {
-      "name": "Design",
-      "slug": "design",
-      "uuid": "e921-4f0c-9b9c",
-      "posts": [
-        {
-          "headline": "Building Design Collaboration into our Workflow",
-          "url": "http://localhost:3000/carrot/design/post/e921-4f0c-9b9c",
-          "publisher" : {
-            "avatar-url" : "https://secure.gravatar.com/avatar/866a6350e399e67e749c6f2aef0b96c0.jpg?s=512&d=https%3A%2F%2Fa.slack-edge.com%2F7fa9%2Fimg%2Favatars%2Fava_0020-512.png",
-            "name" : "Lisa Malo",
-            "user-id" : "d6e9-4529-8e7b"
-          },
-          "body": "<p>This ajsndajnskdsdk nsakdnad jkna dnajs lksndkas dlkam kdm aldlk amsdlk maskld malks mdlkam  jnasj dnaks jbdahbs dkan</p><p>Slkdnal smdamslkdma;sl md;la s,ld, aslkmdklasn dnas ndkajsn lkdnlasi nda nsdlna skdn akls</p>",
-          "comment-count-label": "2 comments",
-          "new-comment-label": "2 NEW",
-          "published-at": "2017-11-5T17:00:48.729Z"
-        }, {
-          "headline": "Versioning, Licensing and Sketch 4.0",
-          "url": "http://localhost:3000/carrot/design/post/e921-4f0c-9b9c",
-          "publisher" : {
-            "avatar-url" : "https://secure.gravatar.com/avatar/866a6350e399e67e749c6f2aef0b96c0.jpg?s=512&d=https%3A%2F%2Fa.slack-edge.com%2F7fa9%2Fimg%2Favatars%2Fava_0020-512.png",
-            "name" : "David Smith",
-            "user-id" : "d6e9-4529-8e7b"
-          },
-          "body": "<p>This ajsndajnskdsdk nsakdnad jkna dnajs lksndkas dlkam kdm aldlk amsdlk maskld malks mdlkam  jnasj dnaks jbdahbs dkan</p><p>Slkdnal smdamslkdma;sl md;la s,ld, aslkmdklasn dnas ndkajsn lkdnlasi nda nsdlna skdn akls</p><p>Slkdnal smdamslkdma;sl md;la s,ld, aslkmdklasn dnas ndkajsn lkdnlasi nda nsdlna skdn akls</p>",
-          "comment-count-label": "5 comments",
-          "new-comment-label": "3 NEW",
-          "published-at": "2017-11-5T17:00:48.729Z",
-          "follow-up": true
-        }
-      ]
+  "digest-label": [
+    "label.digest-label",
+    "Hey Iacopo, here’s the latest digest. Check out the new updates and comments from your team."
+  ],
+  "org-light-brand-color": {
+    "primary": {
+      "rgb": {"r": 63,
+              "g": 189,
+              "b": 124},
+      "hex": "#3FBD7C"
+    },
+    "secondary": {
+      "rgb": {"r": 0,
+              "g": 0,
+              "b": 244},
+      "hex": "#0000FF"
     }
-  ]
+  },
+  "following": {
+    "url": "http://staging.carrot.io/carrot/home",
+    "following-list": [
+      {
+        "headline": "Another again and again",
+        "url": "http://staging.carrot.io/carrot/above-the-line/post/dc68-4c26-b396",
+        "must-see": true,
+        "board-access": "public",
+        "board-name": "Above the line",
+        "board-slug": "above-the-line",
+        "board-uuid": "1234-1234-1234",
+        "publisher" : {
+          "avatar-url" : "https://cdn.filestackcontent.com/resize=height%3a72/UcLBPMzZRGeOGT7MWqWl",
+          "name" : "Iacopo Carraro",
+          "user-id" : "c8a5-4a10-b851",
+          "url": "http://staging.carrot.io/carrot/u/c8a5-4a10-b851"
+        },
+        "body": "<p>Asda das as</p>",
+        "comment-count-label": "",
+        "published-at": "2017-11-5T17:00:48.729Z"
+      }, {
+        "headline": "One more here again",
+        "url": "http://staging.carrot.io/carrot/under-the-line/post/abe4-47e9-9be2",
+        "board-access": "public",
+        "board-name": "Under the line",
+        "board-slug": "under-the-line",
+        "board-uuid": "4321-4321-4321",
+        "publisher" : {
+          "avatar-url" : "https://cdn.filestackcontent.com/resize=height%3a72/UcLBPMzZRGeOGT7MWqWl",
+          "name" : "Iacopo Carraro",
+          "user-id" : "c8a5-4a10-b851",
+          "url": "http://staging.carrot.io/carrot/u/c8a5-4a10-b851"
+        },
+        "body": "<p>Kmkamdsklmalkdm aslkmdkl a</p>",
+        "comment-count-label": "3 new comments",
+        "published-at": "2020-08-07T12:35:57.193Z"
+      }, {
+        "headline": "Asd sad ad auhd ashiud haiush d ads aspokapso kdpsoak pkd soakpoaskd poaspdo jas pasjd oiash douihasoi dhoasi o",
+        "url": "http://staging.carrot.io/carrot/design/post/0646-4c22-a8e0",
+        "board-access": "public",
+        "board-name": "Design",
+        "board-slug": "design",
+        "board-uuid": "1357-1357-1357",
+        "publisher" : {
+          "avatar-url" : "https://cdn.filestackcontent.com/resize=height%3a72/UcLBPMzZRGeOGT7MWqWl",
+          "name" : "Iacopo Carraro",
+          "user-id" : "c8a5-4a10-b851",
+          "url": "http://staging.carrot.io/carrot/u/c8a5-4a10-b851"
+        },
+        "body": "<p>asdasd asd asd as das das ds</p>",
+        "comment-count-label": "1 comment",
+        "published-at": "2017-11-5T17:00:48.729Z"
+      }
+    ]
+  },
+  "boards-label": [
+    "div.test",
+    "Since your digest ",
+    ["a",
+      {"href": "http://staging.carrot.io/carrot/general"},
+      "1 new topic"],
+    " was cerated"],
+  "replies-label": "Sean Johnson, Stuart Levinson and 1 other left 6 replies on updates you care about"
 }

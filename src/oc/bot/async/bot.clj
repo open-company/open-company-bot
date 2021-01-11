@@ -3,6 +3,7 @@
   (:require [clojure.string :as s]
             [clojure.core.async :as async :refer (<!! >!!)]
             [cuerdas.core :as str]
+            [oc.lib.sentry.core :as sentry]
             [taoensso.timbre :as timbre]
             [cheshire.core :as json]
             [clj-time.core :as time]
@@ -54,7 +55,7 @@
         output-format (if same-year? date-format date-format-year)]
     (time-format/unparse output-format d)))
 
-(def carrot-explainer "Carrot is your company digest for the team news and updates no one should miss.")
+(def carrot-explainer "Carrot is the personalized news feed your team is using to stay in sync with fewer interruptions.")
 
 (defn get-post-data [payload]
   (let [notification (:notification payload)
@@ -113,6 +114,11 @@
 
 ;; ----- Bot Request handling -----
 
+(defn- notification-org-url [msg]
+  (let [org (:org msg)
+        org-slug (:slug org)]
+    (s/join "/" [c/web-url org-slug "home"])))
+
 (defn- notification-entry-url [msg post-data]
   (let [org (:org msg)
         org-slug (:slug org)
@@ -143,9 +149,7 @@
         user-id (:user-id notification)
         from (:author notification)]
     (if-not mention?
-      (if (not= (:user-id entry-publisher) user-id)
-        (str ":speech_balloon: *" (:name from) "* replied to a thread:")
-        (str ":speech_balloon: *" (:name from) "* commented on your post:"))
+      (str ":speech_balloon: *" (:name from) "* added a comment:")
       (str ":speech_balloon: " (:name from) " mentioned you:"))))
 
 (defn- board-access-string [board-access]
@@ -283,11 +287,28 @@
   (timbre/info "Sending welcome message to Slack channel:" receiver)
   (slack/post-message token (:id receiver) c/welcome-message))
 
-(defn- notify [token receiver msg]
+(defn- team-notify [token receiver msg]
   {:pre [(string? token)
          (map? receiver)
          (map? msg)]}
-  (timbre/info "Sending notification to Slack channel:" receiver)
+  (timbre/info "Sending notification for team to Slack channel:" receiver)
+  (let [content (text/clean-html (:content (:notification msg)))
+        org-url (notification-org-url msg)]
+    (slack/post-attachments token
+                            (:id receiver)
+                            [{:title (:name (:org msg))
+                              :title_link org-url
+                              :color attachment-grey-color
+                              :actions [{:type "button"
+                                         :text "Open"
+                                         :url (str org-url "?force-refresh-jwt=1")}]}]
+                            content)))
+
+(defn- entry-notify [token receiver msg]
+  {:pre [(string? token)
+         (map? receiver)
+         (map? msg)]}
+  (timbre/info "Sending notification for entry to Slack channel:" receiver)
   (let [content (text/clean-html (:content (:notification msg)))
         post-data (get-post-data msg)
         entry-url (notification-entry-url msg post-data)
@@ -303,6 +324,14 @@
                                          :text (if comment? "Reply" "View post")
                                          :url entry-url}]}]
                             text-for-notification)))
+
+(defn- notify [token receiver msg]
+  {:pre [(string? token)
+         (map? receiver)
+         (map? msg)]}
+  (if (:team? (:notification msg))
+    (team-notify token receiver msg)
+    (entry-notify token receiver msg)))
 
 ;; Reminders
 
@@ -432,9 +461,9 @@
          (string? (-> msg :bot :token))]}
   (let [token (-> msg :bot :token)
         receiver (:receiver msg)
-        script-type (keyword (:type msg))]
-    (timbre/trace "Routing message with type:" script-type)
-    (case script-type
+        msg-type (keyword (:type msg))]
+    (timbre/trace "Routing message with type:" msg-type)
+    (case msg-type
       :share-entry (share-entry token receiver msg)
       :invite (invite token receiver msg)
       :digest (digest/send-digest token receiver msg)
@@ -444,7 +473,7 @@
       :reminder-notification (reminder-notification token receiver msg)
       :reminder-alert (reminder-alert token receiver msg)
       :follow-up (follow-up-notification token receiver msg)
-      (timbre/warn "Ignoring message with script type:" script-type))))
+      (timbre/warn "Ignoring message with script type:" msg-type))))
 
 ;; ----- Event loop -----
 
@@ -494,7 +523,8 @@
                   (bot-handler (assoc-in m [:bot :token] bot-token)))))
             (timbre/trace "Processing complete.")
             (catch Exception e
-              (timbre/error e))))))))
+              (timbre/warn e)
+              (sentry/capture e))))))))
 
 ;; ----- Component start/stop -----
 

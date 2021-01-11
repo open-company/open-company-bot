@@ -19,10 +19,16 @@
     [manifold "0.1.9-alpha3"]
     ;; Namespace management https://github.com/clojure/tools.namespace
     ;; NB: org.clojure/tools.reader pulled in by oc.lib
-    [org.clojure/tools.namespace "0.3.1" :exclusions [org.clojure/tools.reader]]
-
+    [org.clojure/tools.namespace "1.0.0" :exclusions [org.clojure/tools.reader]]
+    
     ;; Library for OC projects https://github.com/open-company/open-company-lib
-    [open-company/lib "0.17.14"]
+    ;; ************************************************************************
+    ;; ****************** NB: don't go under 0.17.29-alpha60 ******************
+    ;; ***************** (JWT schema changes, more info here: *****************
+    ;; ******* https://github.com/open-company/open-company-lib/pull/82) ******
+    ;; ************************************************************************
+    [open-company/lib "0.17.29-alpha63" :exclusions [org.clojure/tools.logging com.taoensso/nippy org.tukaani/xz]]
+    ;; ************************************************************************
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; Aleph - Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph
     ;; defun - Erlang-esque pattern matching for Clojure functions https://github.com/killme2008/defun
@@ -33,6 +39,7 @@
     ;; Timbre - Pure Clojure/Script logging library https://github.com/ptaoussanis/timbre
     ;; Amazonica - A comprehensive Clojure client for the AWS API. https://github.com/mcohen01/amazonica
     ;; Raven - Interface to Sentry error reporting https://github.com/sethtrain/raven-clj
+    ;; http-kit - HTTP client and server https://github.com/http-kit/http-kit
     ;; Cheshire - JSON encoding / decoding https://github.com/dakrone/cheshire
     ;; clj-jwt - A Clojure library for JSON Web Token(JWT) https://github.com/liquidz/clj-jwt
     ;; clj-time - Date and time lib https://github.com/clj-time/clj-time
@@ -64,11 +71,11 @@
         ]
       :plugins [
         ;; Linter https://github.com/jonase/eastwood
-        [jonase/eastwood "0.3.6"]
+        [jonase/eastwood "0.3.10"]
         ;; Test framework https://github.com/marick/Midje
-        [lein-midje "3.2.1"]
+        [lein-midje "3.2.2"]
         ;; Static code search for non-idiomatic code https://github.com/jonase/kibit
-        [lein-kibit "0.1.7" :exclusions [org.clojure/clojure]]
+        [lein-kibit "0.1.8" :exclusions [org.clojure/clojure]]
         ]
     }
 
@@ -93,7 +100,7 @@
         ;; Runs bikeshed, kibit and eastwood https://github.com/itang/lein-checkall
         [lein-checkall "0.1.1"]
         ;; pretty-print the lein project map https://github.com/technomancy/leiningen/tree/master/lein-pprint
-        [lein-pprint "1.2.0"]
+        [lein-pprint "1.3.2"]
         ;; Check for outdated dependencies https://github.com/xsc/lein-ancient
         [lein-ancient "0.6.15"]
         ;; Catch spelling mistakes in docs and docstrings https://github.com/cldwalker/lein-spell
@@ -161,7 +168,7 @@
 
   :eastwood {
     ;; Disable some linters that are enabled by default
-    ;; contant-test - just seems mostly ill-advised, logical constants are useful in something like a `->cond`
+    ;; constant-test - just seems mostly ill-advised, logical constants are useful in something like a `->cond`
     ;; wrong-arity - unfortunate, but it's failing on 3/arity of sqs/send-message
     ;; implicit-dependencies - uhh, just seems dumb
     :exclude-linters [:constant-test :wrong-arity :implicit-dependencies]

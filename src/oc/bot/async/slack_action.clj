@@ -5,6 +5,7 @@
   (:require [clojure.core.async :as async :refer (<! >!!)]
             [defun.core :refer (defun-)]
             [if-let.core :refer (if-let*)]
+            [oc.lib.sentry.core :as sentry]
             [taoensso.timbre :as timbre]
             [clj-http.client :as http]
             [cheshire.core :as json]
@@ -379,7 +380,8 @@
           (try
             (handle-post-callback message)
           (catch Exception e
-            (timbre/error e)))))))))
+            (timbre/warn e)
+            (sentry/capture e)))))))))
 
 ;; ----- Event triggering -----
 
