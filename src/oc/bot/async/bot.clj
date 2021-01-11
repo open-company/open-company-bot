@@ -3,6 +3,7 @@
   (:require [clojure.string :as s]
             [clojure.core.async :as async :refer (<!! >!!)]
             [cuerdas.core :as str]
+            [oc.lib.sentry.core :as sentry]
             [taoensso.timbre :as timbre]
             [cheshire.core :as json]
             [clj-time.core :as time]
@@ -524,7 +525,8 @@
                   (bot-handler (assoc-in m [:bot :token] bot-token)))))
             (timbre/trace "Processing complete.")
             (catch Exception e
-              (timbre/error e))))))))
+              (timbre/warn e)
+              (sentry/capture e))))))))
 
 ;; ----- Component start/stop -----
 
