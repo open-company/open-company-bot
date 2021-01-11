@@ -59,9 +59,7 @@
 
 (defn get-post-data [payload]
   (let [notification (:notification payload)
-        team (:team-id (:org payload))
         slack-bot (:bot payload)
-        token (:token slack-bot)
         slack-user-map {:slack-user-id (:slack-user-id (:receiver payload))
                         :slack-team-id (:slack-org-id slack-bot)}
         config {:storage-server-url c/storage-server-url
@@ -109,7 +107,7 @@
   "Handle an incoming SQS message to the bot."
   [msg done-channel]
   (doseq [msg-body (sqs/read-message-body (:body msg))]
-    (let [error (if (:test-error msg-body) (/ 1 0) false)] ; a message testing Sentry error reporting
+    (let [_error (if (:test-error msg-body) (/ 1 0) false)] ; a message testing Sentry error reporting
       (timbre/infof "Received message from SQS: %s\n" msg-body)
       (>!! bot-chan msg-body))) ; send the message to the bot's channel
   (sqs/ack done-channel msg))
@@ -200,8 +198,6 @@
                                         [{:pretext message :text expnote}])))))))))
 
 (defn- share-entry [token receiver {:keys [org-slug
-                                           org-logo-url
-                                           org-name
                                            board-name
                                            board-slug
                                            board-access
@@ -510,7 +506,9 @@
                   ;; SNS originated about the Post to Carrot action
                   (or (= (:type msg-parsed) "interactive_message")
                       (= callback-id "post")
-                      (= callback-id "add_post"))
+                      (= callback-id "add_post")
+                      (= callback-id "save_message_a")
+                      (= callback-id "save_message_b"))
                   (do
                     (timbre/debug "Received post action notification:" msg-parsed)
                     (slack-action/send-payload! msg-parsed))

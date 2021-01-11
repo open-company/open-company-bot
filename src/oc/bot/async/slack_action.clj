@@ -11,8 +11,10 @@
             [cheshire.core :as json]
             [oc.lib.auth :as auth]
             [oc.lib.storage :as storage]
-            [oc.bot.resources.slack-org :as slack-org]
-            [oc.bot.resources.team :as team]
+            [oc.bot.async.storage :as storage-async]
+            [oc.bot.resources.slack-org :as slack-org-res]
+            [oc.bot.resources.team :as team-res]
+            [oc.bot.resources.user :as user-res]
             [oc.bot.config :as c]))
 
 (def db-pool (atom false)) ; atom holding DB pool so it can be used for each SQS message
@@ -23,28 +25,40 @@
 
 (defonce slack-go (atom true))
 
+;; ----- Utility functions -----
+
+(defun- new-post-for
+
+  ([payload]
+  ;; Get the author by their slack user ID
+  (let [team-id (-> payload :team :id)
+        slack-id (-> payload :user :id)
+        posting-user (user-res/user-for @db-pool team-id slack-id)]
+    (new-post-for payload team-id slack-id posting-user)))
+  
+  ([payload team-id slack-id user :guard nil?]
+  (timbre/warn "No Carrot user for Slack user:" slack-id "found for Slack team:" team-id))
+
+  ([payload _team-id _slack-id user]
+  (storage-async/send-trigger! (storage-async/->trigger payload user))))
+      
 ;; ----- Slack API calls -----
 
-(defn- post-dialog-for [bot-token payload boards]
-  (let [response-url (:response_url payload)
-        trigger (:trigger_id payload)
-        team (:team payload)
-        channel (:channel payload)
-        user (:user payload)
-        message (:message payload)
+(defn- new-post-dialog-for [bot-token payload boards]
+  (let [trigger (:trigger_id payload)
         body {
           :trigger_id trigger
           :dialog {
-            :title "Save message to Carrot"
-            :submit_label "Add"
+            :title "Create Post in Carrot" ; max 24 chars
+            :submit_label "Create"
             :callback_id "add_post"
-            :state (:text message)
+            :state ""
             :elements [
               {
                 :type "select"
-                :label "Save as draft or post?"
+                :label "Create as draft or post?"
                 :name "status"
-                :value "draft"
+                :value "post"
                 :options [
                   {
                     :label "Draft"
@@ -55,26 +69,152 @@
                     :value "post"
                   }
                 ]
-              }                {
+              }               
+              {
                 :type "select"
                 :label "Choose a section"
-                :name "section"
+                :name "board-slug"
                 :value "all-hands"
                 :options (map #(clojure.set/rename-keys % {:name :label :slug :value}) boards)
               }
               {
                 :type "text"
                 :label "Post title"
-                :name "title"
+                :name "headline"
                 :placeholder "Add a title for your Carrot post..."
                 :optional false
               }
               {
                 :type "textarea"
-                :label "Note"
-                :name "note"
-                :placeholder "Provide context for why this is important..."
+                :label "Post body"
+                :name "body"
+                :placeholder "What would you like to say?"
                 :optional true
+              }
+            ]
+          }
+        }
+        result (http/post "https://slack.com/api/dialog.open" {
+                  :headers {"Content-type" "application/json"
+                            "Authorization" (str "Bearer " bot-token)}
+                  :body (json/encode body)})]
+    (timbre/info "Result with" bot-token ":" result)))
+
+(defn- post-dialog-a-for [bot-token payload boards]
+  (let [trigger (:trigger_id payload)
+        message (:message payload)
+        body {
+          :trigger_id trigger
+          :dialog {
+            :title "Save message to Carrot" ; max 24 chars
+            :submit_label "Save"
+            :callback_id "save_message_a"
+            :state (:text message)
+            :elements [
+              {
+                :type "select"
+                :label "Save as draft or post?"
+                :name "status"
+                :value "post"
+                :options [
+                  {
+                    :label "Draft"
+                    :value "draft"
+                  }
+                  {
+                    :label "Post"
+                    :value "post"
+                  }
+                ]
+              }                
+              {
+                :type "select"
+                :label "Choose a section"
+                :name "board-slug"
+                :options (map #(clojure.set/rename-keys % {:name :label :slug :value}) boards)
+              }
+              {
+                :type "text"
+                :label "Post title"
+                :name "headline"
+                :placeholder "Add a title for this Carrot post..."
+                :optional false
+              }
+              {
+                :type "select"
+                :label "Choose a signpost"
+                :name "signpost"
+                :value "Why it matters"
+                :options [{:label "Why it matters" :value "Why it matters"}
+                          {:label "The big picture" :value "The big picture"}
+                          {:label "Go deeper" :value "Go deeper"}
+                          {:label "What's next" :value "What's next"}
+                          {:label "The details" :value "The details"}
+                          {:label "Between the lines" :value "Between the lines"}
+                          ]
+              }
+              {
+                :type "textarea"
+                :label "Additional context"
+                :name "body"
+                :placeholder "Why it matters, -or- The big picture, etc. ..."
+                :optional false
+              }
+            ]
+          }
+        }
+        result (http/post "https://slack.com/api/dialog.open" {
+                  :headers {"Content-type" "application/json"
+                            "Authorization" (str "Bearer " bot-token)}
+                  :body (json/encode body)})]
+    (timbre/info "Result with" bot-token ":" result)))
+
+(defn- post-dialog-b-for [bot-token payload boards]
+  (let [trigger (:trigger_id payload)
+        message (:message payload)
+        body {
+          :trigger_id trigger
+          :dialog {
+            :title "Save message to Carrot" ; max 24 chars
+            :submit_label "Save"
+            :callback_id "save_message_b"
+            :state (:text message)
+            :elements [
+              {
+                :type "select"
+                :label "Save as draft or post?"
+                :name "status"
+                :value "post"
+                :options [
+                  {
+                    :label "Draft"
+                    :value "draft"
+                  }
+                  {
+                    :label "Post"
+                    :value "post"
+                  }
+                ]
+              }                
+              {
+                :type "select"
+                :label "Choose a section"
+                :name "board-slug"
+                :options (map #(clojure.set/rename-keys % {:name :label :slug :value}) boards)
+              }
+              {
+                :type "text"
+                :label "Post title"
+                :name "headline"
+                :placeholder "Add a title for this Carrot post..."
+                :optional false
+              }
+              {
+                :type "textarea"
+                :label "Why it matters"
+                :name "body"
+                :placeholder "Additional context on why this Slack message matters..."
+                :optional false
               }
             ]
           }
@@ -93,11 +233,11 @@
 
   We have 3s max to respond to the action with a dialog request.
 
-  Initial action invocation event ('post') looks like:
+  Initial action invocation event ('save_message') looks like:
   
   { 
     :action_ts '1538878700.800208'
-    :callback_id 'post'
+    :callback_id 'add_post'
     :type 'message_action'
     :trigger_id '450676967892.6895731204.3b1d077d82901bb21e3d18e62d20d594'
     :response_url 'https://hooks.slack.com/app/T06SBMH60/452213600886/6BquVZR07zzRqblaB35yYxgC'
@@ -124,11 +264,42 @@
     }
   }
 
-  Dialog submission event ('add_post') looks like:
+  Other initial action invocation event ('add_post') looks like:
+  
+  { 
+    :action_ts '1538878700.800208'
+    :callback_id 'save_message'
+    :type 'message_action'
+    :trigger_id '450676967892.6895731204.3b1d077d82901bb21e3d18e62d20d594'
+    :response_url 'https://hooks.slack.com/app/T06SBMH60/452213600886/6BquVZR07zzRqblaB35yYxgC'
+    :token 'aLbD1VFXN31DEgpFIvxu32JV'
+    :message_ts '1538877805.000100'
+    :message {
+      :type 'message'
+      :user 'U06SBTXJR'
+      :text 'test it'
+      :client_msg_id 'f027da72-2800-47ac-93b5-b0208652540e'
+      :ts '1538877805.000100'
+    }
+    :user {
+      :id 'U06SBTXJR'
+      :name 'sean'
+    }
+    :channel {
+      :id 'C10A1P4H2'
+      :name 'bot-testing'
+    }
+    :team {
+      :id 'T06SBMH60'
+      :domain 'opencompanyhq'
+    }
+  }
+
+  Dialog submission event ('post') looks like:
 
   {
     :action_ts '1539172586.746607'
-    :callback_id 'add_post'
+    :callback_id 'post'
     :type 'dialog_submission'
     :response_url 'https://hooks.slack.com/app/T06SBMH60/453288716437/NrgG1Vo4h3Urcoqy1W13aIdo'
     :token 'aLbD1VFXN31DEgpFIvxu32JV'
@@ -154,36 +325,42 @@
   }
   "
   ;; Initial action callback, respond w/ a dialog request
-  ([payload :guard #(= "post" (:callback_id %))]
-  (timbre/debug "Slack request of:" payload)
-  ;; Bot token from Auth DB
-  (if-let* [slack-team-id (-> payload :team :id)
-            bot-token (slack-org/bot-token-for @db-pool slack-team-id)]
-    ;; JWT from Auth service
-    (if-let* [slack-user-id (-> payload :user :id)
-              user-token (auth/user-token {:slack-user-id slack-user-id
-                                           :slack-team-id slack-team-id}
-                                          c/auth-server-url
-                                          c/passphrase
-                                          "Bot")]
-      ;; Teams for this Slack from Auth DB & board list from Storage service
-      (if-let* [teams (team/teams-for @db-pool slack-team-id)
-                boards (storage/board-list-for c/storage-server-url teams user-token)]
-        (do
-          ;; Dialog request to Slack
-          (timbre/debug "Boards:" boards)
-          (post-dialog-for bot-token payload boards))
-        (timbre/error "No board list for Slack action:" payload))
-      (timbre/error "No JWT possible for Slack action:" payload))
-    (timbre/error "No bot-token for Slack action:" payload)))
+  ([payload :guard #(and (= "message_action" (:type %))
+                      (or (= "save_message_a" (:callback_id %))
+                          (= "save_message_b" (:callback_id %))
+                          (= "add_post" (:callback_id %))))]
+  (let [type (:callback_id payload)]
+    (timbre/debug (str "Slack '" type "' request of:" payload))
+    ;; Bot token from Auth DB
+    (if-let* [slack-team-id (-> payload :team :id)
+              bot-token (slack-org-res/bot-token-for @db-pool slack-team-id)]
+      ;; JWT from Auth service
+      (if-let* [slack-user-id (-> payload :user :id)
+                user-token (auth/user-token {:slack-user-id slack-user-id
+                                             :slack-team-id slack-team-id}
+                                             c/auth-server-url
+                                             c/passphrase
+                                             "Bot")]
+        ;; Teams for this Slack from Auth DB & board list from Storage service
+        (if-let* [teams (team-res/teams-for @db-pool slack-team-id)
+                  boards (storage/board-list-for c/storage-server-url teams user-token)]
+          (do
+            ;; Dialog request to Slack
+            (timbre/debug "Boards:" boards)
+            (case type 
+              "save_message_a" (post-dialog-a-for bot-token payload boards)
+              "save_message_b" (post-dialog-b-for bot-token payload boards)
+              "add_post" (new-post-dialog-for bot-token payload boards)))
+          (timbre/error "No board list for Slack action:" payload))
+        (timbre/error "No JWT possible for Slack action:" payload))
+      (timbre/error "No bot-token for Slack action:" payload))))
 
   ;; User submission of the dialog
-  ([payload :guard #(= "add_post" (:callback_id %))]
-  (timbre/debug "Slack request of:" payload)
-  ;; Get the author by their slack user ID
-  ;; Initiate a request to the storage queue
-  )
+  ([payload :guard #(= "dialog_submission" (:type %))]
+  (timbre/debug "Slack 'post' request of:" payload)
+  (new-post-for payload))
 
+  ;; What message is this?
   ([payload]
   (timbre/debug "Slack request of:" payload)
   (timbre/warn "Unknown Slack action callback-id:" (:callback_id payload))))

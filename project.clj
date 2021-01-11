@@ -179,5 +179,7 @@
     :exclude-namespaces [:test-paths]
   }
 
+  ;; ----- Application -----
+
   :main oc.bot.app
 )
