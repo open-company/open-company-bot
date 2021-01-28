@@ -33,11 +33,7 @@
   []
 
   ;; Log errors go to Sentry
-  (if c/dsn
-    (timbre/merge-config!
-      {:level (keyword c/log-level)
-       :appenders {:sentry (sentry/sentry-appender c/sentry-config)}})
-    (timbre/merge-config! {:level (keyword c/log-level)}))
+  (timbre/merge-config! {:level (keyword c/log-level)})
 
   ;; Echo config information
   (println (str "\n"
