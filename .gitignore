@@ -9,6 +9,11 @@ pom.xml.asc
 /.nrepl-*
 .hgignore
 .hg/
+.vscode/
+.lsp/
+.calva/
+.clj-kondo/
+.clojure-lsp/
 
 .ruby-gemset
 .ruby-version
