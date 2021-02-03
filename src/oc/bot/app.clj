@@ -19,7 +19,7 @@
     "Web URL: " c/web-url "\n"
     "Auth service URL: " c/auth-server-url "\n"
     "Storage service URL: " c/storage-server-url "\n"
-    "Log level: " (name c/log-level) "\n"
+    "Log level: " c/log-level "\n"
     "FileStack: " (or c/filestack-api-key "false") "\n"
     "Sentry: " (or c/dsn "false") "\n"
     "  env: " c/sentry-env "\n"
@@ -33,7 +33,7 @@
   []
 
   ;; Log errors go to Sentry
-  (timbre/merge-config! {:level (keyword c/log-level)})
+  (timbre/merge-config! {:min-level (keyword c/log-level)})
 
   ;; Echo config information
   (println (str "\n"
