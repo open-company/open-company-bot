@@ -109,8 +109,9 @@
   "Handle an incoming SQS message to the bot."
   [msg done-channel]
   (doseq [msg-body (sqs/read-message-body (:body msg))]
-    (let [error (if (:test-error msg-body) (/ 1 0) false)] ; a message testing Sentry error reporting
-      (timbre/infof "Received message from SQS: %s\n" msg-body)
+    (let [_error (if (:test-error msg-body) (/ 1 0) false)] ; a message testing Sentry error reporting
+      (timbre/info "Received message from SQS")
+      (timbre/debugf "Received message from SQS: %s\n" msg-body)
       (>!! bot-chan msg-body))) ; send the message to the bot's channel
   (sqs/ack done-channel msg))
 
