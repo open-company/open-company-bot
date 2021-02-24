@@ -59,9 +59,7 @@
 
 (defn get-post-data [payload]
   (let [notification (:notification payload)
-        team (:team-id (:org payload))
         slack-bot (:bot payload)
-        token (:token slack-bot)
         slack-user-map {:slack-user-id (:slack-user-id (:receiver payload))
                         :slack-team-id (:slack-org-id slack-bot)}
         config {:storage-server-url c/storage-server-url
