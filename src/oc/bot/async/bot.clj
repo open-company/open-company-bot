@@ -60,13 +60,20 @@
 (defn get-post-data [payload]
   (let [notification (:notification payload)
         slack-bot (:bot payload)
-        slack-user-map {:slack-user-id (:slack-user-id (:receiver payload))
-                        :slack-team-id (:slack-org-id slack-bot)}
+        slack-user-id (:slack-user-id (:receiver payload))
+        slack-team-id (:slack-org-id slack-bot)
+        slack-user-map {:slack-user-id slack-user-id
+                        :slack-team-id slack-team-id}
         config {:storage-server-url c/storage-server-url
                 :auth-server-url c/auth-server-url
                 :passphrase c/passphrase
                 :service-name "Bot"}]
-    (storage/post-data-for config slack-user-map (:slug (:org payload)) (:board-id notification) (:entry-id notification))))
+    (if (and slack-user-id
+             slack-team-id)
+      (storage/post-data-for config slack-user-map (:slug (:org payload)) (:board-id notification) (:entry-id notification))
+      (throw (ex-info "No Slack info to retrieve post" {:notification notification
+                                                        :bot slack-bot
+                                                        :slack-user-map slack-user-map})))))
 
 ;; ----- SQS handling -----
 
@@ -496,6 +503,7 @@
                     notification-type (:notification-type msg-parsed)
                     resource-type (:resource-type msg-parsed)
                     callback-id (:callback_id msg-parsed)]
+                (timbre/infof "Processing %s %s message on bot-loop" resource-type notification-type)
                 (cond
 
                   ;; SNS originated about a user updated or added to a board
@@ -503,7 +511,8 @@
                            (= notification-type "add"))
                        (= resource-type "board"))
                   (do
-                    (timbre/debug "Received private board notification:" msg-parsed)
+                    (timbre/info "Handling board add/update message")
+                    (timbre/trace "Received private board notification:" msg-parsed)
                     (send-private-board-notification msg-parsed))
 
                   ;; SNS originated about the Post to Carrot action
@@ -511,7 +520,8 @@
                       (= callback-id "post")
                       (= callback-id "add_post"))
                   (do
-                    (timbre/debug "Received post action notification:" msg-parsed)
+                    (timbre/info "Handling slack action message")
+                    (timbre/trace "Received post action notification:" msg-parsed)
                     (slack-action/send-payload! msg-parsed))
 
                   :else
