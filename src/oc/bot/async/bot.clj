@@ -61,7 +61,8 @@
   (let [notification (:notification payload)
         slack-bot (:bot payload)
         slack-user-id (:slack-user-id (:receiver payload))
-        slack-team-id (:slack-org-id slack-bot)
+        slack-team-id (or (:slack-org-id (:receiver payload))
+                          (:slack-org-id slack-bot))
         slack-user-map {:slack-user-id slack-user-id
                         :slack-team-id slack-team-id}
         config {:storage-server-url c/storage-server-url
@@ -532,8 +533,10 @@
                   (timbre/debug "Unknown SQS request:" msg-parsed)))
 
               ; else it's a direct SQS request to send information out using the bot
-              (let [bot-token  (or (-> msg :bot :token) (slack-org/bot-token-for @db-pool (-> msg :receiver :slack-org-id)))
-                    _missing_token (if bot-token false (throw (ex-info "Missing bot token for:" {:msg-body msg})))]
+              (let [bot-token  (or (-> msg :bot :token) (slack-org/bot-token-for @db-pool (-> msg :receiver :slack-org-id)))]
+                (when-not bot-token
+                  (throw (ex-info "Missing bot token for:" {:msg-body msg})))
+                (timbre/infof "Handling direct bot message")
                 (doseq [m (adjust-receiver msg)]
                   (bot-handler (assoc-in m [:bot :token] bot-token)))))
             (timbre/trace "Processing complete.")
