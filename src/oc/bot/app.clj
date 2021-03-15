@@ -22,8 +22,7 @@
     "Storage service URL: " c/storage-server-url "\n"
     "Log level: " c/log-level "\n"
     "FileStack: " (or c/filestack-api-key "false") "\n"
-    "Sentry: " (or c/dsn "false") "\n"
-    "  env: " c/sentry-config "\n"
+    "Sentry: " c/sentry-config "\n"
     "\n"
     (when c/intro? "Ready to serve...\n"))))
 
