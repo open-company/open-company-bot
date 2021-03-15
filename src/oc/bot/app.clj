@@ -2,7 +2,8 @@
   (:gen-class)
   (:require [manifold.stream :as stream]
             [taoensso.timbre :as timbre]
-            [oc.lib.sentry.core :as sentry]
+            [clojure.string :as string]
+            [clojure.java.io :as jio]
             [com.stuartsierra.component :as component]
             [oc.bot.components :as components]
             [oc.bot.async.bot :as bot]
@@ -22,9 +23,7 @@
     "Log level: " c/log-level "\n"
     "FileStack: " (or c/filestack-api-key "false") "\n"
     "Sentry: " (or c/dsn "false") "\n"
-    "  env: " c/sentry-env "\n"
-    (when-not (clojure.string/blank? c/sentry-release)
-      (str "  release: " c/sentry-release "\n"))
+    "  env: " c/sentry-config "\n"
     "\n"
     (when c/intro? "Ready to serve...\n"))))
 
@@ -37,7 +36,7 @@
 
   ;; Echo config information
   (println (str "\n"
-    (when c/intro? (str (slurp (clojure.java.io/resource "oc/assets/ascii_art.txt")) "\n"))
+    (when c/intro? (str (slurp (jio/resource "oc/assets/ascii_art.txt")) "\n"))
     "OpenCompany Bot Service\n"))
   (echo-config)
 

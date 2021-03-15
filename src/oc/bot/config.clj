@@ -28,8 +28,12 @@
 
 (defonce dsn (or (env :sentry-dsn) false))
 (defonce sentry-release (or (env :release) ""))
+(defonce sentry-deploy (or (env :deploy) ""))
+(defonce sentry-debug  (boolean (or (bool (env :sentry-debug)) (#{:debug :trace} log-level))))
 (defonce sentry-env (or (env :environment) "local"))
 (defonce sentry-config {:dsn dsn
+                        :debug sentry-debug
+                        :deploy sentry-deploy
                         :release sentry-release
                         :environment sentry-env})
 
