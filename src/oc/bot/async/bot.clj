@@ -3,7 +3,6 @@
   (:require [clojure.string :as s]
             [clojure.core.async :as async :refer (<!! >!!)]
             [cuerdas.core :as str]
-            [oc.lib.sentry.core :as sentry]
             [taoensso.timbre :as timbre]
             [cheshire.core :as json]
             [clj-time.core :as time]
@@ -212,25 +211,31 @@
                                         (:id (:receiver receiver))
                                         [{:pretext message :text expnote}])))))))))
 
-(defn- share-entry [token receiver {:keys [org-slug
-                                           org-logo-url
-                                           org-name
-                                           board-name
-                                           board-slug
-                                           board-access
-                                           entry-uuid
-                                           headline
-                                           abstract
-                                           note
-                                           body
-                                           comment-count
-                                           publisher
-                                           published-at
-                                           secure-uuid
-                                           sharer
-                                           auto-share
-                                           must-see
-                                           video-id] :as msg}]
+(defn- join-channel [token {channel :id :as receiver} {entry-uuid :entry-uuid}]
+  ;; Let's wrap in case it fails, we can try the post-attachments just the same
+  ;; maybe the bot already joined
+  (try
+    (slack/join-channel token channel)
+    (catch Throwable e
+      (timbre/error "Error while joining channel" (ex-info (ex-message e) {:cause (ex-cause e)
+                                                                           :receiver receiver
+                                                                           :entry-uuid entry-uuid})))))
+
+(defn- real-share-entry [token receiver {:keys [org-slug
+                                                board-name
+                                                board-slug
+                                                board-access
+                                                entry-uuid
+                                                headline
+                                                abstract
+                                                note
+                                                body
+                                                comment-count
+                                                publisher
+                                                published-at
+                                                sharer
+                                                auto-share
+                                                must-see] :as msg}]
   {:pre [(string? token)
          (map? receiver)
          (map? msg)]}
@@ -274,15 +279,26 @@
                         [{:pretext text :text clean-note} attachment]
                         [(assoc attachment :pretext text)])] ; no optional note provided
     (when (:needs-join receiver)
-      ;; Let's wrap in case it fails, we can try the post-attachments just the same
-      ;; maybe the bot already joined
-      (try
-        (slack/join-channel token channel)
-        (catch Throwable e
-          (timbre/error "Error during channel join" (ex-info (ex-message e) {:cause (ex-cause e)
-                                                                             :receiver receiver
-                                                                             :entry-uuid entry-uuid})))))
+      (join-channel token receiver msg))
     (slack/post-attachments token channel attachments)))
+
+(defn- share-entry
+  "Wrap the real share-entry function, catch Slack errors"
+  [token receiver msg]
+  (try
+    (real-share-entry token receiver msg)
+    (catch Exception e
+      ;; Retrieve the Slack response from the error to examine it
+      (let [parsed-body (some-> e
+                                ex-data
+                                :body
+                                (json/decode true))
+            fixed-receiver (assoc receiver :needs-join true)]
+        (if (and (not (:ok parsed-body))
+                   (= (:error parsed-body) "not_in_channel"))
+          ;; Repeat entry share, but this time let's join the channel first
+          (real-share-entry token fixed-receiver msg)
+          (throw e))))))
 
 (defn- invite [token receiver {:keys [org-name from from-id first-name url note] :as msg}]
   {:pre [(string? token)
