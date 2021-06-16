@@ -211,7 +211,8 @@
                                         (:id (:receiver receiver))
                                         [{:pretext message :text expnote}])))))))))
 
-(defn- join-channel [token {channel :id :as receiver} {entry-uuid :entry-uuid}]
+(defn- join-channel [token {channel :id slack-org-id :slack-org-id :as receiver} {entry-uuid :entry-uuid}]
+  (timbre/infof "Attempt to channel %s of Slack org %s" channel slack-org-id)
   ;; Let's wrap in case it fails, we can try the post-attachments just the same
   ;; maybe the bot already joined
   (try
@@ -293,9 +294,12 @@
                                 ex-data
                                 :body
                                 (json/decode true))
-            fixed-receiver (assoc receiver :needs-join true)]
-        (if (and (not (:ok parsed-body))
-                   (= (:error parsed-body) "not_in_channel"))
+            fixed-receiver (assoc receiver :needs-join true)
+            join-channel? (and (not (:ok parsed-body))
+                               (= (:error parsed-body) "not_in_channel"))]
+        (when join-channel?
+          (timbre/info "Error from Slack not_in_channel, will retry after join"))
+        (if join-channel?
           ;; Repeat entry share, but this time let's join the channel first
           (real-share-entry token fixed-receiver msg)
           (throw e))))))
