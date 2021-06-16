@@ -2,7 +2,6 @@
   (:gen-class)
   (:require [manifold.stream :as stream]
             [taoensso.timbre :as timbre]
-            [clojure.string :as string]
             [clojure.java.io :as jio]
             [com.stuartsierra.component :as component]
             [oc.bot.components :as components]
