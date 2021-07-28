@@ -363,7 +363,7 @@
   (-> message
       :bot_profile
       :app_id
-      (= config/slack-app-id)))
+      (= c/slack-app-id)))
 
 (defn- last-usage-message-timestamp [messages]
   (->> messages
@@ -386,7 +386,7 @@
       (let [last-ts (last-usage-message-timestamp messages)
             now-ts (lib-time/now-epoch)
             time-ago (- now-ts last-ts)
-            no-repetition-seconds (* config/slack-usage-avoid-repetition-hours 60 60)]
+            no-repetition-seconds (* c/slack-usage-avoid-repetition-hours 60 60)]
         (timbre/infof "Last usage message found with ts %s. Elapsed time %s, required min last usage %s" last-ts time-ago min-last-usage-time)
         (if (or (not last-ts)
                 (> time-ago no-repetition-seconds))
