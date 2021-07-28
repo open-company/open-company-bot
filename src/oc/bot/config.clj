@@ -74,7 +74,7 @@
 
 ;; How many hours we should wait before resending the welcome message
 ;; when the user opens the Messages or Home tabs in Slack?
-(defonce slack-usage-avoid-repetition-hours 24) ;; for testing, let's do 1 minute
+(defonce slack-usage-avoid-repetition-hours (* 24 100)) ;; every 100 days
 (defonce slack-app-id (or (env :open-company-slack-app-id) "A5SGHA79P"))
 
 ;; https://api.slack.com/docs/message-formatting
