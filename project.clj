@@ -27,7 +27,7 @@
     ;; ***************** (JWT schema changes, more info here: *****************
     ;; ******* https://github.com/open-company/open-company-lib/pull/82) ******
     ;; ************************************************************************
-    [open-company/lib "0.19.0-alpha3" :exclusions [org.clojure/tools.logging com.taoensso/nippy org.tukaani/xz]]
+    [open-company/lib "0.19.0-alpha5" :exclusions [org.clojure/tools.logging com.taoensso/nippy org.tukaani/xz]]
     ;; ************************************************************************
     ;; In addition to common functions, brings in the following common dependencies used by this project:
     ;; Aleph - Asynch comm. for clojure (http-client) https://github.com/ztellman/aleph

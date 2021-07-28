@@ -14,6 +14,7 @@
             [oc.lib.storage :as storage]
             [oc.lib.user :as user]
             [oc.lib.text :as lib-text]
+            [oc.lib.time :as lib-time]
             [oc.bot.digest :as digest]
             [oc.bot.async.slack-action :as slack-action]
             [oc.bot.resources.slack-org :as slack-org]
@@ -327,6 +328,76 @@
   (timbre/info "Sending usage to Slack channel:" receiver)
   (slack/post-message token (:id receiver) c/usage-message))
 
+(defn- usage-message?
+  "Check if a given message map is our usage message.
+
+   Usage message payload:
+   {:bot_id B025QMCTH32,
+    :type message,
+    :text \"*Here's what I do:*\n&gt;- Provide a daily digest that keeps everyone focused on what matters most\n&gt;- Share Carrot posts to Slack\n&gt;- Unfurl links to Carrot\",
+    :user U024XQYUSG5,
+    :ts 1627399561.000200,
+    :team T1Q0DD7D5,
+    :bot_profile
+    {:id B025QMCTH32,
+      :deleted false,
+      :name \"Carrot (Staging)\",
+      :updated 1627399545,
+      :app_id A5TT9AUPQ,
+      :icons
+      {:image_36
+      \"https://slack-files2.s3-us-west-2.amazonaws.com/avatars/2017-07-27/219390194902_f1065e5363ed7e81c479_36.png\",
+      :image_48
+      \"https://slack-files2.s3-us-west-2.amazonaws.com/avatars/2017-07-27/219390194902_f1065e5363ed7e81c479_48.png\",
+      :image_72
+      \"https://slack-files2.s3-us-west-2.amazonaws.com/avatars/2017-07-27/219390194902_f1065e5363ed7e81c479_72.png\"},
+      :team_id T1Q0DD7D5}}"
+  [msg-map]
+  (let [msg-text (or (:text msg-map) (:text (:event msg-map)))
+        escape-opts {\< "&lt;", \> "&gt;", \& "&amp;"}
+        escaped-usage-bullets (s/escape c/usage-bullets escape-opts)]
+    (and msg-text
+        (re-find (re-pattern escaped-usage-bullets) msg-text))))
+
+(defn- from-us? [message]
+  (-> message
+      :bot_profile
+      :app_id
+      (= config/slack-app-id)))
+
+(defn- last-usage-message-timestamp [messages]
+  (->> messages
+       (filter from-us?)
+       (sort-by :ts)
+       (reverse)
+       (map #(if (usage-message? %) (:ts %) nil))
+       (remove nil?)
+       first
+       bigdec
+       int))
+
+(defn- maybe-usage [token receiver]
+  (let [messages (slack/get-conversation-history token (:id receiver))]
+    (if (not (seq messages))
+      (do
+        (timbre/info "Sending usage message: no previous messages in conversation")
+        (usage token receiver)
+        true)
+      (let [last-ts (last-usage-message-timestamp messages)
+            now-ts (lib-time/now-epoch)
+            time-ago (- now-ts last-ts)
+            no-repetition-seconds (* config/slack-usage-avoid-repetition-hours 60 60)]
+        (timbre/infof "Last usage message found with ts %s. Elapsed time %s, required min last usage %s" last-ts time-ago min-last-usage-time)
+        (if (or (not last-ts)
+                (> time-ago no-repetition-seconds))
+          (do
+            (timbre/info "Sending usage message: last message is older enough or doesn't exists")
+            (usage token receiver)
+            true)
+          (do
+            (timbre/infof "Not sending usage message: last one is not old enough, time ago %s" time-ago)
+            false))))))
+
 (defn- welcome [token receiver]
   {:pre [(string? token)
          (map? receiver)]}
@@ -507,13 +578,16 @@
          (string? (-> msg :bot :token))]}
   (let [token (-> msg :bot :token)
         receiver (:receiver msg)
-        msg-type (keyword (:type msg))]
+        tmp-msg-type (keyword (:type msg))
+        min-last-usage-time (:min-last-usage-time msg 0)
+        msg-type (if (and (= tmp-msg-type :usage) (> min-last-usage-time 0)) :maybe-usage tmp-msg-type)]
     (timbre/trace "Routing message with type:" msg-type)
     (case msg-type
       :share-entry (share-entry token receiver msg)
       :invite (invite token receiver msg)
       :digest (digest/send-digest token receiver msg)
       :usage (usage token receiver)
+      :maybe-usage (maybe-usage token receiver min-last-usage-time)
       :welcome (welcome token receiver)
       :notify (notify token receiver msg)
       :reminder-notification (reminder-notification token receiver msg)
