@@ -387,7 +387,7 @@
             now-ts (lib-time/now-epoch)
             time-ago (- now-ts last-ts)
             no-repetition-seconds (* c/slack-usage-avoid-repetition-hours 60 60)]
-        (timbre/infof "Last usage message found with ts %s. Elapsed time %s, required min last usage %s" last-ts time-ago min-last-usage-time)
+        (timbre/infof "Last usage message found with ts %s. Elapsed time %s, required min last usage %s" last-ts time-ago no-repetition-seconds)
         (if (or (not last-ts)
                 (> time-ago no-repetition-seconds))
           (do
@@ -579,15 +579,15 @@
   (let [token (-> msg :bot :token)
         receiver (:receiver msg)
         tmp-msg-type (keyword (:type msg))
-        min-last-usage-time (:min-last-usage-time msg 0)
-        msg-type (if (and (= tmp-msg-type :usage) (> min-last-usage-time 0)) :maybe-usage tmp-msg-type)]
+        avoid-usage-repetition? (:avoid-repetition msg)
+        msg-type (if (and (= tmp-msg-type :usage) avoid-usage-repetition?) :maybe-usage tmp-msg-type)]
     (timbre/trace "Routing message with type:" msg-type)
     (case msg-type
       :share-entry (share-entry token receiver msg)
       :invite (invite token receiver msg)
       :digest (digest/send-digest token receiver msg)
       :usage (usage token receiver)
-      :maybe-usage (maybe-usage token receiver min-last-usage-time)
+      :maybe-usage (maybe-usage token receiver)
       :welcome (welcome token receiver)
       :notify (notify token receiver msg)
       :reminder-notification (reminder-notification token receiver msg)
