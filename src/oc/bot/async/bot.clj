@@ -3,7 +3,6 @@
   (:require [clojure.string :as s]
             [clojure.core.async :as async :refer (<!! >!!)]
             [cuerdas.core :as str]
-            [oc.lib.sentry.core :as sentry]
             [taoensso.timbre :as timbre]
             [cheshire.core :as json]
             [clj-time.core :as time]
@@ -15,6 +14,7 @@
             [oc.lib.storage :as storage]
             [oc.lib.user :as user]
             [oc.lib.text :as lib-text]
+            [oc.lib.time :as lib-time]
             [oc.bot.digest :as digest]
             [oc.bot.async.slack-action :as slack-action]
             [oc.bot.resources.slack-org :as slack-org]
@@ -72,9 +72,9 @@
     (if (and slack-user-id
              slack-team-id)
       (storage/post-data-for config slack-user-map (:slug (:org payload)) (:board-id notification) (:entry-id notification))
-      (throw (ex-info "No Slack info to retrieve post" {:notification notification
-                                                        :bot slack-bot
-                                                        :slack-user-map slack-user-map})))))
+      (timbre/error (ex-info "No Slack info to retrieve post" {:notification notification
+                                                               :bot slack-bot
+                                                               :slack-user-map slack-user-map})))))
 
 ;; ----- SQS handling -----
 
@@ -83,7 +83,8 @@
    with proper DM channels."
   [msg]
   (let [token (-> msg :bot :token)
-        type  (-> msg :receiver :type)]
+        type  (-> msg :receiver :type)
+        needs-join (-> msg :receiver :needs-join)]
     (timbre/info "Adjusting receiver" {:type type})
     (cond
       ;; Directly to a specific user
@@ -94,10 +95,11 @@
                              :type :channel
                              :dm true})]
       
-      ;; To a specific channel
-      (and (= :channel type) (not (s/blank? (-> msg :receiver :id))))
+      ;; To a specific channel or user
+      (and (#{:user :channel} type) (not (s/blank? (-> msg :receiver :id))))
       [(assoc msg :receiver {:id (-> msg :receiver :id)
-                             :type :channel
+                             :type type
+                             :needs-join needs-join
                              :dm false})]
 
       ;; To every full member of the Slack org (fan out)
@@ -109,7 +111,7 @@
                                             :dm true})))
 
       :else
-      (throw (ex-info "Failed to adjust receiver" {:msg msg})))))
+      (timbre/error (ex-info "Failed to adjust receiver" {:msg msg})))))
 
 (defn sqs-handler
   "Handle an incoming SQS message to the bot."
@@ -210,25 +212,32 @@
                                         (:id (:receiver receiver))
                                         [{:pretext message :text expnote}])))))))))
 
-(defn- share-entry [token receiver {:keys [org-slug
-                                           org-logo-url
-                                           org-name
-                                           board-name
-                                           board-slug
-                                           board-access
-                                           entry-uuid
-                                           headline
-                                           abstract
-                                           note
-                                           body
-                                           comment-count
-                                           publisher
-                                           published-at
-                                           secure-uuid
-                                           sharer
-                                           auto-share
-                                           must-see
-                                           video-id] :as msg}]
+(defn- join-channel [token {channel :id slack-org-id :slack-org-id :as receiver} {entry-uuid :entry-uuid}]
+  (timbre/infof "Attempt to channel %s of Slack org %s" channel slack-org-id)
+  ;; Let's wrap in case it fails, we can try the post-attachments just the same
+  ;; maybe the bot already joined
+  (try
+    (slack/join-channel token channel)
+    (catch Throwable e
+      (timbre/error "Error while joining channel" (ex-info (ex-message e) {:cause (ex-cause e)
+                                                                           :receiver receiver
+                                                                           :entry-uuid entry-uuid})))))
+
+(defn- real-share-entry [token receiver {:keys [org-slug
+                                                board-name
+                                                board-slug
+                                                board-access
+                                                entry-uuid
+                                                headline
+                                                abstract
+                                                note
+                                                body
+                                                comment-count
+                                                publisher
+                                                published-at
+                                                sharer
+                                                auto-share
+                                                must-see] :as msg}]
   {:pre [(string? token)
          (map? receiver)
          (map? msg)]}
@@ -271,7 +280,30 @@
         attachments (if clean-note
                         [{:pretext text :text clean-note} attachment]
                         [(assoc attachment :pretext text)])] ; no optional note provided
+    (when (:needs-join receiver)
+      (join-channel token receiver msg))
     (slack/post-attachments token channel attachments)))
+
+(defn- share-entry
+  "Wrap the real share-entry function, catch Slack errors"
+  [token receiver msg]
+  (try
+    (real-share-entry token receiver msg)
+    (catch Exception e
+      ;; Retrieve the Slack response from the error to examine it
+      (let [parsed-body (some-> e
+                                ex-data
+                                :body
+                                (json/decode true))
+            fixed-receiver (assoc receiver :needs-join true)
+            join-channel? (and (not (:ok parsed-body))
+                               (= (:error parsed-body) "not_in_channel"))]
+        (when join-channel?
+          (timbre/info "Error from Slack not_in_channel, will retry after join"))
+        (if join-channel?
+          ;; Repeat entry share, but this time let's join the channel first
+          (real-share-entry token fixed-receiver msg)
+          (throw e))))))
 
 (defn- invite [token receiver {:keys [org-name from from-id first-name url note] :as msg}]
   {:pre [(string? token)
@@ -295,6 +327,76 @@
          (map? receiver)]}
   (timbre/info "Sending usage to Slack channel:" receiver)
   (slack/post-message token (:id receiver) c/usage-message))
+
+(defn- usage-message?
+  "Check if a given message map is our usage message.
+
+   Usage message payload:
+   {:bot_id B025QMCTH32,
+    :type message,
+    :text \"*Here's what I do:*\n&gt;- Provide a daily digest that keeps everyone focused on what matters most\n&gt;- Share Carrot posts to Slack\n&gt;- Unfurl links to Carrot\",
+    :user U024XQYUSG5,
+    :ts 1627399561.000200,
+    :team T1Q0DD7D5,
+    :bot_profile
+    {:id B025QMCTH32,
+      :deleted false,
+      :name \"Carrot (Staging)\",
+      :updated 1627399545,
+      :app_id A5TT9AUPQ,
+      :icons
+      {:image_36
+      \"https://slack-files2.s3-us-west-2.amazonaws.com/avatars/2017-07-27/219390194902_f1065e5363ed7e81c479_36.png\",
+      :image_48
+      \"https://slack-files2.s3-us-west-2.amazonaws.com/avatars/2017-07-27/219390194902_f1065e5363ed7e81c479_48.png\",
+      :image_72
+      \"https://slack-files2.s3-us-west-2.amazonaws.com/avatars/2017-07-27/219390194902_f1065e5363ed7e81c479_72.png\"},
+      :team_id T1Q0DD7D5}}"
+  [msg-map]
+  (let [msg-text (or (:text msg-map) (:text (:event msg-map)))
+        escape-opts {\< "&lt;", \> "&gt;", \& "&amp;"}
+        escaped-usage-bullets (s/escape c/usage-bullets escape-opts)]
+    (and msg-text
+        (re-find (re-pattern escaped-usage-bullets) msg-text))))
+
+(defn- from-us? [message]
+  (-> message
+      :bot_profile
+      :app_id
+      (= c/slack-app-id)))
+
+(defn- last-usage-message-timestamp [messages]
+  (->> messages
+       (filter from-us?)
+       (sort-by :ts)
+       (reverse)
+       (map #(if (usage-message? %) (:ts %) nil))
+       (remove nil?)
+       first
+       bigdec
+       int))
+
+(defn- maybe-usage [token receiver]
+  (let [messages (slack/get-conversation-history token (:id receiver))]
+    (if (not (seq messages))
+      (do
+        (timbre/info "Sending usage message: no previous messages in conversation")
+        (usage token receiver)
+        true)
+      (let [last-ts (last-usage-message-timestamp messages)
+            now-ts (lib-time/now-epoch)
+            time-ago (- now-ts last-ts)
+            no-repetition-seconds (* c/slack-usage-avoid-repetition-hours 60 60)]
+        (timbre/infof "Last usage message found with ts %s. Elapsed time %s, required min last usage %s" last-ts time-ago no-repetition-seconds)
+        (if (or (not last-ts)
+                (> time-ago no-repetition-seconds))
+          (do
+            (timbre/info "Sending usage message: last message is older enough or doesn't exists")
+            (usage token receiver)
+            true)
+          (do
+            (timbre/infof "Not sending usage message: last one is not old enough, time ago %s" time-ago)
+            false))))))
 
 (defn- welcome [token receiver]
   {:pre [(string? token)
@@ -476,13 +578,16 @@
          (string? (-> msg :bot :token))]}
   (let [token (-> msg :bot :token)
         receiver (:receiver msg)
-        msg-type (keyword (:type msg))]
+        tmp-msg-type (keyword (:type msg))
+        avoid-usage-repetition? (:avoid-repetition msg)
+        msg-type (if (and (= tmp-msg-type :usage) avoid-usage-repetition?) :maybe-usage tmp-msg-type)]
     (timbre/trace "Routing message with type:" msg-type)
     (case msg-type
       :share-entry (share-entry token receiver msg)
       :invite (invite token receiver msg)
       :digest (digest/send-digest token receiver msg)
       :usage (usage token receiver)
+      :maybe-usage (maybe-usage token receiver)
       :welcome (welcome token receiver)
       :notify (notify token receiver msg)
       :reminder-notification (reminder-notification token receiver msg)
@@ -500,9 +605,9 @@
       (timbre/trace "Waiting for message on bot channel...")
       (let [msg (<!! bot-chan)]
         (timbre/debug "Processing message on bot channel...")
-        (if (:stop msg)
-          (do (reset! bot-go false) (timbre/info "Bot stopped."))
-          (try
+        (try
+          (if (:stop msg)
+            (do (reset! bot-go false) (timbre/info "Bot stopped."))
             (if (:Message msg)
               (let [msg-parsed (json/parse-string (:Message msg) true)
                     notification-type (:notification-type msg-parsed)
@@ -534,15 +639,15 @@
 
               ; else it's a direct SQS request to send information out using the bot
               (let [bot-token  (or (-> msg :bot :token) (slack-org/bot-token-for @db-pool (-> msg :receiver :slack-org-id)))]
-                (when-not bot-token
-                  (throw (ex-info "Missing bot token for:" {:msg-body msg})))
-                (timbre/infof "Handling direct bot message")
-                (doseq [m (adjust-receiver msg)]
-                  (bot-handler (assoc-in m [:bot :token] bot-token)))))
-            (timbre/trace "Processing complete.")
-            (catch Exception e
-              (timbre/warn e)
-              (sentry/capture e))))))))
+                (if-not bot-token
+                  (timbre/error (ex-info "Missing bot token for:" {:msg-body msg}))
+                  (do
+                    (timbre/infof "Handling direct bot message")
+                    (doseq [m (adjust-receiver msg)]
+                      (bot-handler (assoc-in m [:bot :token] bot-token))))))))
+          (timbre/trace "Processing complete.")
+          (catch Exception e
+            (timbre/error e)))))))
 
 ;; ----- Component start/stop -----
 
